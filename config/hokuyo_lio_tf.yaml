@@ -1,0 +1,16 @@
+tf_en: true
+odom_en: true
+use_init_R: true
+mode_2d: true
+
+sub_pose_topic: "/hokuyo_lio/lidar_pose"
+pub_odom_topic: "lio_odom"
+
+frame_id: "lio_odom"
+child_frame_id: "base_link"
+
+init_num: 10
+R_arr: [ 1, 0, 0, 
+         0, 1, 0, 
+         0, 0, 1]
+position_arr: [0.0, 0.0, 0.0]

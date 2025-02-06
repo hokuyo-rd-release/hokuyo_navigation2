@@ -1,0 +1,19 @@
+global_costmap:
+  global_frame: map
+  robot_base_frame: base_link #arno変更前：base_footprint
+
+  update_frequency: 10.0 #arno変更前:10.0
+  publish_frequency: 10.0 #arno変更前:10.0
+  transform_tolerance: 0.5
+
+  static_map: true
+
+  #======wizurgで追加==========
+  static_layer:
+    map_topic: "/map"
+    track_unknown_space: false
+    subscribe_to_updates: true
+  #============================
+
+#footprint: [[-0.105, -0.105], [-0.105, 0.105], [0.041, 0.105], [0.041, -0.105]]
+#inflation_radius: 1.0

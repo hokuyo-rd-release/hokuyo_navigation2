@@ -1,0 +1,16 @@
+obstacle_range: 3.0 #1.0 #5.0
+raytrace_range: 3.5 #1.1 #5.5
+
+footprint: [[-0.35, -0.35], [-0.35, 0.35], [0.25, 0.25], [0.25, -0.25]] #wizurg
+#footprint: [[-0.515, -0.29], [-0.515, 0.29], [0.215, 0.29], [0.215, -0.29]] #arno変更前
+#footprint: [[-0.05, -0.05], [-0.05, 0.05], [0.01, 0.05], [0.01, -0.05]] #動作確認用小型サイズ
+#robot_radius: 0.0105 #動作確認用小型円形
+
+inflation_radius: 0.8 #0.5 #0.8 #障害物の影響を受け始める開始距離
+cost_scaling_factor: 3 #5 #10 #cost = e^(r*cost_scaling_factor)
+
+map_type: costmap
+observation_sources: hokuyo_pc2
+scan: {sensor_frame: yvt, data_type: PointCloud2, topic: hokuyo3d3/hokuyo_cloud2, marking: true, clearing: true}
+#arno変更前
+#scan: {sensor_frame: base_scan, data_type: LaserScan, topic: scan, marking: true, clearing: true}

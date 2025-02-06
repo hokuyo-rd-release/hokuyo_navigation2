@@ -1,0 +1,16 @@
+#==========ust=========
+is_use_ust: true
+ust_ip: 192.168.0.11
+#==========yvt=========
+is_use_yvt: true
+yvt_ip: 192.168.0.12
+#==========ylm=========
+is_use_ylm: true
+ylm_ip: 192.168.0.10
+#==========gnss=========
+is_use_gnss: false
+gnss_com: /dev/ttyACM1
+gnss_baud: 38400
+#==========camera=========
+is_use_camera: true
+camera_com: /dev/video4

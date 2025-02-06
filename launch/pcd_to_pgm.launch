@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+
+<launch>
+    <arg name="file_directory" default="$(find expo_wizurg)/map/"/>
+    <arg name="file_name" default="map"/>
+    <arg name="thre_z_min" default="-2.2"/>
+    <arg name="thre_z_max" default="-0.1"/>
+    <arg name="flag_pass_through" default="0"/>
+    <arg name="thre_radius" default="0.5"/>
+    <arg name="thres_point_count" default="10"/>
+    <arg name="map_resolution" default="0.05"/>
+    <arg name="map_topic_name" default="map"/>
+
+    <node pkg="expo_wizurg" name="pcd_to_pgm_node" type="pcd_to_pgm_node" output="screen">
+        <!-- pcd ファイルを保存するパス -->
+        <param name="file_directory" value= "$(arg file_directory)" />
+        <!-- pcd ファイル名 -->
+        <param name="file_name" value= "$(arg file_name)" />
+        <!-- 選択範囲 最小高さ -->
+        <param name="thre_z_min" value= "$(arg thre_z_min)" />
+        <!-- 選択範囲 最大高さ -->
+        <param name="thre_z_max" value= "$(arg thre_z_max)" />
+        <!--0 は高さの範囲内のものを選択し、1 は高さの範囲外のものを選択します-->
+        <param name="flag_pass_through" value= "$(arg flag_pass_through)" />
+        <!-- 半径フィルター半径 -->
+        <param name="thre_radius" value= "$(arg thre_radius)" />
+        <!-- 半径フィルタリングに必要なポイント数 -->
+        <param name="thres_point_count" value= "$(arg thres_point_count)" />
+        <!-- 保存されたラスターマップの解像度 -->
+        <param name="map_resolution" value= "$(arg map_resolution)" />
+        <!-- 変換後に公開された 2D マップのトピックは、デフォルトでマップを使用して保存できます。map_server を使用して保存できます。-->
+        <param name="map_topic_name" value= "$(arg map_topic_name)" />
+    </node>
+
+</launch>
