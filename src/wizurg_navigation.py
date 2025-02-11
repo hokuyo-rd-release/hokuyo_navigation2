@@ -99,7 +99,7 @@ if __name__ == '__main__':
     client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
     client.wait_for_server()
     listener.waitForTransform("map", "base_link", rospy.Time(), rospy.Duration(4.0))
-    dynamic_client = dynamic_reconfigure.client.Client("amcl", timeout=30)
+    #dynamic_client = dynamic_reconfigure.client.Client("amcl", timeout=30)
 
     #=============
     count=0
@@ -114,8 +114,8 @@ if __name__ == '__main__':
             pub.publish(waypoints)
             goal = goal_pose(pose)
             client.send_goal(goal)
-            if not change_params[i] == None:
-                dynamic_client.update_configuration(change_params[i])
+            # if not change_params[i] == None:
+            #     dynamic_client.update_configuration(change_params[i])
 
             #========自己位置とwaypointが近づくまでループ=========
             while not rospy.is_shutdown():

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+# amcl_pose: posestampedwithcovariance から、estimated_pose: posestamped に変更
 import rospy
 #==================
 import sys
@@ -7,7 +7,7 @@ import json
 #==================
 from move_base_msgs.msg import MoveBaseActionGoal, MoveBaseGoal
 from visualization_msgs.msg import Marker
-from geometry_msgs.msg import PoseArray, Pose, PoseWithCovarianceStamped
+from geometry_msgs.msg import PoseArray, Pose, PoseWithCovarianceStamped, PoseStamped
 from sensor_msgs.msg import Joy
 from std_msgs.msg import Int16
 
@@ -18,7 +18,7 @@ is_insert = -1
 pub = None
 num = None
 
-amcl_pose = PoseWithCovarianceStamped()
+lio_loc_pose = PoseWithCovarianceStamped()
 joy_button = 1
 
 
@@ -87,16 +87,16 @@ def goalCallback(data):
 
 #   amclの自己位置を更新.
 def amclCallback(data):
-    global amcl_pose
-    amcl_pose = data 
+    global lio_loc_pose
+    lio_loc_pose = data 
     
     
 #   amclの自己位置をwaypointに追加.
 def amclWaypointAppend():
     global pub
     global waypoints
-    global amcl_pose
-    waypoints.poses.append(amcl_pose.pose.pose)
+    global lio_loc_pose
+    waypoints.poses.append(lio_loc_pose.pose) # 2/10 髙橋変更 ()
     printWaypoints()
     updateWaypointjson()
     rewriteMarker()
@@ -182,7 +182,7 @@ def listener():
     global joy_button
     rospy.init_node('goal_sub', anonymous=True)
     
-    rospy.Subscriber("/amcl_pose", PoseWithCovarianceStamped, amclCallback)
+    rospy.Subscriber("/estimated_pose", PoseStamped, amclCallback)
     rospy.Subscriber("/initialpose", PoseWithCovarianceStamped, initPoseCallback)
     rospy.Subscriber('/joy', Joy, joyCallback)
     

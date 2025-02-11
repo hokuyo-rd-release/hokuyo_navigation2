@@ -103,7 +103,7 @@
        
      <!--マップサーバー-->
     <group if="$(eval use_navigation or use_loader or use_editor)">
-        <!--<param name="use_sim_time" value="false"/>--><!--rosbag を使うとき：True rosbagを使わないとき：false-->
+        <param name="use_sim_time" value="false"/><!--rosbag を使うとき：True rosbagを使わないとき：false-->
         <node name="map_server" pkg="map_server" type="map_server" args="$(arg map_dir)/$(arg map_file).yaml" output="log" />
     </group>
     
@@ -111,14 +111,14 @@
     <!-- p2o でオフライン -->
     <group if="$(arg use_mapping)">
         <group if="$(arg use_lio)">
-            <node pkg="pcl_ros" type="pcd_to_pointcloud" name="pcd_to_pointcloud" args="$(arg map_dir)/$(arg  map_file).pcd 0.1" output="screen">
+            <node pkg="pcl_ros" type="pcd_to_pointcloud" name="pcd_to_pointcloud" args="$(arg map_dir)/$(arg map_file).pcd 0.1" output="screen">
                 <remap from="cloud_pcd" to="map3d"/>
                 <param name="frame_id" value="map" />
             </node>
             <node pkg="expo_wizurg" type="pcd_to_pgm_node" name="pcd_to_pgm_node" output="screen">
                 <param name="file_directory" value= "$(arg map_dir)" />
                 <!-- pcd ファイル名 -->
-                <param name="file_name" value= "$(arg  map_file)" />
+                <param name="file_name" value= "/$(arg map_file)" />
                 <!-- 選択範囲 最小高さ -->
                 <param name="thre_z_min" value= "$(arg thre_z_min)" />
                 <!-- 選択範囲 最大高さ -->
@@ -154,6 +154,8 @@
 		        <arg name="cmd_vel_topic" default="/icart_mini/cmd_vel" />
                 <arg name="odom_topic" default="lio_odom"/>
             </include>
+            <include file="$(find expo_wizurg)/launch/pointcloud2_to_laserscan.launch">
+            </include>
         </group>
         
         <!-- <group unless="$(arg use_lio)">
@@ -169,10 +171,12 @@
     
     <!--waypoint作成(現状loaderはbashファイルから起動)-->
     <group if="$(arg use_loader)">
-        <include file="$(find expo_wizurg)/launch/move_base.launch">
-            <arg name="cmd_vel_topic" default="/dummy/cmd_vel" />
-        </include>
+        <include file="$(find expo_wizurg)/launch/move_base.launch"/>
+            <!-- <arg name="cmd_vel_topic" default="/dummy/cmd_vel" /> -->
         <group if="$(arg use_lio)">
+            <!-- sync_lio_pc -->
+            <node name="sync_lio_pc_node" pkg="sync_lio_pc" type="sync_lio_pc" >
+            </node>
             <node name="localization_node" pkg="expo_wizurg" type="simple_fastlio_localization_node" output="screen">
                 <rosparam command="load" file="$(arg lio_localization_param)"/>
                 <remap from="/Odometry" to="$(arg sub_odom_name)"/>
@@ -192,6 +196,7 @@
     </group>
     <group if="$(arg use_editor)">
         <include file="$(find expo_wizurg)/launch/move_base.launch">
+            <arg name="use_sim_time_" default="false"/>
             <arg name="cmd_vel_topic" default="/dummy/cmd_vel" />
         </include>
     	<node pkg="rviz" type="rviz" name="waypoint_rviz"  args="-d $(find expo_wizurg)/rviz_cfg/wizurg_loader.rviz"/>

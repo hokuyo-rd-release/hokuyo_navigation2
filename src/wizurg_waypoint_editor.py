@@ -15,7 +15,7 @@ import json
 #==================
 from move_base_msgs.msg import MoveBaseActionGoal, MoveBaseGoal
 from visualization_msgs.msg import Marker
-from geometry_msgs.msg import PoseArray, Pose, PoseWithCovarianceStamped
+from geometry_msgs.msg import PoseArray, Pose, PoseWithCovarianceStamped, PoseStamped
 from sensor_msgs.msg import Joy
 from std_msgs.msg import Int16
 
@@ -26,7 +26,6 @@ is_insert = -1
 pub = None
 num = None
 
-amcl_pose = PoseWithCovarianceStamped()
 joy_button = 1
 
 #	waypointファイルの読み込み.

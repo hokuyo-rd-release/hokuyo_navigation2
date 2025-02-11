@@ -32,7 +32,6 @@ options=(`cat ./config/wizurg_opts/99_${wizurg_opt}.csv`)   #-- params/wizurg_op
 
 map_names=(`cat ./config/maps_and_waypoints.csv`) 
 Rmapfile=()
-R3Dmapfile=()
 Rwayfile=()
 
 
@@ -51,8 +50,7 @@ for i in ${!map_names[@]}; do
  if [ $i -gt 0 ]; then
   j=$((${i}-1))
   Rmapfile[$j]=`echo ${map_names[$i]} | cut -d ',' -f 1`
-  R3Dmapfile[$j]=`echo ${map_names[$i]} | cut -d ',' -f 2`
-  Rwayfile[$j]=`echo ${map_names[$i]} | cut -d ',' -f 3`
+  Rwayfile[$j]=`echo ${map_names[$i]} | cut -d ',' -f 2`
  fi
 done
 
@@ -96,7 +94,7 @@ if [ "x${multi_map}" = "xtrue" ]; then
     echo "rosbag record"
     gnome-terminal -- bash -c "sleep 2; cd ${rosbag_dir}; rosbag record -a -o ${Rmapfile[$i]}; bash"
   fi
-  gnome-terminal -- bash -c "roslaunch expo_wizurg expo_wizurg_start.launch use_joy:=${use_joy} use_mapping:=${mapping} use_navigation:=${navigation} use_loader:=${loader} use_editor:=${editor} use_sensor:=${sensor} use_icart:=${icart} use_lio:=${use_lio} use_unity_sim:=${use_unity} map_file:=${Rmapfile[$i]} 3dmap_file:=${R3Dmapfile[$i]} ;bash"
+  gnome-terminal -- bash -c "roslaunch expo_wizurg expo_wizurg_start.launch use_joy:=${use_joy} use_mapping:=${mapping} use_navigation:=${navigation} use_loader:=${loader} use_editor:=${editor} use_sensor:=${sensor} use_icart:=${icart} use_lio:=${use_lio} use_unity_sim:=${use_unity} map_file:=${Rmapfile[$i]} ;bash"
   sleep 2s
   echo "sleep 2"
   echo "start wizurg_navigation ${Rwayfile[$i]}"
@@ -141,7 +139,6 @@ fi
 
 #========マップsave(入力待ち)=======
 if [ "x${mapping}" = "xtrue" ]; then
- gnome-terminal -- bash -c "cd ~/github/hokuyo_slam"
  str="none"
  while [ "x${str}" != "xsave" ]; do
   echo "マップセーブ(save)"

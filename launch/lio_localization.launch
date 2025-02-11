@@ -1,13 +1,12 @@
 <launch>
     <!--params-->
-    <param name="use_sim_time" value="true"/>
     <arg name= "hokuyo_lio_param" default="$(find expo_wizurg)/config/hokuyo_lio.yaml"/>
-    <arg name= "lio_localization_param" default="$(find simple_fastlio_localization)/config/lio_localization.yaml"/>
+    <arg name= "lio_localization_param" default="$(find expo_wizurg)/config/lio_localization.yaml"/>
     <!--topics-->
     <arg name="sub_odom_name" default="/hokuyo_lio/sync_odom" />
     <arg name="sub_cloud_name" default="/hokuyo3d3/hokuyo_cloud2" />
 
-    <arg name="map_path" default="$(find expo_wizurg)/map/2dmap.yaml" />
+    <arg name="map_path" default="$(find expo_wizurg)/map/ATC_area_1.yaml" />
 
     <!-- sync_lio_pc -->
     <node name="sync_lio_pc_node" pkg="sync_lio_pc" type="sync_lio_pc" >
@@ -16,7 +15,15 @@
     <node name="hokuyo_lio" pkg="hokuyo_lio" type="hokuyo_lio_node" output="log" >
         <rosparam command="load" file="$(arg hokuyo_lio_param)"/>
     </node>
-
+    <!-- pointcloud2_to_laserscan -->
+    <include file="$(find expo_wizurg)/launch/pointcloud2_to_laserscan.launch">
+    </include>
+    <!-- move_base -->
+    <include file="$(find expo_wizurg)/launch/move_base.launch">
+        <arg name="use_sim_time_" default="true"/>
+        <arg name="cmd_vel_topic" default="/icart_mini/cmd_vel" />
+        <arg name="odom_topic" default="lio_odom"/>
+    </include>
     <!-- expo_wizurg -->
     <node name="localization_node" pkg="expo_wizurg" type="simple_fastlio_localization_node" output="screen">
         <rosparam command="load" file="$(arg lio_localization_param)"/>
