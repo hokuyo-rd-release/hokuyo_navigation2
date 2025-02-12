@@ -82,7 +82,7 @@ chmod +x wizurg_start.sh
 ## モータドライバインストールの確認
 ```
 端末 1
-ypspur-coordinator -d /dev/ttyUSB0 --blvr -p ~/catkin_ws/src/wizurg_ros1/params/icart_ypspur_params/iCart3_100W.param
+ypspur-coordinator -d /dev/ttyUSB0 --blvr -p ~/catkin_ws/src/expo_wizurg/params/icart_ypspur_params/iCart3_100W.param
 
 端末 2
 cd ~/catkin_ws/src/yp-spur/build/sample
@@ -92,7 +92,7 @@ cd ~/catkin_ws/src/yp-spur/build/sample
 
 ## プログラムの実行
 ```
-rosrun wizurg wizurg_start.sh -オプション
+rosrun expo_wizurg wizurg_start.sh -オプション
 ```
 シェルスクリプトの実行によりrosbag取得・マッピング・ナビゲーション・ウェイポイント作成を行う。`use_mapping`をtrueとした場合,ターミナル上で`save`と打つとマップが保存される。
 
@@ -148,28 +148,55 @@ rosrun wizurg wizurg_start.sh -オプション
 |make_waypoints|false|false|waypoint_makerの起動|
 |edit_waypoints|false|false|waypoint_editorの起動|
 
-### ROSBAGセンサデータ取得
+### ①ROSBAGセンサデータ取得
 ```
-rosrun wizurg wizurg_start.sh -B
-```
-
-### ナビゲーション実行
-```
-rosrun wizurg wizurg_start.sh -N
+rosrun wizurg wizurg_start.sh -B　-L
 ```
 
-### 複数マップ・ウェイポイントでのナビゲーション
-`./wizurg_ros1/params/maps_and_waypoints.csv`から複数地図名と対応するウェイポイントを記入する.
+### ②地図作成
+この際、raw_rosbag には、後処理したものは使わないようにする。(tf_remover等。)
+wheelオドメトリが入っているものでも良い。
+
+#### 2-1 p2o用にトピックを抽出した別のrosbag ファイルを作成する
 ```
-rosrun wizurg wizurg_start.sh -P
+cd ~/github/hokuyo_slam
+./get_rosbag <raw_rosbag> <lio, pc, fix topic rosbag>
 ```
 
-### rosbagから地図作成
-
+#### 2-2 2-1で作成したrosbag を使って絶対座標の情報を付与した3D地図を作成
+この際、システム用に相対座標に変換した3D点群地図も作成
 ```
-rosrun wizurg wizurg_start.sh -M
+cd ~/github/hokuyo_slam
+./hokuyo_slam <lio, pc, fix topic rosbag> <mapname>
+```
+#### 2-3 2D地図作成
+pcd_to_pgm を用いて、3Dの相対座標の点群地図を圧縮し、2Dの点群地図を作成する。
+```
+rosrun expo_wizurg wizurg_start.sh -M -L
+```
+#### 2-4 2D地図修正
+地図の障害物と通行可能領域の整合性を保つため、
+適宜、GIMPを用いて2D地図を手作業で修正する。(3D点群と2D点群を重ね合わせたり、Waypoint を参考にする。)
 
-別端末でrosbagを再生する.
+### ③ Waypoint の新規作成
+terminal 2のrosbag は 車輪オドメトリのtf が無いものを使用し、--clock オプションを使うこと。
+tfを消したもの、最初からrecordしていないもののどちらでも構わない。
+```
+# terminal 1
+rosrun wizurg wizurg_start.sh -W -L
+
+# terminal 2
+rosbag play <mapnamebag> --clock
+```
+### ④ Waypoint の編集
+```
+rosrun wizurg wizurg_start.sh -E -L
+```
+
+### ⑤ 複数マップ・Waypointでのナビゲーション
+`./wizurg_ros1/params/maps_and_waypoints.csv`に、複数地図名とそれに対応するウェイポイントを記入する.
+```
+rosrun wizurg wizurg_start.sh -P -L
 ```
 
 ### hokuyo-lioありのrosbagから点群地図作成
@@ -181,17 +208,6 @@ roslaunch test_tools hlio_make_pcd.launch
 ```
 wizurg_ros1/map/map.pcd　が生成される.
 
-### waypoint の新規作成
-```
-rosrun wizurg wizurg_start.sh -W
-
-別端末でrosbagを再生する。
-```
-
-### waypoint の編集
-```
-rosrun wizurg wizurg_start.sh -E
-```
 
 ### LIOを使用する場合
 上記各オプションに`-L`を追加する.  
