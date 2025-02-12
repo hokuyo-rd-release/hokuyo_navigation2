@@ -1,5 +1,7 @@
-map_file: "/home/takahashi/catkin_ws/src/expo_wizurg/map/ATC_area_1.pcd"
-initial_pose: "-3.0 -1.5 0.0 0.0 0.0 0.906307787 0.422618"
+#map_file: "/home/takahashi/catkin_ws/src/expo_wizurg/map/ATC_area_2.pcd"
+#initial_pose: "-3.0 -1.5 0.0 0.0 0.0 0.906307787 0.422618"
+#initial_pose: "-2.3723 -5.652 0.0 0.0 -0.01114 -0.9560230966 0.2930647287"
+#initial_pose: "2.3723 -5.652 0.0 0.0 -0.01114 -0.9560230966 0.2930647287"
 frames_accumulate: 1
 min_registration_interval: 0
 asynchronous_registration: true

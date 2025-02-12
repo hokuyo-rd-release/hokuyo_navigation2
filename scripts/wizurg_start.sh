@@ -34,7 +34,6 @@ map_names=(`cat ./config/maps_and_waypoints.csv`)
 Rmapfile=()
 Rwayfile=()
 
-
 #-------オプション入力情報を格納----------
 #-------maps_and_waypoints の配列のデータを読む。------#
 for i in ${!options[@]}; do
@@ -70,6 +69,26 @@ rosbag_dir="${option_arr[12]}";
 loader="${option_arr[13]}";
 editor="${option_arr[14]}";
 
+IFS_BACKUP=$IFS
+IFS=$'\n'
+i=0
+for init_pose in `cat ~/github/hokuyo_slam/data/${mapfile}/init_pose.txt`
+do
+  i=`expr $i + 1`
+#   echo ${init_pose}
+done
+IFS=$IFS_BACKUP
+
+pose_arr=( `echo ${init_pose} | tr -s ',' ' '`)
+pose1=${pose_arr[0]}
+pose2=${pose_arr[1]}
+pose3=${pose_arr[2]}
+pose4=${pose_arr[3]}
+pose5=${pose_arr[4]}
+pose6=${pose_arr[5]}
+pose7=${pose_arr[6]}
+
+echo ${pose1} ${pose2} ${pose3} ${pose4} ${pose5} ${pose6} ${pose7}
 
 #-------ypspur-coordinator起動------------
 if [ "x${ypspur}" = "xtrue" ]; then
@@ -77,7 +96,6 @@ if [ "x${ypspur}" = "xtrue" ]; then
  #---------spur待機---------------
  sleep 1
 fi
-
 
 #============= wizurg_satrt.launch起動 =============
 gnome-terminal -- bash -c "roscore" # 25/1/16 岡本追記
@@ -94,7 +112,7 @@ if [ "x${multi_map}" = "xtrue" ]; then
     echo "rosbag record"
     gnome-terminal -- bash -c "sleep 2; cd ${rosbag_dir}; rosbag record -a -o ${Rmapfile[$i]}; bash"
   fi
-  gnome-terminal -- bash -c "roslaunch expo_wizurg expo_wizurg_start.launch use_joy:=${use_joy} use_mapping:=${mapping} use_navigation:=${navigation} use_loader:=${loader} use_editor:=${editor} use_sensor:=${sensor} use_icart:=${icart} use_lio:=${use_lio} use_unity_sim:=${use_unity} map_file:=${Rmapfile[$i]} ;bash"
+  gnome-terminal -- bash -c "roslaunch expo_wizurg expo_wizurg_start.launch use_joy:=${use_joy} use_mapping:=${mapping} use_navigation:=${navigation} use_loader:=${loader} use_editor:=${editor} use_sensor:=${sensor} use_icart:=${icart} use_lio:=${use_lio} use_unity_sim:=${use_unity} map_file:=${Rmapfile[$i]} initial_pose:="${pose1}${pose2}${pose3}${pose4}${pose5}${pose6}${pose7}";bash"
   sleep 2s
   echo "sleep 2"
   echo "start wizurg_navigation ${Rwayfile[$i]}"
@@ -110,7 +128,7 @@ else
      gnome-terminal -- bash -c "sleep 2; cd ${rosbag_dir}; rosbag record -a -o ${mapfile}; bash"
   fi
 #-------------------------------------
- gnome-terminal -- bash -c "roslaunch expo_wizurg expo_wizurg_start.launch use_joy:=${use_joy} use_mapping:=${mapping} use_navigation:=${navigation} use_loader:=${loader} use_editor:=${editor} use_sensor:=${sensor} use_icart:=${icart}  use_lio:=${use_lio} use_unity_sim:=${use_unity} use_sensor:=${sensor} use_icart:=${icart} map_file:=${mapfile} 3dmap_file:=${map3dfile} ;bash"
+ gnome-terminal -- bash -c "roslaunch expo_wizurg expo_wizurg_start.launch use_joy:=${use_joy} use_mapping:=${mapping} use_navigation:=${navigation} use_loader:=${loader} use_editor:=${editor} use_sensor:=${sensor} use_icart:=${icart}  use_lio:=${use_lio} use_unity_sim:=${use_unity} use_sensor:=${sensor} use_icart:=${icart} map_file:=${mapfile} initial_pose:="${pose1}${pose2}${pose3}${pose4}${pose5}${pose6}${pose7}" ;bash"
  sleep 1
  if [ "x${loader}" = "xtrue" ]; then
     cd ~/catkin_ws/src/expo_wizurg/waypoints

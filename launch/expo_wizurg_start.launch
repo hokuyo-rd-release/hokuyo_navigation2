@@ -40,6 +40,7 @@
     <arg name="thres_point_count" default="10"/>
     <arg name="map_resolution" default="0.05"/>
     <arg name="map_topic_name" default="map"/>
+    <arg name="initial_pose" default="0.0 0.0 0.0 0.0 0.0 0.0 0.0"/>
 
     <group if="$(arg use_navigation)">
         <param name="use_sim_time" value="$(arg use_unity_sim)"/>
@@ -143,7 +144,7 @@
         <group if="$(arg use_lio)">
             <node name="localization_node" pkg="expo_wizurg" type="simple_fastlio_localization_node" output="screen">
                 <param name="map_file" value="$(arg map_file)"/>
-                <param name="initial_pose" value="$(arg 3d_initial_pose)"/>
+                <param name="initial_pose" value="$(arg initial_pose)"/>
                 <param name="frames_accumulate" value="$(arg frames_accumulate)"/>
                 <param name="min_registration_interval" value="$(arg min_registration_interval)"/>
                 <param name="asynchronous_registration" value="$(arg asynchronous_registration)"/> 
@@ -179,6 +180,8 @@
             </node>
             <node name="localization_node" pkg="expo_wizurg" type="simple_fastlio_localization_node" output="screen">
                 <rosparam command="load" file="$(arg lio_localization_param)"/>
+                <param name="initial_pose" value="$(arg initial_pose)"/>
+                <param name="map_file" value="$(arg map_dir)/$(arg map_file).pcd"/>
                 <remap from="/Odometry" to="$(arg sub_odom_name)"/>
                 <remap from="/cloud_registered_body" to="$(arg sub_cloud_name)" />
             </node>
