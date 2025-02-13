@@ -2,7 +2,7 @@
 
 <launch>
   <!-- Arguments -->
-  <arg name="use_sim_time_" default="true"/>
+  <arg name="use_sim_time_" default="false"/>
   <arg name="cmd_vel_topic" default="/icart_mini/cmd_vel" />
   <arg name="odom_topic" default="/lio_odom" />
   <arg name="scan_topic" default="/hokuyo3d3/scan" />
