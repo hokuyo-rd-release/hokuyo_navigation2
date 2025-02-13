@@ -142,12 +142,16 @@
     <!--ナビゲーション-->
     <group if="$(arg use_navigation)">
         <group if="$(arg use_lio)">
+    	    <node pkg="rviz" type="rviz" name="navigation_rviz"  args="-d $(find expo_wizurg)/rviz_cfg/wizurg_navigation.rviz"/>
+            <node name="sync_lio_pc_node" pkg="sync_lio_pc" type="sync_lio_pc" >
+            </node>
             <node name="localization_node" pkg="expo_wizurg" type="simple_fastlio_localization_node" output="screen">
-                <param name="map_file" value="$(arg map_file)"/>
+                <rosparam command="load" file="$(arg lio_localization_param)"/>
                 <param name="initial_pose" value="$(arg initial_pose)"/>
-                <param name="frames_accumulate" value="$(arg frames_accumulate)"/>
-                <param name="min_registration_interval" value="$(arg min_registration_interval)"/>
-                <param name="asynchronous_registration" value="$(arg asynchronous_registration)"/> 
+                <param name="map_file" value="$(arg map_dir)/$(arg map_file).pcd"/>
+                <param name="frames_accumulate" value="1"/>
+                <param name="min_registration_interval" value="0"/>
+                <param name="asynchronous_registration" value="true"/>
                 <remap from="/Odometry" to="$(arg sub_odom_name)"/>
                 <remap from="/cloud_registered_body" to="$(arg sub_cloud_name)" />
             </node>
@@ -167,7 +171,6 @@
 	        <arg name="cmd_vel_topic" default="/icart_mini/cmd_vel" />
 	    </include>
         </group> -->
-    	    <node pkg="rviz" type="rviz" name="navigation_rviz"  args="-d $(find expo_wizurg)/rviz_cfg/wizurg_navigation.rviz"/>
     </group>
     
     <!--waypoint作成(現状loaderはbashファイルから起動)-->
@@ -179,7 +182,9 @@
             <node name="sync_lio_pc_node" pkg="sync_lio_pc" type="sync_lio_pc" >
             </node>
             <node name="localization_node" pkg="expo_wizurg" type="simple_fastlio_localization_node" output="screen">
-                <rosparam command="load" file="$(arg lio_localization_param)"/>
+                <param name="frames_accumulate" value="1"/>
+                <param name="min_registration_interval" value="0"/>
+                <param name="asynchronous_registration" value="true"/>
                 <param name="initial_pose" value="$(arg initial_pose)"/>
                 <param name="map_file" value="$(arg map_dir)/$(arg map_file).pcd"/>
                 <remap from="/Odometry" to="$(arg sub_odom_name)"/>
