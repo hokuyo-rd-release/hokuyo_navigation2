@@ -38,7 +38,7 @@ cmake ..
 make
 sudo make install
 ```
-hokuyo パッケージ群 (urg_node, hokuyo3d, base_local_planner, ylm_ros, wizurg_ros1)
+hokuyo パッケージ群 (urg_node, hokuyo3d, base_local_planner, ylm_ros, expo_wizurg)
 ```
 sudo apt-get install ros-noetic-urg-node
 sudo apt-get install ros-noetic-hokuyo3d
@@ -47,9 +47,10 @@ sudo apt-get install ros-noetic-gmapping
 sudo apt-get install ros-noetic-move-base
 sudo apt-get install ros-noetic-dwa-local-planner
 sudo apt-get install ros-noetic-base-local-planner
+sudo apt-get install ros-noetic-jsk-rviz-plugins
 
 cd ~/catkin_ws/src
-git clone -b takahashi_devel https://github.com/Hokuyo-RD/wizurg_ros1.git
+git clone https://github.com/Hokuyo-RD/expo_wizurg.git
 git clone https://github.com/Hokuyo-aut/ylm_ros
 ```
 nmea_navsat_driver のインストール
@@ -61,18 +62,18 @@ rosdep による WizURGの依存関係パッケージのインストール
 sudo apt-get install python3-rosdep
 
 cd ~/catkin_ws/src
-rosdep install -i --from-paths wizurg_ros1
+rosdep install -i --from-paths expo_wizurg
 rosdep update
 catkin_make or catkin build
 ```
 .py .sh に実行権限を付与
 ```
-cd ~/catkin_ws/src/wizurg_ros1/src
+cd ~/catkin_ws/src/expo_wizurg/src
 chmod +x wizurg_navigation.py
 chmod +x wizurg_waypoint_editor.py
 chmod +x wizurg_waypoint_maker.py
 
-cd ~/catkin_ws/src/wizurg_ros1/scripts
+cd ~/catkin_ws/src/expo_wizurg/scripts
 chmod +x rosbag_mapping.sh
 chmod +x waypoint_editor.sh
 chmod +x waypoint_maker.sh
@@ -158,16 +159,20 @@ rosrun wizurg wizurg_start.sh -B　-L
 wheelオドメトリが入っているものでも良い。
 
 #### 2-1 p2o用にトピックを抽出した別のrosbag ファイルを作成する
+~/github/hokuyo_slam下のrosbagディレクトリに、
+
 ```
 cd ~/github/hokuyo_slam
-./get_rosbag <raw_rosbag> <lio, pc, fix topic rosbag>
+./get_rosbag.bash <raw_rosbag> <lio, pc, fix topic rosbag>
+# ex. ./get_rosbag.bash toyonaka.bag toyonaka_test_input.bag
 ```
 
 #### 2-2 2-1で作成したrosbag を使って絶対座標の情報を付与した3D地図を作成
 この際、システム用に相対座標に変換した3D点群地図も作成
 ```
 cd ~/github/hokuyo_slam
-./hokuyo_slam <lio, pc, fix topic rosbag> <mapname>
+./hokuyo_slam.bash <lio, pc, fix topic rosbag> <mapname>
+# ex. ./hokuyo_slam.bash toyonaka_test_input.bag toyonaka_test
 ```
 #### 2-3 2D地図作成
 pcd_to_pgm を用いて、3Dの相対座標の点群地図を圧縮し、2Dの点群地図を作成する。
@@ -194,7 +199,7 @@ rosrun wizurg wizurg_start.sh -E -L
 ```
 
 ### ⑤ 複数マップ・Waypointでのナビゲーション
-`./wizurg_ros1/params/maps_and_waypoints.csv`に、複数地図名とそれに対応するウェイポイントを記入する.
+`./expo_wizurg/config/maps_and_waypoints.csv`に、複数地図名とそれに対応するウェイポイントを記入する.
 ```
 rosrun wizurg wizurg_start.sh -P -L
 ```

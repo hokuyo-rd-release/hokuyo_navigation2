@@ -11,6 +11,8 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   tf
+  tf2_ros
+  tf2_geometry_msgs
   pcl_ros
   sensor_msgs
 )
@@ -59,3 +61,6 @@ target_link_libraries(gnss_logger_node ${catkin_LIBRARIES})
 
 add_executable(joy_to_twist src/joy_to_twist.cpp)
 target_link_libraries(joy_to_twist ${catkin_LIBRARIES})
+
+add_executable(pcd_tf_transform src/pcd_tf_transform.cpp)
+target_link_libraries(pcd_tf_transform ${catkin_LIBRARIES} ${PCL_LIBRARIES})
