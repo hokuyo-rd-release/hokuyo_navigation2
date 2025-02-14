@@ -50,7 +50,7 @@ sudo apt-get install ros-noetic-base-local-planner
 sudo apt-get install ros-noetic-jsk-rviz-plugins
 
 cd ~/catkin_ws/src
-git clone https://github.com/Hokuyo-RD/expo_wizurg.git
+git clone --recursive https://github.com/Hokuyo-RD/expo_wizurg.git
 git clone https://github.com/Hokuyo-aut/ylm_ros
 ```
 nmea_navsat_driver のインストール
