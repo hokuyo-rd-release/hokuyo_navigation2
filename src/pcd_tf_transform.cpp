@@ -39,7 +39,7 @@ private:
 
 
     // 点群地図.
-    pcl::PointCloud<pcl::PointXYZINormal> pcd_map;
+    pcl::PointCloud<pcl::PointXYZ> pcd_map;
 
     
 public:
@@ -70,7 +70,7 @@ public:
             pc2_pub_msg.header.frame_id = target_frame;
             pcd_pub.publish(pc2_pub_msg);
             if(save_map_flg){
-                pcl::PointCloud<pcl::PointXYZINormal> pcd_data;    
+                pcl::PointCloud<pcl::PointXYZ> pcd_data;    
                 pcl::fromROSMsg(pc2_pub_msg, pcd_data);
                 pcd_map += pcd_data;
             }
