@@ -24,7 +24,7 @@
     <arg name="amcl_param_" default="$(find wizurg)/params/localization_params/amcl_params.yaml"/> -->
     <arg name="lio_localization_param" default="$(find expo_wizurg)/config/lio_localization.yaml"/>
     <arg name="sub_odom_name" default="/hokuyo_lio/sync_odom" />
-    <arg name="sub_cloud_name" default="/hokuyo3d3/hokuyo_cloud2" />
+    <arg name="sub_cloud_name" default="/hokuyo3d/hokuyo_cloud2" />
     <arg name="costmap_common_param_" default="$(find expo_wizurg)/config/move_base/costmap_common_params.yaml"/>
     <arg name="local_costmap_param_" default="$(find expo_wizurg)/config/move_base/local_costmap_params.yaml"/>
     <arg name="global_costmap_param_" default="$(find expo_wizurg)/config/move_base/global_costmap_params.yaml"/>
@@ -33,8 +33,8 @@
     <arg name="icart_control_params_" default="$(find expo_wizurg)/config/icart/icart_mini_control.yaml"/>
     <arg name="icart_control_lio_params_" default="$(find expo_wizurg)/config/icart/icart_mini_control_lio.yaml"/>
 
-    <arg name="thre_z_min" default="-2.2" />
-    <arg name="thre_z_max" default= "-0.1" />
+    <arg name="thre_z_min" default="-5.2" />
+    <arg name="thre_z_max" default= "5.2" />
     <arg name="flag_pass_through" default= "0" />
     <arg name="thre_radius" default="0.5"/>
     <arg name="thres_point_count" default="10"/>

@@ -6,6 +6,6 @@
       <param name="pub_topic" value="/dummy/point_cloud" />
       <param name="target_frame" value="dummy" />
       <param name="map_dir" value="$(find expo_wizurg)/map"/>
-      <param name="map_name" value="toyonaka_0213_nav_hokuyo_lio.pcd"/>
+      <param name="map_name" value="toyonaka_demo1.pcd"/>
   </node>
 </launch >
