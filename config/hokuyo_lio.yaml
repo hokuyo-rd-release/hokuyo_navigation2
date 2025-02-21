@@ -1,6 +1,6 @@
 #==========name=========
-imu_name: "/hokuyo3d/imu"
-point_cloud_name: "/hokuyo3d/hokuyo_cloud2"
+imu_name: "/hokuyo3d3/imu"
+point_cloud_name: "/hokuyo3d3/hokuyo_cloud2"
 
 imu_pose_name: "/hokuyo_lio/imu_pose"
 lidar_pose_name: "/hokuyo_lio/lidar_pose"
