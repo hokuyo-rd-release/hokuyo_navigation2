@@ -69,27 +69,6 @@ rosbag_dir="${option_arr[12]}";
 loader="${option_arr[13]}";
 editor="${option_arr[14]}";
 
-IFS_BACKUP=$IFS
-IFS=$'\n'
-i=0
-for init_pose in `cat ~/github/hokuyo_slam/data/${mapfile}/init_pose.txt`
-do
-  i=`expr $i + 1`
-#   echo ${init_pose}
-done
-IFS=$IFS_BACKUP
-
-pose_arr=( `echo ${init_pose} | tr -s ',' ' '`)
-pose1=${pose_arr[0]}
-pose2=${pose_arr[1]}
-pose3=${pose_arr[2]}
-pose4=${pose_arr[3]}
-pose5=${pose_arr[4]}
-pose6=${pose_arr[5]}
-pose7=${pose_arr[6]}
-
-echo ${pose1} ${pose2} ${pose3} ${pose4} ${pose5} ${pose6} ${pose7}
-
 #-------ypspur-coordinator起動------------
 if [ "x${ypspur}" = "xtrue" ]; then
  gnome-terminal -- bash -c "/usr/local/bin/ypspur-coordinator -d /dev/ttyUSB0 --blvr -p ~/catkin_ws/src/expo_wizurg/config/icart/iCart3_100W.param ; bash"
@@ -104,6 +83,25 @@ sleep 1
 #----複数マップ----
 if [ "x${multi_map}" = "xtrue" ]; then
  for i in ${!Rmapfile[@]}; do
+  IFS_BACKUP=$IFS
+  IFS=$'\n'
+  i=0
+  for Rinit_pose in `cat ~/github/hokuyo_slam/data/${Rmapfile[$i]}/init_pose.txt`
+  do
+  i=`expr $i + 1`
+  #   echo ${Rinit_pose}
+  done
+  IFS=$IFS_BACKUP
+
+  Rpose_arr=( `echo ${Rinit_pose} | tr -s ',' ' '`)
+  Rpose1=${Rpose_arr[0]}
+  Rpose2=${Rpose_arr[1]}
+  Rpose3=${Rpose_arr[2]}
+  Rpose4=${Rpose_arr[3]}
+  Rpose5=${Rpose_arr[4]}
+  Rpose6=${Rpose_arr[5]}
+  Rpose7=${Rpose_arr[6]}
+
   echo "kill all_nodes"
   rosnode kill -a
   sleep 8s
@@ -112,7 +110,7 @@ if [ "x${multi_map}" = "xtrue" ]; then
     echo "rosbag record"
     gnome-terminal -- bash -c "sleep 2; cd ${rosbag_dir}; rosbag record -a -o ${Rmapfile[$i]}; bash"
   fi
-  gnome-terminal -- bash -c "roslaunch expo_wizurg expo_wizurg_start.launch use_joy:=${use_joy} use_mapping:=${mapping} use_navigation:=${navigation} use_loader:=${loader} use_editor:=${editor} use_sensor:=${sensor} use_icart:=${icart} use_lio:=${use_lio} use_unity_sim:=${use_unity} map_file:=${Rmapfile[$i]} initial_pose:="${pose1}${pose2}${pose3}${pose4}${pose5}${pose6}${pose7}";bash"
+  gnome-terminal -- bash -c "roslaunch expo_wizurg expo_wizurg_start.launch use_joy:=${use_joy} use_mapping:=${mapping} use_navigation:=${navigation} use_loader:=${loader} use_editor:=${editor} use_sensor:=${sensor} use_icart:=${icart} use_lio:=${use_lio} use_unity_sim:=${use_unity} map_file:=${Rmapfile[$i]} initial_pose:="${Rpose1}${Rpose2}${Rpose3}${Rpose4}${Rpose5}${Rpose6}${Rpose7}";bash"
   sleep 2s
   echo "sleep 2"
   echo "start wizurg_navigation ${Rwayfile[$i]}"
@@ -120,8 +118,30 @@ if [ "x${multi_map}" = "xtrue" ]; then
   echo "finish map"
   cd -
  done
+
 #----単一マップ---
 else
+  IFS_BACKUP=$IFS
+  IFS=$'\n'
+  i=0
+  for init_pose in `cat ~/github/hokuyo_slam/data/${mapfile}/init_pose.txt`
+  do
+    i=`expr $i + 1`
+  #   echo ${init_pose}
+  done
+  IFS=$IFS_BACKUP
+
+  pose_arr=( `echo ${init_pose} | tr -s ',' ' '`)
+  pose1=${pose_arr[0]}
+  pose2=${pose_arr[1]}
+  pose3=${pose_arr[2]}
+  pose4=${pose_arr[3]}
+  pose5=${pose_arr[4]}
+  pose6=${pose_arr[5]}
+  pose7=${pose_arr[6]}
+
+  echo ${pose1} ${pose2} ${pose3} ${pose4} ${pose5} ${pose6} ${pose7}
+
   # ------rosbag record----------------
   if [ "x${rosbag_record}" = "xtrue" ]; then
      echo "rosbag record"
