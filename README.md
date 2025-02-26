@@ -151,7 +151,7 @@ rosrun expo_wizurg wizurg_start.sh -オプション
 
 ### ①ROSBAGセンサデータ取得
 ```
-rosrun wizurg wizurg_start.sh -B　-L
+rosrun expo_wizurg wizurg_start.sh -B　-L
 ```
 
 ### ②地図作成
@@ -210,8 +210,10 @@ roslaunch test_tools hlio_make_pcd.launch
 
 別端末でrosbagを再生する.
 
+ディレクトリを作成：~/github/hokuyo_slam/data/$MAP_NAME 
+ディレクトリ下に、0.0,0.0,0.0,0.0,0.0,0.0,1.0 として、init_pose.txt を作成。これが初期値となる。
 ```
-wizurg_ros1/map/map.pcd　が生成される.
+expo_wizurg/map/$MAP_NAME.pcd　が生成される.
 
 
 ### LIOを使用する場合
