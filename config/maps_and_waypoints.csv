@@ -1,8 +1,5 @@
 2Dマップファイル名,ウェイポイントファイル名
-ATC_area_1,ATC_area_1
-ATC_area_2,ATC_area_2
-ATC_area_3,ATC_area_3
-ATC_area_4,ATC_area_4
-ATC_area_5,ATC_area_5
-ATC_area_6,ATC_area_6
-ATC_area_7,ATC_area_7
+hokuyo_hall1,hokuyo_hall1
+hokuyo_hall2,hokuyo_hall2
+hokuyo_hall3,hokuyo_hall3
+hokuyo_hall4,hokuyo_hall4

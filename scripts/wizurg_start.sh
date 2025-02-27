@@ -85,7 +85,6 @@ if [ "x${multi_map}" = "xtrue" ]; then
  for i in ${!Rmapfile[@]}; do
   IFS_BACKUP=$IFS
   IFS=$'\n'
-  i=0
   for Rinit_pose in `cat ~/github/hokuyo_slam/data/${Rmapfile[$i]}/init_pose.txt`
   do
   i=`expr $i + 1`
@@ -106,15 +105,16 @@ if [ "x${multi_map}" = "xtrue" ]; then
   rosnode kill -a
   sleep 8s
   echo "sleep 8"
+  echo "map_count:${Rmapfile[$i-1]}"
   if [ "x${rosbag_record}" = "xtrue" ]; then
     echo "rosbag record"
-    gnome-terminal -- bash -c "sleep 2; cd ${rosbag_dir}; rosbag record -a -o ${Rmapfile[$i]}; bash"
+    gnome-terminal -- bash -c "sleep 2; cd ${rosbag_dir}; rosbag record -a -o ${Rmapfile[$i-1]}; bash"
   fi
-  gnome-terminal -- bash -c "roslaunch expo_wizurg expo_wizurg_start.launch use_joy:=${use_joy} use_mapping:=${mapping} use_navigation:=${navigation} use_loader:=${loader} use_editor:=${editor} use_sensor:=${sensor} use_icart:=${icart} use_lio:=${use_lio} use_unity_sim:=${use_unity} map_file:=${Rmapfile[$i]} initial_pose:="${Rpose1}${Rpose2}${Rpose3}${Rpose4}${Rpose5}${Rpose6}${Rpose7}";bash"
+  gnome-terminal -- bash -c "roslaunch expo_wizurg expo_wizurg_start.launch use_joy:=${use_joy} use_mapping:=${mapping} use_navigation:=${navigation} use_loader:=${loader} use_editor:=${editor} use_sensor:=${sensor} use_icart:=${icart} use_lio:=${use_lio} use_unity_sim:=${use_unity} map_file:=${Rmapfile[$i-1]} initial_pose:="${Rpose1}${Rpose2}${Rpose3}${Rpose4}${Rpose5}${Rpose6}${Rpose7}";bash"
   sleep 2s
   echo "sleep 2"
-  echo "start wizurg_navigation ${Rwayfile[$i]}"
-  cd ~/catkin_ws/src/expo_wizurg/waypoints; rosrun expo_wizurg wizurg_navigation.py ${Rwayfile[$i]}.json once
+  echo "start wizurg_navigation ${Rwayfile[$i-1]}"
+  cd ~/catkin_ws/src/expo_wizurg/waypoints; rosrun expo_wizurg wizurg_navigation.py ${Rwayfile[$i-1]}.json once
   echo "finish map"
   cd -
  done
