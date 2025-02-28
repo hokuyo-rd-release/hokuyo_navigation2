@@ -9,21 +9,46 @@ roscd expo_wizurg
 
 wizurg_opt="wizurg_opt";                        #-- wizurg_optを追記 --
 
-while getopts MNWEBCPL OPTN; do
-  case $OPTN in
-     M) wizurg_opt="map_opt";;                  #-- -M で map_opt.csv が入る --
-     N) wizurg_opt="nav_opt";;                  #-- -N で nav_opt.csv が入る --
-     W) wizurg_opt="way_opt";;                  #-- -W で way_opt.csv が入る (岡本11/6追記) --
-     E) wizurg_opt="edit_opt";;                 #-- -E で edit_opt.csv が入る (岡本11/6追記)--
-     B) wizurg_opt="sensor_rosbag";;            #-- -B で sensor_rosbag.csv が入る (高橋11/6追記)--
-     C) wizurg_opt="control_opt";;              #-- -C で control_opt.csv が入る (岡本11/10追記)--
-     P) wizurg_opt="plural_opt";;               #-- -P で plural_opt.csv が入る (岡本11/10追記)--
-     L) wizurg_opt="${wizurg_opt}_lio";;        #-- -L で 〇〇_lio.csv が入る（岡本11/12追記）--
-     :) echo "$OPTARGに引数が指定されていません";;
-     ?) echo "$OPTARGは定義されていません";;
-  esac
+
+#========入力待ち1=======
+operation_str=-1
+while [ ${operation_str} -lt 1 -o ${operation_str} -gt 7 ]; do
+  echo -e "\n select operate_mode \n";
+  echo " 1) manual operation only"
+  echo " 2) manual operation and rosbag record"
+  echo " 3) mapping"
+  echo " 4) make_waypoints"
+  echo " 5) edit_waypoints"
+  echo " 6) single_map_navigation"
+  echo " 7) multi_map_navigation(plural_opt)"
+  read operation_str
 done
 
+case $operation_str in
+  1) wizurg_opt="control_opt";;              #-- -C で control_opt.csv が入る (岡本11/10追記)--
+  2) wizurg_opt="sensor_rosbag";;            #-- -B で sensor_rosbag.csv が入る (高橋11/6追記)--
+  3) wizurg_opt="map_opt";;                  #-- -M で map_opt.csv が入る --
+  4) wizurg_opt="way_opt";;                  #-- -W で way_opt.csv が入る (岡本11/6追記) --
+  5) wizurg_opt="edit_opt";;                 #-- -E で edit_opt.csv が入る (岡本11/6追記)--
+  6) wizurg_opt="nav_opt";;                  #-- -N で nav_opt.csv が入る --
+  7) wizurg_opt="plural_opt";;               #-- -P で plural_opt.csv が入る (岡本11/10追記)--
+esac
+
+
+#========入力待ち2=======
+odom_str=-1
+while [ ${odom_str} -lt 1 -o ${odom_str} -gt 7 ]; do
+  echo -e "\n select odom_type \n";
+  echo " 1) icart_mini_driver"
+  echo " 2) LIO"
+  read odom_str
+done
+
+case $odom_str in
+  1) ;;
+  2) wizurg_opt="${wizurg_opt}_lio";;
+esac
+#============================
 echo "wizurg_opt=${wizurg_opt}";
 
 options=(`cat ./config/wizurg_opts/99_${wizurg_opt}.csv`)   #-- params/wizurg_opts/を新規作成（岡本11/12追記）--
