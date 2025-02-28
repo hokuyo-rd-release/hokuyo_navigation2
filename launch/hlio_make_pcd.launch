@@ -1,11 +1,15 @@
 <?xml version="1.0"?>
 <launch >
+  <arg name="map_name_" default="hokuyo_hall4.pcd" />
+
   <node name="save_map_node" pkg="expo_wizurg" type="pcd_tf_transform">
       <param name="save_map" value="true" />
       <param name="sub_topic" value="/hokuyo_lio/aligned_scan_points" />
+      <param name="sub_odom" value="/hokuyo_lio/lidar_odom"/>
       <param name="pub_topic" value="/dummy/point_cloud" />
       <param name="target_frame" value="dummy" />
       <param name="map_dir" value="$(find expo_wizurg)/map"/>
-      <param name="map_name" value="hokuyo_elv_test.pcd"/>
+      <param name="map_name" value="$(arg map_name_)"/>
+      <param name="pc_save_distance" value="1"/>
   </node>
 </launch >
