@@ -2,6 +2,7 @@
 #include <nav_msgs/Odometry.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <tf2_ros/transform_broadcaster.h>
@@ -18,6 +19,7 @@ public:
     {
         odom_sub_  = nh_.subscribe("/Odometry", 10, &FastLIOHandler::odomCallback, this);
         cloud_sub_ = nh_.subscribe("/cloud_registered_body", 10, &FastLIOHandler::cloudCallback, this);
+        rviz_initialpose_sub_  = nh_.subscribe("/initialpose", 10, &FastLIOHandler::rvizInitCallback, this);
         pose_pub_  = nh_.advertise<geometry_msgs::PoseStamped>("/estimated_pose", 10);
         map_pub_   = nh_.advertise<sensor_msgs::PointCloud2>("/map_cloud", 1, true);
         registration_pub_   = nh_.advertise<sensor_msgs::PointCloud2>("/loc_registered_cloud", 1);
@@ -80,10 +82,12 @@ public:
 
     Eigen::Isometry3d parse_posestr(const std::string &pose_str)
     {
+        std::string pose_str_tmp = pose_str;
         double x = 0.0, y = 0.0, z = 0.4;
         double qx = 0.0, qy = 0.0, qz = 0.0, qw = 1.0;
 
-        std::istringstream iss(pose_str);
+        std::replace(pose_str_tmp.begin(), pose_str_tmp.end(), ',', ' ');
+        std::istringstream iss(pose_str_tmp);
         iss >> x >> y >> z >> qx >> qy >> qz >> qw;
         Eigen::Isometry3d pose = Eigen::Isometry3d::Identity();
         pose.translation() << x, y, z;
@@ -114,6 +118,28 @@ public:
         ROS_INFO("LIO Orientation: x=%f, y=%f, z=%f, w=%f", orientation.x, orientation.y, orientation.z, orientation.w);
         odom_buffer_.push_back(*msg);
         update();
+    }
+
+    void rvizInitCallback(const  geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg)
+    {
+        ROS_INFO("Received rviz initialpose");
+        
+        Eigen::Isometry3d initial_pose = Eigen::Isometry3d::Identity();
+        initial_pose.translation() << msg->pose.pose.position.x, msg->pose.pose.position.y, msg->pose.pose.position.z;
+
+        Eigen::Quaterniond q(msg->pose.pose.orientation.w, msg->pose.pose.orientation.x, msg->pose.pose.orientation.y, msg->pose.pose.orientation.z);
+        if ( q.norm() == 0)
+        {
+            std::cerr << "invalid quaternion" << std::endl;
+            q = Eigen::Quaterniond(1, 0, 0, 0);
+        }
+        else
+        {
+            q.normalize();
+        }
+        initial_pose.rotate(q);
+
+        loc_.setInitialPose(initial_pose);
     }
 
     void cloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg)
@@ -209,6 +235,7 @@ private:
     ros::NodeHandle nh_;
     ros::Subscriber odom_sub_;
     ros::Subscriber cloud_sub_;
+    ros::Subscriber rviz_initialpose_sub_;
     ros::Publisher pose_pub_;
     ros::Publisher map_pub_;
     ros::Publisher registration_pub_;
