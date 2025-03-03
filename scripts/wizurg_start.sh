@@ -14,13 +14,13 @@ wizurg_opt="wizurg_opt";                        #-- wizurg_optを追記 --
 operation_str=-1
 while [ ${operation_str} -lt 1 -o ${operation_str} -gt 7 ]; do
   echo -e "\n select operate_mode \n";
-  echo " 1) manual operation only"
-  echo " 2) manual operation and rosbag record"
-  echo " 3) mapping"
-  echo " 4) make_waypoints"
-  echo " 5) edit_waypoints"
-  echo " 6) single_map_navigation"
-  echo " 7) multi_map_navigation(plural_opt)"
+  echo " 1) control_opt        ... manual operation only"
+  echo " 2) sensor_rosbag      ... manual operation and rosbag record"
+  echo " 3) map_opt            ... mapping "
+  echo " 4) way_opt            ... make waypoints "
+  echo " 5) edit_opt           ... edit waypoints"
+  echo " 6) nav_opt            ... single_map navigation"
+  echo " 7) plural_opt         ... multi_map navigation"
   read operation_str
 done
 
@@ -150,7 +150,7 @@ if [ "x${multi_map}" = "xtrue" ]; then
     echo "rosbag record"
     gnome-terminal -- bash -c "sleep 2; cd ${rosbag_dir}; rosbag record -a -o ${Rmapfile[$i-1]}; bash"
   fi
-  gnome-terminal -- bash -c "roslaunch expo_wizurg expo_wizurg_start.launch use_joy:=${use_joy} use_mapping:=${mapping} use_navigation:=${navigation} use_loader:=${loader} use_editor:=${editor} use_sensor:=${sensor} use_icart:=${icart} use_lio:=${use_lio} use_unity_sim:=${use_unity} map_file:=${Rmapfile[$i-1]} initial_pose:="${Rpose1}${Rpose2}${Rpose3}${Rpose4}${Rpose5}${Rpose6}${Rpose7}";bash"
+  gnome-terminal -- bash -c "roslaunch expo_wizurg expo_wizurg_start.launch use_joy:=${use_joy} use_mapping:=${mapping} use_navigation:=${navigation} use_loader:=${loader} use_editor:=${editor} use_sensor:=${sensor} use_icart:=${icart} use_lio:=${use_lio} use_unity_sim:=${use_unity} map_file:=${Rmapfile[$i-1]} initial_pose:="${Rpose1},${Rpose2},${Rpose3},${Rpose4},${Rpose5},${Rpose6},${Rpose7}";bash"
   sleep 2s
   echo "sleep 2"
   echo "start wizurg_navigation ${Rwayfile[$i-1]}"
