@@ -1,5 +1,9 @@
 # EXPO_WizURG
 
+万博でのSPELデモンストレーションを目的としたナビゲーションソフトウェアです。
+3D自己位置推定の結果をNavigation Stack に渡して、2DのPath Planningにより
+2Dの自律移動を実現します。[wizurg_ros1](https://github.com/Hokuyo-RD/wizurg_ros1)からのアップデート、システム構成の発案、パッケージの選定とインテグレーションを北陽電機 髙橋が作成しました。
+
 ## 全体構成
 ```
 .
@@ -53,9 +57,14 @@ cd ~/catkin_ws/src
 git clone --recursive https://github.com/Hokuyo-RD/expo_wizurg.git
 git clone https://github.com/Hokuyo-aut/ylm_ros
 ```
+pointcloud_to_laserscan
+```
+git clone https://github.com/Hokuyo-RD/pointcloud_to_laserscan.git
+```
 nmea_navsat_driver のインストール
 ```
 sudo apt-get install ros-noetic-nmea-navsat-driver
+git clone https://github.com/Hokuyo-aut/nmea_navsat_driver.git
 ```
 rosdep による WizURGの依存関係パッケージのインストール
 ```
@@ -91,28 +100,37 @@ cd ~/catkin_ws/src/yp-spur/build/sample
 ```
 
 
-## プログラムの実行
-```
-rosrun expo_wizurg wizurg_start.sh -オプション
-```
-シェルスクリプトの実行によりrosbag取得・マッピング・ナビゲーション・ウェイポイント作成を行う。`use_mapping`をtrueとした場合,ターミナル上で`save`と打つとマップが保存される。
+## プログラムの実行手順
 
-### オプション一覧 (全6種類)
+### プログラムの実行の流れ
 ```
--B # 手動操作＋センサのrosbagを取得する。
--M # マッピングを実行する(オフライン)
--N # ナビゲーション(単一マップ)
--P # ナビゲーション(複数マップ)
--W # waypointの新規作成 
--E # waypointの編集
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
--L # LIOモード: 各オプションの後につける。
+rosrun expo_wizurg wizurg_start.sh
+
+# 1. 指示されたキーとenterを入力
+
+select operate_mode 
+
+1) control_opt        ... manual operation only
+2) sensor_rosbag      ... manual operation and rosbag record
+3) map_opt            ... mapping 
+4) way_opt            ... make waypoints 
+5) edit_opt           ... edit waypoints
+6) nav_opt            ... single_map navigation
+7) plural_opt         ... multi_map navigation
+
+# 2. 指示されたキーとenterを入力
+
+select odom_type 
+
+1) icart_mini_driver
+2) LIO
 ```
 
 ### オプションファイルの構成
 ```
 ├── params
 │   ├── wizurg_opt
+│   │   └── 99_common_opt_lio.csv
 │   │   └── 99_control_opt_lio.csv
 │   │   └── 99_control_opt.csv
 │   │   └── 99_edit_opt_lio.csv
@@ -129,37 +147,36 @@ rosrun expo_wizurg wizurg_start.sh -オプション
 └── ...
 ```
 
-### オプションファイル内のオプション一覧
+## 0. センサから取得したデータに名前をつける。
+99_common_opt_lio.csvのmap_file_name
 
-| オプション | 指定値 | デフォルト値 | 意味 | 自由欄 |
-| ---- | ---- | ---- | ---- | ---- |
-|use_joy_controller|true|true|手動操作
-|use_mapping|false|true|Gmappingの起動 (単一のマップと単一のwaypointを作成)
-|use_navigation|true|false|ナビゲーションの起動
-|use_sensors|true|true|北陽LiDAR、カメラ、Ichimilの起動
-|use_icart_driver|true|true|icart_driver_tf の起動
-|use_lio|true|false|Hokuyo_LIOの起動
-|use_unity_sim|false|false|Unity シミュレータで使う際の
-|use_ypspur|true|true|ypspurモータドライバの起動
-|use_multi_maps|true|false|ナビゲーション時の複数マップの読み込み(読み込みファイルはmaps_and_waypoints.csvに記載する。)
-|map_file_name|LIO_sim_test|test_map|Gmappingの保存ファイル名|
-|waypoint_file_name|LIO_sim_test|test_waypoints|waypointの保存ファイル名
-|rosbag_record|true|false|rosbag の記録
-|rosbag_dir|/media/kev/samsung/ATC2024/raw_rosbag/nav_bag/atc|~/rosbag|rosbagファイルの保存先
-|make_waypoints|false|false|waypoint_makerの起動|
-|edit_waypoints|false|false|waypoint_editorの起動|
 
-### ①ROSBAGセンサデータ取得
+## 1. ROSBAGセンサデータ取得
+
 ```
-rosrun expo_wizurg wizurg_start.sh -B　-L
+rosrun expo_wizurg wizurg_start.sh 1) → 2)
 ```
 
-### ②地図作成
+## 2. 地図作成
 この際、raw_rosbag には、後処理したものは使わないようにする。(tf_remover等。)
 wheelオドメトリが入っているものでも良い。
 
-#### 2-1 p2o用にトピックを抽出した別のrosbag ファイルを作成する
-~/github/hokuyo_slam下のrosbagディレクトリに、
+## 2.1. hokuyo-lioのデータから点群地図作成
+```
+# terminal 1
+roslaunch test_tools hlio_make_pcd.launch 
+# terminal 2
+rosbag play <mapname_bag>
+
+# ディレクトリを作成：~/github/hokuyo_slam/data/$MAP_NAME 
+# ディレクトリ下に、0.0,0.0,0.0,0.0,0.0,0.0,1.0 として、init_pose.txt を作成。これが初期値となる。
+```
+expo_wizurg/map/$MAP_NAME.pcd　が生成される.
+
+### 2.2. p2o用にトピックを抽出した別のrosbag ファイルを作成する
+
+1. ROSBAGセンサデータで取得したrosbag にhokuyo_lioのトピックだけを抜いたものを用意する。
+2. ~/github/hokuyo_slam下のrosbagディレクトリにで取得したrosbag を設置する。
 
 ```
 cd ~/github/hokuyo_slam
@@ -167,60 +184,55 @@ cd ~/github/hokuyo_slam
 # ex. ./get_rosbag.bash toyonaka.bag toyonaka_test_input.bag
 ```
 
-#### 2-2 2-1で作成したrosbag を使って絶対座標の情報を付与した3D地図を作成
+### 2.3. 2.2. で作成したrosbag を使って絶対座標の情報を付与した3D地図を作成
 この際、システム用に相対座標に変換した3D点群地図も作成
 ```
 cd ~/github/hokuyo_slam
 ./hokuyo_slam.bash <lio, pc, fix topic rosbag> <mapname>
 # ex. ./hokuyo_slam.bash toyonaka_test_input.bag toyonaka_test
 ```
-#### 2-3 2D地図作成
+### 2.4. 2D地図作成
+```
+rosrun expo_wizurg wizurg_start.sh 3) → 2)
+
+# 2D地図がRVizに表示されたら"save"と入力して保存
+
+save
+```
 pcd_to_pgm を用いて、3Dの相対座標の点群地図を圧縮し、2Dの点群地図を作成する。
-```
-rosrun expo_wizurg wizurg_start.sh -M -L
-```
-#### 2-4 2D地図修正
+シェルスクリプトの実行によりrosbag取得・マッピング・ナビゲーション・ウェイポイント作成を行う。`use_mapping`をtrueとした場合,ターミナル上で`save`と打つとマップが保存される。
+
+### 2.4. 2D地図修正
 地図の障害物と通行可能領域の整合性を保つため、
 適宜、GIMPを用いて2D地図を手作業で修正する。(3D点群と2D点群を重ね合わせたり、Waypoint を参考にする。)
 
-### ③ Waypoint の新規作成
-terminal 2のrosbag は 車輪オドメトリのtf が無いものを使用し、--clock オプションを使うこと。
+## 3. Waypoint の新規作成
+terminal 1のrosbag は 車輪オドメトリのtf が無いものを使用し、--clock オプションを使うこと。
 tfを消したもの、最初からrecordしていないもののどちらでも構わない。
+
 ```
 # terminal 1
-rosrun wizurg wizurg_start.sh -W -L
+rosbag play <mapname_bag> --clock
 
 # terminal 2
-rosbag play <mapnamebag> --clock
-```
-### ④ Waypoint の編集
-```
-rosrun wizurg wizurg_start.sh -E -L
+rosrun expo_wizurg wizurg_start.sh 4) → 2)
 ```
 
-### ⑤ 複数マップ・Waypointでのナビゲーション
-`./expo_wizurg/config/maps_and_waypoints.csv`に、複数地図名とそれに対応するウェイポイントを記入する.
+## 4. Waypoint の編集
 ```
-rosrun wizurg wizurg_start.sh -P -L
+rosrun expo_wizurg wizurg_start.sh 5) → 2)
 ```
 
-### hokuyo-lioありのrosbagから点群地図作成
+## 5. 単一マップ・Waypointでのナビゲーション
+
 ```
-roslaunch test_tools hlio_make_pcd.launch 
-
-別端末でrosbagを再生する.
-
-ディレクトリを作成：~/github/hokuyo_slam/data/$MAP_NAME 
-ディレクトリ下に、0.0,0.0,0.0,0.0,0.0,0.0,1.0 として、init_pose.txt を作成。これが初期値となる。
+rosrun expo_wizurg wizurg_start.sh 6) → 2)
 ```
-expo_wizurg/map/$MAP_NAME.pcd　が生成される.
 
-
-### LIOを使用する場合
-上記各オプションに`-L`を追加する.  
-例：ナビゲーションの場合）
+## 6. 複数マップ・Waypointでのナビゲーション
+`./expo_wizurg/config/maps_and_waypoints.csv`に、複数地図名とそれに対応するウェイポイントを記入する。
 ```
-rosrun wizurg wizurg_start.sh -P -L
+rosrun expo_wizurg wizurg_start.sh 7) → 2)
 ```
 
 ## コントローラー設定

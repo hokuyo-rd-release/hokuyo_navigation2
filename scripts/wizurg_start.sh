@@ -188,7 +188,7 @@ else
      gnome-terminal -- bash -c "sleep 2; cd ${rosbag_dir}; rosbag record -a -o ${mapfile}; bash"
   fi
 #-------------------------------------
- gnome-terminal -- bash -c "roslaunch expo_wizurg expo_wizurg_start.launch use_joy:=${use_joy} use_mapping:=${mapping} use_navigation:=${navigation} use_loader:=${loader} use_editor:=${editor} use_sensor:=${sensor} use_icart:=${icart}  use_lio:=${use_lio} use_unity_sim:=${use_unity} use_sensor:=${sensor} use_icart:=${icart} map_file:=${mapfile} initial_pose:="${pose1}${pose2}${pose3}${pose4}${pose5}${pose6}${pose7}" ;bash"
+ gnome-terminal -- bash -c "roslaunch expo_wizurg expo_wizurg_start.launch use_joy:=${use_joy} use_mapping:=${mapping} use_navigation:=${navigation} use_loader:=${loader} use_editor:=${editor} use_sensor:=${sensor} use_icart:=${icart}  use_lio:=${use_lio} use_unity_sim:=${use_unity} use_sensor:=${sensor} use_icart:=${icart} map_file:=${mapfile} initial_pose:="${pose1},${pose2},${pose3},${pose4},${pose5},${pose6},${pose7}" ;bash"
  sleep 1
  if [ "x${loader}" = "xtrue" ]; then
     cd ~/catkin_ws/src/expo_wizurg/waypoints

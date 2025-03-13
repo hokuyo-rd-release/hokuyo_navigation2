@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <launch >
-  <arg name="map_name_" default="hokuyo_hall4.pcd" />
+  <arg name="map_name_" default="out_and_in_demo_0304.pcd" />
 
   <node name="save_map_node" pkg="expo_wizurg" type="pcd_tf_transform">
       <param name="save_map" value="true" />
@@ -10,6 +10,6 @@
       <param name="target_frame" value="dummy" />
       <param name="map_dir" value="$(find expo_wizurg)/map"/>
       <param name="map_name" value="$(arg map_name_)"/>
-      <param name="pc_save_distance" value="1"/>
+      <param name="pc_save_distance" value="2"/>
   </node>
 </launch >

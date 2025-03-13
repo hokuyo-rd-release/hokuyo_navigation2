@@ -68,6 +68,7 @@ public:
         sub_topic = "fix";
         pub_fix_text = "gnss_fix_text";
         pub_fix_data = "gnss_fix_float";
+        pnh.getParam("sub_topic", sub_topic);
         subscriber = nh.subscribe(sub_topic,10,&OverlayText::NavSatStatusCallBack, this);
         text_publisher = nh.advertise<jsk_rviz_plugins::OverlayText>(pub_fix_text,10);
         float_publisher = nh.advertise<std_msgs::Float32>(pub_fix_data,10);
