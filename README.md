@@ -161,7 +161,7 @@ rosrun expo_wizurg wizurg_start.sh 1) → 2)
 この際、raw_rosbag には、後処理したものは使わないようにする。(tf_remover等。)
 wheelオドメトリが入っているものでも良い。
 
-## 2.1. hokuyo-lioのデータから点群地図作成
+### 2.1. hokuyo_lioのデータから点群地図作成
 ```
 # terminal 1
 roslaunch test_tools hlio_make_pcd.launch 
@@ -169,7 +169,7 @@ roslaunch test_tools hlio_make_pcd.launch
 rosbag play <mapname_bag>
 
 # ディレクトリを作成：~/github/hokuyo_slam/data/$MAP_NAME 
-# ディレクトリ下に、0.0,0.0,0.0,0.0,0.0,0.0,1.0 として、init_pose.txt を作成。これが初期値となる。
+# ディレクトリ下に、init_pose.txt を作成し、0.0,0.0,0.0,0.0,0.0,0.0,1.0 とする。(これがlocalizationの初期値となる。)
 ```
 expo_wizurg/map/$MAP_NAME.pcd　が生成される.
 
@@ -185,7 +185,7 @@ cd ~/github/hokuyo_slam
 ```
 
 ### 2.3. 2.2. で作成したrosbag を使って絶対座標の情報を付与した3D地図を作成
-この際、システム用に相対座標に変換した3D点群地図も作成
+この際、システム用に相対座標に変換した3D点群地図とGNSSで取得した初期値も設定される。
 ```
 cd ~/github/hokuyo_slam
 ./hokuyo_slam.bash <lio, pc, fix topic rosbag> <mapname>
