@@ -2,7 +2,7 @@
 
 万博でのSPELデモンストレーションを目的としたナビゲーションソフトウェアです。
 3D自己位置推定の結果をNavigation Stack に渡して、2DのPath Planningにより
-2Dの自律移動を実現します。[wizurg_ros1](https://github.com/Hokuyo-RD/wizurg_ros1)からのアップデート、システム構成の発案、パッケージの選定とインテグレーションを北陽電機 髙橋が作成しました。
+2Dの自律移動を実現します。[wizurg_ros1](https://github.com/Hokuyo-RD/wizurg_ros1)からのアップデート、システム構成の発案、パッケージの選定とインテグレーションを北陽電機 髙橋が作成/実施しました。
 
 ## 全体構成
 ```
