@@ -71,7 +71,7 @@ git clone https://github.com/Hokuyo-RD/pointcloud_to_laserscan.git
 nmea_navsat_driver のインストール
 ```
 sudo apt-get install ros-noetic-nmea-navsat-driver
-git clone https://github.com/Hokuyo-aut/nmea_navsat_driver.git
+git clone https://github.com/Hokuyo-RD/nmea_navsat_driver.git
 ```
 rosdep による WizURGの依存関係パッケージのインストール
 ```
