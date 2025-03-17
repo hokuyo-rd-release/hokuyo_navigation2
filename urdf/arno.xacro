@@ -5,8 +5,8 @@
   <xacro:property name="PI" value="3.1415926535897931"/>
 
   <!-- Import Rviz colors -->
-  <xacro:include filename="$(find wizurg)/urdf/materials.xacro" />
-  <xacro:include filename="$(find wizurg)/urdf/arno.gazebo"/>
+  <xacro:include filename="$(find expo_wizurg)/urdf/materials.xacro" />
+  <xacro:include filename="$(find expo_wizurg)/urdf/arno.gazebo"/>
 
   <!-- Base Link -->
   <link name="base_link">

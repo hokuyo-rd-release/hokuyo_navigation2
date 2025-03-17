@@ -56,7 +56,7 @@
 
     <!--コントローラー-->
     <group if="$(arg use_joy)">
-        <include file="$(find wizurg)/launch/teleop_joy.launch" >
+        <include file="$(find expo_wizurg)/launch/teleop_joy.launch" >
             <arg name="cmd_vel" default="/icart_mini/cmd_vel"/>
         </include>
     </group>

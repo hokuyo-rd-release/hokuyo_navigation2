@@ -41,6 +41,11 @@ cd build
 cmake ..
 make
 sudo make install
+
+icart3のインストール
+```
+cd ~/catkin_ws/src
+git clone https://github.com/Hokuyo-RD/icart
 ```
 hokuyo パッケージ群 (urg_node, hokuyo3d, base_local_planner, ylm_ros, expo_wizurg)
 ```
@@ -52,10 +57,11 @@ sudo apt-get install ros-noetic-move-base
 sudo apt-get install ros-noetic-dwa-local-planner
 sudo apt-get install ros-noetic-base-local-planner
 sudo apt-get install ros-noetic-jsk-rviz-plugins
+sudo apt-get install ros-noetic-pointcloud-to-laserscan
 
 cd ~/catkin_ws/src
 git clone --recursive https://github.com/Hokuyo-RD/expo_wizurg.git
-git clone https://github.com/Hokuyo-aut/ylm_ros
+git clone https://github.com/Hokuyo-RD/ylm_ros
 ```
 pointcloud_to_laserscan
 ```
