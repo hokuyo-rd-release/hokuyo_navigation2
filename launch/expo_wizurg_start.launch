@@ -69,6 +69,7 @@
         </include>
     </group> -->
     
+    <node name="gnss_logger_node" pkg="expo_wizurg" type="gnss_logger_node" output="log"/>
     <!--icart_mini_driver-->
     <group if="$(arg use_icart)">
         <group if="$(arg use_lio)">
@@ -81,6 +82,7 @@
                 <arg name="icart_control_params" value="$(arg icart_control_params_)" />
             </include>
         </group>
+        <node pkg="rviz" type="rviz" name="gnss_rviz"  args="-d $(find gnss_logger)/rviz_cfg/gnss_plot.rviz"/>
     </group>
 
     <!-- LIO -->

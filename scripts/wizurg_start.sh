@@ -37,14 +37,14 @@ esac
 
 #========入力待ち2=======
 odom_str=-1
-while [ ${odom_str} -lt 1 -o ${odom_str} -gt 7 ]; do
+while [ ${odom_str} -lt 1 -o ${odom_str} -gt 3 ]; do
   echo -e "\n select odom_type \n";
   echo " 1) icart_mini_driver"
   echo " 2) LIO"
   read odom_str
 done
 
-case $odom_str in
+case ${odom_str} in
   1) ;;
   2) wizurg_opt="${wizurg_opt}_lio";;
 esac

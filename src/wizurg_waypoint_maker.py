@@ -18,7 +18,7 @@ is_insert = -1
 pub = None
 num = None
 
-lio_loc_pose = PoseWithCovarianceStamped()
+lio_loc_pose = PoseStamped()
 joy_button = 1
 
 

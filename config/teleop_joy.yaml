@@ -5,5 +5,5 @@ high_mode_scale: 2
 forward_axis: 1
 left_button: 0
 right_button: 2
-high_button: 5
-low_button: 4
+high_button: 4
+low_button: 5

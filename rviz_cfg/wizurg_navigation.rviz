@@ -8,6 +8,10 @@ Panels:
         - /Path1/Offset1
         - /localization_cloud1
         - /3Dmap1
+        - /Odometry1
+        - /Odometry1/Shape1
+        - /Odometry2
+        - /Odometry2/Shape1
       Splitter Ratio: 0.5
     Tree Height: 794
   - Class: rviz/Selection
@@ -27,7 +31,7 @@ Panels:
   - Class: rviz/Time
     Name: Time
     SyncMode: 0
-    SyncSource: pointcloud2_to_laserscan
+    SyncSource: 3Dmap
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -296,27 +300,9 @@ Visualization Manager:
         All Enabled: true
         base_link:
           Value: true
-        base_scan:
-          Value: true
-        camera:
-          Value: true
-        gnss:
-          Value: true
-        left_wheel:
-          Value: true
         lio_odom:
           Value: true
         map:
-          Value: true
-        right_wheel:
-          Value: true
-        ust:
-          Value: true
-        ust2:
-          Value: true
-        ylm:
-          Value: true
-        yvt:
           Value: true
       Marker Alpha: 1
       Marker Scale: 1
@@ -328,24 +314,7 @@ Visualization Manager:
         map:
           lio_odom:
             base_link:
-              base_scan:
-                {}
-              camera:
-                {}
-              gnss:
-                {}
-              left_wheel:
-                {}
-              right_wheel:
-                {}
-              ust:
-                {}
-              ust2:
-                {}
-              ylm:
-                {}
-              yvt:
-                {}
+              {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -442,6 +411,76 @@ Visualization Manager:
       Use Fixed Frame: true
       Use rainbow: true
       Value: false
+    - Angle Tolerance: 0.10000000149011612
+      Class: rviz/Odometry
+      Covariance:
+        Orientation:
+          Alpha: 0.5
+          Color: 255; 255; 127
+          Color Style: Unique
+          Frame: Local
+          Offset: 1
+          Scale: 1
+          Value: true
+        Position:
+          Alpha: 0.30000001192092896
+          Color: 204; 51; 204
+          Scale: 1
+          Value: true
+        Value: false
+      Enabled: true
+      Keep: 100
+      Name: Odometry
+      Position Tolerance: 0.10000000149011612
+      Queue Size: 10
+      Shape:
+        Alpha: 1
+        Axes Length: 1
+        Axes Radius: 0.10000000149011612
+        Color: 0; 255; 255
+        Head Length: 0.30000001192092896
+        Head Radius: 0.10000000149011612
+        Shaft Length: 1
+        Shaft Radius: 0.05000000074505806
+        Value: Arrow
+      Topic: /odometry/filtered
+      Unreliable: false
+      Value: true
+    - Angle Tolerance: 0.10000000149011612
+      Class: rviz/Odometry
+      Covariance:
+        Orientation:
+          Alpha: 0.5
+          Color: 255; 255; 127
+          Color Style: Unique
+          Frame: Local
+          Offset: 1
+          Scale: 1
+          Value: true
+        Position:
+          Alpha: 0.30000001192092896
+          Color: 204; 51; 204
+          Scale: 1
+          Value: true
+        Value: false
+      Enabled: true
+      Keep: 100
+      Name: Odometry
+      Position Tolerance: 0.10000000149011612
+      Queue Size: 10
+      Shape:
+        Alpha: 1
+        Axes Length: 1
+        Axes Radius: 0.10000000149011612
+        Color: 85; 255; 127
+        Head Length: 0.30000001192092896
+        Head Radius: 0.10000000149011612
+        Shaft Length: 1
+        Shaft Radius: 0.05000000074505806
+        Value: Arrow
+      Topic: /odometry/from_fix1
+      Unreliable: false
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 0; 0; 0
@@ -470,7 +509,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 9.799844741821289
+      Distance: 74.83699798583984
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -478,17 +517,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 0.3105347454547882
-        Y: -0.7296963334083557
-        Z: 0.43523073196411133
+        X: 2.1841821670532227
+        Y: 4.309483051300049
+        Z: 2.3614320755004883
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.5853971838951111
+      Pitch: 1.45979642868042
       Target Frame: base_link
-      Yaw: 2.2140259742736816
+      Yaw: 5.134025573730469
     Saved: ~
 Window Geometry:
   Displays:
