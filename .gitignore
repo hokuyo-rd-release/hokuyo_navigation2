@@ -3,3 +3,4 @@ ATC_area1_tfedit2.bag
 map/
 mapmap_filter.pcd
 rosbag/
+data/*

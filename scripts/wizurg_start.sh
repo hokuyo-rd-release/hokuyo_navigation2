@@ -2,36 +2,46 @@
 source /opt/ros/noetic/setup.bash
 cd ~/catkin_ws
 source devel/setup.bash
+source ~/.bashrc
 
 roscd expo_wizurg
 
 #--2024/10/30 Mapping と Navigation を分けるように追記--
 
 wizurg_opt="wizurg_opt";                        #-- wizurg_optを追記 --
-
+inbagname="none"
+p2obagname="none"
+p2odir="none"
+p2omapname="none"
 
 #========入力待ち1=======
 operation_str=-1
-while [ ${operation_str} -lt 1 -o ${operation_str} -gt 7 ]; do
+while [ ${operation_str} -lt 1 -o ${operation_str} -gt 9 ]; do
   echo -e "\n select operate_mode \n";
   echo " 1) control_opt        ... manual operation only"
   echo " 2) sensor_rosbag      ... manual operation and rosbag record"
-  echo " 3) map_opt            ... mapping "
-  echo " 4) way_opt            ... make waypoints "
-  echo " 5) edit_opt           ... edit waypoints"
-  echo " 6) nav_opt            ... single_map navigation"
-  echo " 7) plural_opt         ... multi_map navigation"
+  echo " 3) rosbag_filter      ... rosbag filtering gui"
+  echo " 4) get_rosbag         ... get rosbag for sync_odom fix hokuyo_cloud2"
+  echo " 5) hokuyo_slam        ... run hokuyo_slam to make pcd file"
+  echo " 6) map_opt            ... mapping pcd to pgm"
+  echo " 7) way_opt            ... make waypoints"
+  echo " 8) edit_opt           ... edit waypoints"
+  echo " 9) nav_opt            ... single_map navigation"
+  echo " 10) plural_opt         ... multi_map navigation"
   read operation_str
 done
 
 case $operation_str in
   1) wizurg_opt="control_opt";;              #-- -C で control_opt.csv が入る (岡本11/10追記)--
   2) wizurg_opt="sensor_rosbag";;            #-- -B で sensor_rosbag.csv が入る (高橋11/6追記)--
-  3) wizurg_opt="map_opt";;                  #-- -M で map_opt.csv が入る --
-  4) wizurg_opt="way_opt";;                  #-- -W で way_opt.csv が入る (岡本11/6追記) --
-  5) wizurg_opt="edit_opt";;                 #-- -E で edit_opt.csv が入る (岡本11/6追記)--
-  6) wizurg_opt="nav_opt";;                  #-- -N で nav_opt.csv が入る --
-  7) wizurg_opt="plural_opt";;               #-- -P で plural_opt.csv が入る (岡本11/10追記)--
+  3) gnome-terminal -- bash -c "source /opt/ros/noetic/setup.bash; source ~/.bashrc; roscd; source devel/setup.bash; roscd expo_wizurg; python3 src/MainWindow.py"; exit;;
+  4) tree -L 1 -a $ROS_WORKSPACE/src/expo_wizurg/rosbag ; echo "rosbag名を入力してください" ; read inbagname ; echo "p2oで使うrosbag名を入力してください" ; read p2obagname ; roscd expo_wizurg/scripts; ./get_rosbag.bash ../rosbag/${inbagname} ../rosbag/${p2obagname}; exit;;
+  5) tree -L 1 -a $ROS_WORKSPACE/src/expo_wizurg/rosbag ; echo "p2oで使うrosbag名を入力してください" ; read p2obagname ; echo "出力したい地図の名前を入力してください" ; read p2omapname ; roscd expo_wizurg/rosbag; ../scripts/hokuyo_slam.bash ${p2obagname} ${p2omapname}; exit;;
+  6) wizurg_opt="map_opt";;                  #-- -M で map_opt.csv が入る --
+  7) wizurg_opt="way_opt";;                  #-- -W で way_opt.csv が入る (岡本11/6追記) --
+  8) wizurg_opt="edit_opt";;                 #-- -E で edit_opt.csv が入る (岡本11/6追記)--
+  9) wizurg_opt="nav_opt";;                  #-- -N で nav_opt.csv が入る --
+  10) wizurg_opt="plural_opt";;               #-- -P で plural_opt.csv が入る (岡本11/10追記)--
 esac
 
 
@@ -125,7 +135,7 @@ if [ "x${multi_map}" = "xtrue" ]; then
  for i in ${!Rmapfile[@]}; do
   IFS_BACKUP=$IFS
   IFS=$'\n'
-  for Rinit_pose in `cat ~/github/hokuyo_slam/data/${Rmapfile[$i]}/init_pose.txt`
+  for Rinit_pose in `cat ~/catkin_ws/src/expo_wizurg/data/${Rmapfile[$i]}/init_pose.txt`
   do
   i=`expr $i + 1`
   #   echo ${Rinit_pose}
@@ -164,7 +174,7 @@ else
   IFS_BACKUP=$IFS
   IFS=$'\n'
   i=0
-  for init_pose in `cat ~/github/hokuyo_slam/data/${mapfile}/init_pose.txt`
+  for init_pose in `cat ~/catkin_ws/src/expo_wizurg/data/${mapfile}/init_pose.txt`
   do
     i=`expr $i + 1`
   #   echo ${init_pose}

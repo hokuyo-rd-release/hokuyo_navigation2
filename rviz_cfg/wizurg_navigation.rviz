@@ -12,6 +12,7 @@ Panels:
         - /Odometry1/Shape1
         - /Odometry2
         - /Odometry2/Shape1
+        - /Odometry3
       Splitter Ratio: 0.5
     Tree Height: 794
   - Class: rviz/Selection
@@ -300,9 +301,27 @@ Visualization Manager:
         All Enabled: true
         base_link:
           Value: true
+        base_scan:
+          Value: true
+        camera:
+          Value: true
+        gnss:
+          Value: true
+        left_wheel:
+          Value: true
         lio_odom:
           Value: true
         map:
+          Value: true
+        right_wheel:
+          Value: true
+        ust:
+          Value: true
+        ust2:
+          Value: true
+        ylm:
+          Value: true
+        yvt:
           Value: true
       Marker Alpha: 1
       Marker Scale: 1
@@ -314,7 +333,24 @@ Visualization Manager:
         map:
           lio_odom:
             base_link:
-              {}
+              base_scan:
+                {}
+              camera:
+                {}
+              gnss:
+                {}
+              left_wheel:
+                {}
+              right_wheel:
+                {}
+              ust:
+                {}
+              ust2:
+                {}
+              ylm:
+                {}
+              yvt:
+                {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -478,7 +514,42 @@ Visualization Manager:
         Shaft Length: 1
         Shaft Radius: 0.05000000074505806
         Value: Arrow
-      Topic: /odometry/from_fix1
+      Topic: /odometry/fix
+      Unreliable: false
+      Value: true
+    - Angle Tolerance: 0.10000000149011612
+      Class: rviz/Odometry
+      Covariance:
+        Orientation:
+          Alpha: 0.5
+          Color: 255; 255; 127
+          Color Style: Unique
+          Frame: Local
+          Offset: 1
+          Scale: 1
+          Value: true
+        Position:
+          Alpha: 0.30000001192092896
+          Color: 204; 51; 204
+          Scale: 1
+          Value: true
+        Value: false
+      Enabled: true
+      Keep: 100
+      Name: Odometry
+      Position Tolerance: 0.10000000149011612
+      Queue Size: 10
+      Shape:
+        Alpha: 1
+        Axes Length: 1
+        Axes Radius: 0.10000000149011612
+        Color: 255; 25; 0
+        Head Length: 0.30000001192092896
+        Head Radius: 0.10000000149011612
+        Shaft Length: 1
+        Shaft Radius: 0.05000000074505806
+        Value: Arrow
+      Topic: /hokuyo_lio/sync_odom
       Unreliable: false
       Value: true
   Enabled: true
@@ -509,7 +580,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 74.83699798583984
+      Distance: 3.651806354522705
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -517,17 +588,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 2.1841821670532227
-        Y: 4.309483051300049
-        Z: 2.3614320755004883
+        X: -0.7954766154289246
+        Y: -0.017306581139564514
+        Z: 0.7224704623222351
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.45979642868042
+      Pitch: 1.1447969675064087
       Target Frame: base_link
-      Yaw: 5.134025573730469
+      Yaw: 2.15584397315979
     Saved: ~
 Window Geometry:
   Displays:
