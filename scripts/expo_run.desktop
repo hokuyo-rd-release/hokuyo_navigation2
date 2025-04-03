@@ -1,0 +1,8 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Terminal=true
+Exec=/home/takahashi/catkin_ws/src/expo_wizurg/scripts/expo_start.sh
+Name=expo_wizurg
+Comment=Test Application
+Icon=/home/takahashi/logo_expo2025.png
