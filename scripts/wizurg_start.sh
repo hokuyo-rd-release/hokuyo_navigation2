@@ -2,7 +2,7 @@
 source /opt/ros/noetic/setup.bash
 cd ~/catkin_ws
 source devel/setup.bash
-source ~/.bashrc
+#source ~/.bashrc
 
 roscd expo_wizurg
 
@@ -35,8 +35,8 @@ case $operation_str in
   1) wizurg_opt="control_opt";;              #-- -C で control_opt.csv が入る (岡本11/10追記)--
   2) wizurg_opt="sensor_rosbag";;            #-- -B で sensor_rosbag.csv が入る (高橋11/6追記)--
   3) gnome-terminal -- bash -c "source /opt/ros/noetic/setup.bash; source ~/.bashrc; roscd; source devel/setup.bash; roscd expo_wizurg; python3 src/MainWindow.py"; exit;;
-  4) tree -L 1 -a $ROS_WORKSPACE/src/expo_wizurg/rosbag ; echo "rosbag名を入力してください" ; read inbagname ; echo "p2oで使うrosbag名を入力してください" ; read p2obagname ; roscd expo_wizurg/scripts; ./get_rosbag.bash ../rosbag/${inbagname} ../rosbag/${p2obagname}; exit;;
-  5) tree -L 1 -a $ROS_WORKSPACE/src/expo_wizurg/rosbag ; echo "p2oで使うrosbag名を入力してください" ; read p2obagname ; echo "出力したい地図の名前を入力してください" ; read p2omapname ; roscd expo_wizurg/rosbag; ../scripts/hokuyo_slam.bash ${p2obagname} ${p2omapname}; exit;;
+  4) tree -L 1 -a $ROS_WORKSPACE/src/expo_wizurg/rosbag ; echo "rosbag名を入力してください" ; read inbagname ; echo "p2oで使うrosbag名を入力してください" ; read p2obagname ; roscd expo_wizurg/scripts; ./get_rosbag.bash ../rosbag/${inbagname} ../rosbag/${p2obagname}; exit;; #-- hokuyo_slam の p2oで使うrosbagを取得する処理を統合 (高橋 25/04/01追記)--
+  5) tree -L 1 -a $ROS_WORKSPACE/src/expo_wizurg/rosbag ; echo "p2oで使うrosbag名を入力してください" ; read p2obagname ; echo "出力したい地図の名前を入力してください" ; read p2omapname ; roscd expo_wizurg/rosbag; ../scripts/hokuyo_slam.bash ${p2obagname} ${p2omapname}; exit;; #-- hokuyo_slam の 地図作成を行う処理を統合 (高橋 25/04/01追記)--
   6) wizurg_opt="map_opt";;                  #-- -M で map_opt.csv が入る --
   7) wizurg_opt="way_opt";;                  #-- -W で way_opt.csv が入る (岡本11/6追記) --
   8) wizurg_opt="edit_opt";;                 #-- -E で edit_opt.csv が入る (岡本11/6追記)--
@@ -129,6 +129,10 @@ fi
 #============= wizurg_satrt.launch起動 =============
 gnome-terminal -- bash -c "roscore" # 25/1/16 岡本追記
 sleep 1
+
+if [ "${operation_str}" = "7" ]; then
+  gnome-terminal -- bash -c "cd ~/catkin_ws/src/expo_wizurg/rosbag; rosbag play ${mapfile}.bag --clock"
+fi
 
 #----複数マップ----
 if [ "x${multi_map}" = "xtrue" ]; then

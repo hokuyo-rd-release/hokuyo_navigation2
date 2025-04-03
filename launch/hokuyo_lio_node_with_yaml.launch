@@ -1,0 +1,6 @@
+<!-- hokuyo_lio_node.launch -->
+<launch>
+  <node name="hokuyo_lio_node" pkg="hokuyo_lio" type="hokuyo_lio_node" output="screen" >
+    <rosparam command="load" file="$(find expo_wizurg)/config/hokuyo_lio.yaml"/>
+  </node>
+</launch>

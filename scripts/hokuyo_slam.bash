@@ -123,7 +123,7 @@ elif [ ${fix_rate} -eq 1 ] ; then
     cd ../..
     bash -c "python3 src/pcd_to_Rcord.py ${CURRENT}/data/$2/${2}_Acord.pcd ${CURRENT}/data/$2/${2}_Rcord.pcd ${CURRENT}/data/$2/output.p2o_out.txt ${CURRENT}/data/$2/init_pose.txt ${CURRENT}/data/$2/init_lat_lon_alt.txt"
     bash -c "mv ${CURRENT}/data/$2/${2}_Rcord.pcd ${CURRENT}/map"
-    bash -c "mv ../../map/${2}_Rcord.pcd ../../map/${2}.pcd"
+    bash -c "mv ${CURRENT}/map/${2}_Rcord.pcd ${CURRENT}/map/${2}.pcd"
   elif [ ${result} -eq 1 ] ; then
     echo 'rosbag play でfixメッセージがあるかの確認と、gnss_logで共分散の値を確認してください。'
   fi
