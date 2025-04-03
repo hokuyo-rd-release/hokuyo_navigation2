@@ -60,7 +60,7 @@ source $ROS_WORKSPACE/devel/setup.bash
 gnome-terminal --tab -t "Tab 0" -- bash -c "roscore; bash"
 sleep 2
 if [ "x${run_lio}" = "xtrue" ]; then
- gnome-terminal --tab -t "hokuyo_lio" -- bash -c "roslaunch hokuyo_lio hokuyo_lio_node_with_yaml.launch; bash"
+ gnome-terminal --tab -t "hokuyo_lio" -- bash -c "roslaunch expo_wizurg hokuyo_lio_node_with_yaml.launch; bash"
 fi
 gnome-terminal --tab -t "rosbag play" -- bash -c "cd ${rosbag_dir}; rosbag play $1; bash"
 #gnome-terminal --tab -t "sync_lio_pc" -- bash -c "echo sync_lio_pc working!!; rosrun sync_lio_pc sync_lio_pc _point_topic:=${pointcloud_topic}; bash" # rosrun を落としてもroscoreが起動しているとrosrun でパラメータを変更しても残る。
