@@ -31,7 +31,7 @@ fi
 
 roscd expo_wizurg
 
-yad --file \  --multiple \  --separator="," \  --add-preview \  --quoted-output
+# yad --file \  --multiple \  --separator="," \  --add-preview \  --quoted-output
 
 #--2024/10/30 Mapping と Navigation を分けるように追記--
 
@@ -212,7 +212,8 @@ else
   # ------rosbag record----------------
   if [ "x${rosbag_record}" = "xtrue" ]; then
      echo "rosbag record"
-     gnome-terminal -- bash -c "sleep 2; cd ${rosbag_dir}; rosbag record -a -o ${mapfile}; bash"
+     gnome-terminal -- bash -c "sleep 2; cd ${rosbag_dir}; rosbag record -a -o ${mapfile}; zenity --question \
+--text="Are you sure you wish to proceed?";　bash"
   fi
 #-------------------------------------
  gnome-terminal -- bash -c "roslaunch expo_wizurg expo_wizurg_start.launch use_joy:=${use_joy} use_mapping:=${mapping} use_navigation:=${navigation} use_loader:=${loader} use_editor:=${editor} use_sensor:=${sensor} use_icart:=${icart}  use_lio:=${use_lio} use_unity_sim:=${use_unity} use_sensor:=${sensor} use_icart:=${icart} map_file:=${mapfile} initial_pose:="${pose1},${pose2},${pose3},${pose4},${pose5},${pose6},${pose7}" ;bash"
