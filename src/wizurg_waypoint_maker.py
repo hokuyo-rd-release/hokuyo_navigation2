@@ -23,7 +23,7 @@ lio_loc_pose = PoseStamped()
 joy_button = 1
 
 # estimated_pose トピックのタイムアウト設定
-topic_timeout = 5.0  # 5秒
+topic_timeout = 20.0  # 5秒
 
 # estimated_pose トピックの最終受信時刻
 last_message_time = time.time()

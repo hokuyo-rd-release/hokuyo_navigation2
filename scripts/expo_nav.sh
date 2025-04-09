@@ -5,20 +5,7 @@ cd ~/catkin_ws
 source devel/setup.bash
 source ~/.bashrc
 
-WIZURG_OPTIONS=$(zenity --list --title="WIZURGの起動コマンド" --text="1つ選択してください" \
-    --width=800 --height=400 \
-    --print-column=1 --separator= \
-    --column="番号" --column="オプション" --column="オプションの説明" \
-    1 "control_opt" " ... manual operation only" \
-    2 "sensor_rosbag" " ... manual operation and rosbag record" \
-    3 "rosbag_filter" " ... rosbag filtering gui" \
-    4 "get_rosbag" " ... get rosbag for sync_odom fix hokuyo_cloud2" \
-    5 "hokuyo_slam" " ... run hokuyo_slam to make pcd file" \
-    6 "map_opt" " ... mapping pcd to pgm" \
-    7 "way_opt" " ... make waypoints" \
-    8 "edit_opt" " ... edit waypoints" \
-    9 "nav_opt" " ... single_map navigation" \
-    10 "plural_opt" " ... multi_map navigation" 2>/dev/null)
+WIZURG_OPTIONS=9
  
 EXITCODE=$?
 echo "EXITCODE=$EXITCODE"
@@ -63,7 +50,7 @@ operation_str=${WIZURG_OPTIONS}
 case $operation_str in
   1) wizurg_opt="control_opt";;              #-- -C で control_opt.csv が入る (岡本11/10追記)--
   2) wizurg_opt="sensor_rosbag";;            #-- -B で sensor_rosbag.csv が入る (高橋11/6追記)--
-  3) gnome-terminal -- bash -c "source /opt/ros/noetic/setup.bash; source ~/.bashrc; cd ~/catkin_ws; source devel/setup.bash; cd ~/catkin_ws/src/expo_wizurg; python3 src/MainWindow.py bash"; exit;;
+  3) gnome-terminal -- bash -c "source /opt/ros/noetic/setup.bash; source ~/.bashrc; roscd; source devel/setup.bash; roscd expo_wizurg; python3 src/MainWindow.py"; exit;;
   4) tree -L 1 -a ~/catkin_ws/src/expo_wizurg/rosbag ; echo "rosbag名を入力してください" ; read inbagname ; echo "p2oで使うrosbag名を入力してください" ; read p2obagname ; roscd expo_wizurg/scripts; ./get_rosbag.bash ../rosbag/${inbagname} ../rosbag/${p2obagname}; exit;;
   5) tree -L 1 -a ~/catkin_ws/src/expo_wizurg/rosbag ; echo "p2oで使うrosbag名を入力してください" ; read p2obagname ; echo "出力したい地図の名前を入力してください" ; read p2omapname ; roscd expo_wizurg/rosbag; ../scripts/hokuyo_slam.bash ${p2obagname} ${p2omapname}; exit;;
   6) wizurg_opt="map_opt";;                  #-- -M で map_opt.csv が入る --
@@ -137,7 +124,7 @@ loader="${option_arr[13]}";
 editor="${option_arr[14]}";
 
 #-------kill_all_rosnode起動--------------
-# gnome-terminal -- bash -c "~/catkin_ws/src/expo_wizurg/scripts/kill_all_rosnode.sh"
+# gnome-terminal -- bash -c "~/catkin_ws/src/expo_wizurg/scripts/kill_all_rosnode.sh" # 25/04/07 高橋追記 kill_all_rosnode.sh で 停止
 
 #-------ypspur-coordinator起動------------
 if [ "x${ypspur}" = "xtrue" ]; then
@@ -215,13 +202,13 @@ else
   # ------rosbag record----------------
   if [ "x${rosbag_record}" = "xtrue" ]; then
      echo "rosbag record"
-     gnome-terminal -- bash -c "sleep 2; cd ${rosbag_dir}; rosbag record -a -o ${mapfile}; bash"
+     gnome-terminal -- bash -c "sleep 2; cd ${rosbag_dir}; rosbag record -a -o ${mapfile}; zenity --question \
+--text="Are you sure you wish to proceed?";　bash"
   fi
 #-------------------------------------
  gnome-terminal -- bash -c "roslaunch expo_wizurg expo_wizurg_start.launch use_joy:=${use_joy} use_mapping:=${mapping} use_navigation:=${navigation} use_loader:=${loader} use_editor:=${editor} use_sensor:=${sensor} use_icart:=${icart}  use_lio:=${use_lio} use_unity_sim:=${use_unity} use_sensor:=${sensor} use_icart:=${icart} map_file:=${mapfile} initial_pose:="${pose1},${pose2},${pose3},${pose4},${pose5},${pose6},${pose7}" ;bash"
  sleep 1
  if [ "x${loader}" = "xtrue" ]; then
-    gnome-terminal -- bash -c "cd ${rosbag_dir}; rosbag play ${mapfile}.bag"
     cd ~/catkin_ws/src/expo_wizurg/waypoints
     # ----waypoint_maker(岡本11/6追記)----
     #gnome-terminal -- bash -c "roslaunch wizurg waypoint_maker_accessory.launch map_file:=${mapfile}; bash"
@@ -243,6 +230,8 @@ else
  fi
 
 fi
+
+
 
 #========マップsave(入力待ち)=======
 if [ "x${mapping}" = "xtrue" ]; then
