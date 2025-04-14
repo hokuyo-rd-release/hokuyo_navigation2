@@ -6,7 +6,7 @@
     <arg name="sub_odom_name" default="/hokuyo_lio/sync_odom" />
     <arg name="sub_cloud_name" default="/hokuyo3d3/hokuyo_cloud2" />
 
-    <arg name="map_path" default="$(find expo_wizurg)/map/toyonaka_0213.yaml" />
+    <arg name="map_path" default="$(find expo_wizurg)/map/toyonaka_0328_test.yaml" />
 
     <!-- sync_lio_pc -->
     <node name="sync_lio_pc_node" pkg="sync_lio_pc" type="sync_lio_pc" >

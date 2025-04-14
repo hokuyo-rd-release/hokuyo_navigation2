@@ -1,7 +1,7 @@
-map_file: "/home/takahashi/catkin_ws/src/expo_wizurg/map/toyonaka_0213.pcd"
+map_file: "/home/hokuyo/catkin_ws/src/expo_wizurg/map/toyonaka_0328_test.pcd"
 #initial_pose: "-3.0 -1.5 0.0 0.0 0.0 0.906307787 0.422618"
 #initial_pose: "-2.3723 -5.652 0.0 0.0 -0.01114 -0.9560230966 0.2930647287"
-#initial_pose: "2.3723 -5.652 0.0 0.0 -0.01114 -0.9560230966 0.2930647287"
+initial_pose: "0.0,0.0,0.0,-0.0040290788,-0.0234288361,-0.954472882,0.297348909"
 frames_accumulate: 1
 min_registration_interval: 0
 asynchronous_registration: true
