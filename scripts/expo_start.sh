@@ -254,3 +254,8 @@ if [ "x${mapping}" = "xtrue" ]; then
  cd ~/catkin_ws/src/expo_wizurg/map && rosrun map_server map_saver -f ${mapfile}
 fi
 #==================================
+
+# 全ての gnome-terminal ウィンドウの ID を取得して最小化
+for id in $(xdotool search --class "gnome-terminal"); do
+    xdotool windowminimize $id
+done
