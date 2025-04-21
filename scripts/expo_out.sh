@@ -5,7 +5,7 @@ cd ~/catkin_ws
 source devel/setup.bash
 source ~/.bashrc
 
-WIZURG_OPTIONS=9
+WIZURG_OPTIONS=10
  
 EXITCODE=$?
 echo "EXITCODE=$EXITCODE"
@@ -159,9 +159,9 @@ if [ "x${multi_map}" = "xtrue" ]; then
   Rpose7=${Rpose_arr[6]}
 
   echo "kill all_nodes"
-  rosnode kill -a
-  sleep 8s
-  echo "sleep 8"
+  # rosnode kill -a
+  # sleep 8s
+  gnome-terminal -- bash -c "/home/hokuyo/catkin_ws/src/expo_wizurg/scripts/web_kill_all_rosnode.sh; bash"
   echo "map_count:${Rmapfile[$i-1]}"
   if [ "x${rosbag_record}" = "xtrue" ]; then
     echo "rosbag record"

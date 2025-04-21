@@ -4,3 +4,4 @@ map/
 mapmap_filter.pcd
 rosbag/
 data/*
+!map/toyonaka_0328_test.pcd

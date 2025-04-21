@@ -318,7 +318,7 @@
   <joint name="laser_joint1" type="fixed">
     <parent link="base_link"/>
     <child link="ust"/>
-    <origin rpy="3.141592653589793 0 1.3" xyz="0 0.25 0.670"/>
+    <origin rpy="0 0 0" xyz="0.2 0.0 0.30"/>
   </joint>
   <link name="ust">
     <visual>
@@ -338,7 +338,7 @@
   <joint name="laser_joint2" type="fixed">
     <parent link="base_link"/>
     <child link="ust2"/>
-    <origin rpy="3.141592653589793 0 -1.3" xyz="0 -0.25 0.67"/>
+    <origin rpy="0 0 3.141592653589793" xyz="-0.3 0.0 0.30"/>
   </joint>
   <link name="ust2">
     <visual>
@@ -378,7 +378,7 @@
   <joint name="laser_joint4" type="fixed">
     <parent link="base_link"/>
     <child link="ylm"/>
-    <origin rpy="0 0 0" xyz="0.25 0 0.3"/>
+    <origin rpy="0 0 0" xyz="0.15 0 0.3"/>
   </joint>
   <link name="ylm">
     <visual>

@@ -137,7 +137,7 @@ loader="${option_arr[13]}";
 editor="${option_arr[14]}";
 
 #-------kill_all_rosnode起動--------------
-# gnome-terminal -- bash -c "~/catkin_ws/src/expo_wizurg/scripts/kill_all_rosnode.sh"
+gnome-terminal -- bash -c "~/catkin_ws/src/expo_wizurg/scripts/kill_all_rosnode.sh"
 
 #-------ypspur-coordinator起動------------
 if [ "x${ypspur}" = "xtrue" ]; then
