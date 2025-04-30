@@ -68,6 +68,11 @@
             <arg name="tcp_port" value="$(arg pc_port)"/>
         </include>
     </group> -->
+
+    <!--map-gnss座標変換-->
+    <include file="$(find expo_fix2xyz)/launch/xyz2fix.launch" />
+    <include file="$(find expo_fix2xyz)/launch/fix2xyz.launch" />
+    <!---->
     
     <node name="gnss_logger_node" pkg="expo_wizurg" type="gnss_logger_node" output="log"/>
     <!--icart_mini_driver-->
