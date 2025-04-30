@@ -32,6 +32,8 @@
     <arg name="planner_param_" default="$(find expo_wizurg)/config/move_base/dwa_local_planner_params.yaml"/>
     <arg name="icart_control_params_" default="$(find expo_wizurg)/config/icart/icart_mini_control.yaml"/>
     <arg name="icart_control_lio_params_" default="$(find expo_wizurg)/config/icart/icart_mini_control_lio.yaml"/>
+    <arg name="fix2xyz_params_" default="$(find expo_wizurg)/config/expo_fix2xyz.yaml"/>
+    <arg name="xyz2fix_params_" default="$(find expo_wizurg)/config/expo_xyz2fix.yaml"/>
 
     <arg name="thre_z_min" default="-5.2" />
     <arg name="thre_z_max" default= "5.2" />
@@ -70,8 +72,12 @@
     </group> -->
 
     <!--map-gnss座標変換-->
-    <include file="$(find expo_fix2xyz)/launch/xyz2fix.launch" />
-    <include file="$(find expo_fix2xyz)/launch/fix2xyz.launch" />
+    <include file="$(find expo_fix2xyz)/launch/xyz2fix.launch" >
+                <arg name="param_file" value="$(arg xyz2fix_params_)" />
+    </include>
+    <include file="$(find expo_fix2xyz)/launch/fix2xyz.launch" >
+                <arg name="param_file" value="$(arg fix2xyz_params_)" />
+    </include>
     <!---->
     
     <node name="gnss_logger_node" pkg="expo_wizurg" type="gnss_logger_node" output="log"/>

@@ -1,0 +1,28 @@
+# マップ原点の設定
+origin_pose: 34.648955532,135.3864642795,47.4248278253 # 万博下見
+origin_quat: 0.0,0.0,0.0,1.0
+
+
+# expo_fix_msgs::AreaFix => expo_msgs::Area
+sub_area_fix_topic: "area_fix"
+pub_area_topic: "area/from_fix"
+
+# expo_fix_msgs::PersonFix => expo_msgs::Person
+sub_person_fix_topic: "person_fix"
+pub_person_topic: "person/from_fix"
+
+# expo_fix_msgs::FixWithOrientation => nav_msgs::Odometry
+sub_fix_topic1: "fix1"
+pub_odom_topic1: "odometry/from_fix1"
+
+# sensor_msgs::NavSatFix => geometry_msgs::PoseStamped
+sub_fix_topic2: "expo_waypoint"
+pub_pose_topic2: "goal"
+
+# sensor_msgs::NavSatFix => geometry_msgs::PoseWithCovarianceStamped
+sub_fix_topic3: "expo_initpose"
+pub_posecov_topic3: "initialpose"
+
+# その他のオプション
+rot_cov: 1000000000.0
+make_angle_from_movement: true
