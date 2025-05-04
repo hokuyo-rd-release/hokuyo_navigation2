@@ -1,0 +1,24 @@
+<?xml version='1.0' ?>
+<launch>
+  <arg name="use_sim_time" default="false" description="Use simulation (Gazebo) clock if true"/>
+
+  <let name="expo_wizurg_pkg_path" value="$(find-pkg-share expo_wizurg)"/>
+  <let name="icart_mini_driver_pkg_path" value="$(find-pkg-share icart_mini_driver)"/>
+  <let name="urdf_path" value="$(var expo_wizurg_pkg_path)/urdf/arno.xacro"/>
+  <let name="robot_description" value="$(command 'xacro $(var urdf_path)')"/>
+
+  <node pkg="robot_state_publisher" exec="robot_state_publisher" name="robot_state_publisher" output="screen">
+    <param name="robot_description" value="$(var robot_description)"/>
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
+  </node>
+
+  <node pkg="joint_state_publisher" exec="joint_state_publisher" name="joint_state_publisher" output="screen">
+    <param name="use_gui" value="True"/>
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
+  </node>
+
+  <include file="$(var icart_mini_driver_pkg_path)/launch/icart_mini_bringup_launch.py">
+    <arg name="use_sim_time" value="$(var use_sim_time)"/>
+  </include>
+
+</launch>

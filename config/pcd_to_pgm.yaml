@@ -1,7 +1,0 @@
-thre_z_min: -2.2
-thre_z_max: -0.1
-flag_pass_through: 0  
-thre_radius: 0.5
-thres_point_count: 10  
-map_resolution: 0.05  
-map_topic_name: "3dmap"  
