@@ -1,0 +1,108 @@
+<?xml version='1.0' ?>
+<launch>
+
+  <!-- <rosparam command="load" file="$(find wizurg)/params/move_base_params/use_sensor_params.yaml" > -->
+
+  <!-- set connect param -->
+  <!-- <arg name="camera_com" default="/dev/video0" /> -->
+  <!--<arg name="gnss_com" default="/dev/ttyACM1" />-->
+  <!-- <arg name="gnss_com" default="/dev/GNSS_SERIAL" />
+  <arg name="gnss_baud" default="38400" />
+  <arg name="ust_ip" default="192.168.0.11" />
+  <arg name="ust2_ip" default="192.168.0.13" />  -->
+  <arg name="yvt_ip" default="192.168.0.10" />
+  <!-- <arg name="ylm_ip" default="192.168.0.10" />
+  <arg name="ylm_sensor_port_" default="10940" doc="Lumotive sensor UDP port number"/>
+  <let name="ylm_config_path" value="$(find-pkg-share ylm_ros2)/config/m20_configs.yaml"/> -->
+  
+  <!-- set frame name -->
+  <!-- <arg name="frame_camera" default="camera" /> 
+  <arg name="frame_gnss" default="gnss" />
+  <arg name="frame_ust" default="ust" />
+  <arg name="frame_ust2" default="ust2" /> -->
+  <arg name="frame_yvt" default="yvt" />
+  <!-- <arg name="frame_ylm" default="ylm" /> -->
+  
+  <!-- camera module -->
+  <!---->
+  <!-- <node pkg="usb_cam" exec="usb_cam_node" name="usb_cam_node">
+    <param name="video_device" value="$(arg camera_com)" />
+    <param name="pixel_format" value="mjpeg" />
+    <param name="frame_id" value="$(arg frame_camera)" />
+  </node> -->
+  <!---->
+
+  <!--uam module-->
+  <!-- <include file="$(find safety_urg)/launch/safety_urg_node.launch">
+    <arg name="param_file" default="$(find expo_wizurg)/config/uam1_param.yaml" />
+    <arg name="name" default="uam1_node"/>
+  </include>
+  <include file="$(find safety_urg)/launch/safety_urg_node.launch">
+    <arg name="param_file" default="$(find expo_wizurg)/config/uam2_param.yaml" />
+    <arg name="name" default="uam2_node"/>
+  </include> -->
+  
+  <!-- gnss module -->
+  <!---->
+  <!-- <node pkg="nmea_navsat_driver" exec="nmea_serial_driver" name="nmea_serial_driver" >
+    <param name="port" value="$(arg gnss_com)" />
+    <param name="baud" value="$(arg gnss_baud)" />
+    <param name="frame_id" value="$(arg frame_gnss)" />
+  </node> -->
+  <!---->
+
+  <!-- ust module -->
+  <!---->
+  	<!-- <node pkg="urg_node" exec="urg_node" name="urg_node">
+		<param name="ip_address" value="$(arg ust_ip)" />
+		<param name="frame_id" value="$(arg frame_ust)" />
+	       <param name="angle_min" value="-1.221730"/>
+	       <param name="angle_max" value="1.91986"/>
+		<remap from="/scan" to="/urg_node1/scan" />
+	</node>
+  	<node pkg="urg_node" exec="urg_node" name="urg_node2">
+		<param name="ip_address" value="$(arg ust2_ip)" />
+		<param name="frame_id" value="$(arg frame_ust2)" />
+	       <param name="angle_max" value="1.221730"/>
+	       <param name="angle_min" value="-1.91986"/>
+		<remap from="/scan" to="/urg_node2/scan" />
+	</node>	 -->
+  <!---->
+
+  <!-- yvt module -->
+  <!---->
+	<node pkg="hokuyo3d_ros2" exec="hokuyo3d_node" name="hokuyo3d">
+		<param name="ip_address" value="$(var yvt_ip)" />
+		<param name="frame_id" value="$(var frame_yvt)" />
+		<param name="horizontal_interlace" value ="4" />
+    <param name="vertical_interlace" value ="2" />
+    <!--param name="range_min" value ="0.5" /-->
+	</node>
+  <!---->
+
+  <!-- ylm module -->
+  <!---->
+	<!-- <node pkg="ylm_ros2" exec="lumotive_driver" name="lumotive_driver" output="screen">
+    <param from="$(var ylm_config_path)" />
+    <param name="sensor_ip" value="$(var ylm_ip_)" />
+    <param name="sensor_port" value="$(var ylm_sensor_port_)" />
+    <param name="device_frame_id" value="$(var frame_ylm)" />
+  </node> -->
+
+  <!---->
+  
+   <!--ust convert-->
+   <!---->
+    <!-- <node pkg="ira_laser_tools" name="laserscan_multi_merger" exec="laserscan_multi_merger" output="screen">
+        <param name="destination_frame" value="base_scan"/>
+        <param name="cloud_destination_topic" value="/merged_cloud"/>
+        <param name="scan_destination_topic" value="/scan"/>
+        <param name="laserscan_topics" value ="/urg_node1/scan /urg_node2/scan" />
+         
+      	<param name="angle_min" value="-3.14159"/>
+	<param name="angle_max" value="3.14159"/>
+	      <param name="range_min" value="0.05"/>
+	      <param name="range_max" value="30.0"/>
+    </node> -->
+    <!---->
+</launch>

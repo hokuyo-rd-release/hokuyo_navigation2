@@ -1,4 +1,4 @@
-# expo_wizurg_ros2
+# hokuyo_navigation2
 
 万博でのSPELデモンストレーションを目的としたナビゲーションソフトウェアのROS2版です。
 3D自己位置推定の結果をNavigation Stack に渡して、2DのPath Planningにより
@@ -7,7 +7,7 @@
 ## 全体構成
 ```
 .
-└── expo_wizurg/
+└── hokuyo_navigation2/
     ├── src/
     │   ├── controller_setup.cpp
     │   ├── wizurg_navigation.py
@@ -48,7 +48,7 @@ icart3のインストール
 cd ~/catkin_ws/src
 git clone https://github.com/Hokuyo-RD/icart_mini_driver_ros2
 ```
-hokuyo パッケージ群 (urg_node, hokuyo3d, base_local_planner, ylm_ros, expo_wizurg)
+hokuyo パッケージ群 (urg_node, hokuyo3d, base_local_planner, ylm_ros, hokuyo_navigation2)
 ```
 <!-- sudo apt-get install ros-noetic-urg-node
 sudo apt-get install ros-noetic-hokuyo3d -->
@@ -61,7 +61,7 @@ sudo apt-get install ros-noetic-jsk-rviz-plugins -->
 sudo apt-get install ros-noetic-pointcloud-to-laserscan
 
 cd ~/catkin_ws/src
-git clone -b ros2 --recursive https://github.com/Hokuyo-RD/expo_wizurg.git
+git clone -b ros2 --recursive https://github.com/Hokuyo-RD/hokuyo_navigation2.git
 <!-- git clone https://github.com/Hokuyo-RD/ylm_ros -->
 ```
 pointcloud_to_laserscan
@@ -78,18 +78,18 @@ rosdep による WizURGの依存関係パッケージのインストール
 sudo apt-get install python3-rosdep
 
 cd ~/catkin_ws/src
-rosdep install -i --from-paths expo_wizurg
+rosdep install -i --from-paths hokuyo_navigation2
 rosdep update
 catkin_make or catkin build
 ```
 .py .sh に実行権限を付与
 ```
-cd ~/catkin_ws/src/expo_wizurg/src
+cd ~/catkin_ws/src/hokuyo_navigation2/src
 chmod +x wizurg_navigation.py
 chmod +x wizurg_waypoint_editor.py
 chmod +x wizurg_waypoint_maker.py
 
-cd ~/catkin_ws/src/expo_wizurg/scripts
+cd ~/catkin_ws/src/hokuyo_navigation2/scripts
 chmod +x rosbag_mapping.sh
 chmod +x waypoint_editor.sh
 chmod +x waypoint_maker.sh
@@ -99,36 +99,19 @@ chmod +x wizurg_start.sh
 ## モータドライバインストールの確認
 ```
 端末 1
-ypspur-coordinator -d /dev/ttyUSB0 --blvr -p ~/catkin_ws/src/expo_wizurg/params/icart_ypspur_params/iCart3_100W.param
+ypspur-coordinator -d /dev/ttyUSB0 --blvr -p ~/colcon_ws/src/hokuyo_navigation2/params/icart_ypspur_params/iCart3_100W.param
 
 端末 2
 cd ~/catkin_ws/src/yp-spur/build/sample
 ./run-test
 ```
+### Docker の場合 
+colcon build --symlink-install --packages-select icart_mini_driver
+でビルドしないとシェルスクリプトに実行権限が付与されない。
 
-
+```
+sudo chown -R root:root /home/colcon_ws
+```
 ## プログラムの実行手順
 
 ### プログラムの実行の流れ
-```
-rosrun expo_wizurg wizurg_start.sh
-
-# 1. 指示されたキーとenterを入力
-
-select operate_mode 
-
-1) control_opt        ... manual operation only
-2) sensor_rosbag      ... manual operation and rosbag record
-3) map_opt            ... mapping 
-4) way_opt            ... make waypoints 
-5) edit_opt           ... edit waypoints
-6) nav_opt            ... single_map navigation
-7) plural_opt         ... multi_map navigation
-
-# 2. 指示されたキーとenterを入力
-
-select odom_type 
-
-1) icart_mini_driver
-2) LIO
-```

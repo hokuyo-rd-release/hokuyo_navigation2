@@ -7,12 +7,12 @@ import os
 from ament_index_python.packages import get_package_share_directory
 
 def generate_launch_description():
-    # パッケージのパスを取得 (expo_wizurg に修正)
-    expo_wizurg_pkg_path = get_package_share_directory('expo_wizurg')
+    # パッケージのパスを取得 (hokuyo_navigation2 に修正)
+    hokuyo_navigation2_pkg_path = get_package_share_directory('hokuyo_navigation2')
     icart_mini_driver_pkg_path = get_package_share_directory('icart_mini_driver')
 
-    # URDFファイルのパス (expo_wizurg パッケージ内の urdf ディレクトリを参照)
-    urdf_path = os.path.join(expo_wizurg_pkg_path, 'urdf', 'arno.xacro')
+    # URDFファイルのパス (hokuyo_navigation2 パッケージ内の urdf ディレクトリを参照)
+    urdf_path = os.path.join(hokuyo_navigation2_pkg_path, 'urdf', 'arno.xacro')
 
     # use_sim_time のLaunch引数を宣言
     use_sim_time = LaunchConfiguration('use_sim_time')

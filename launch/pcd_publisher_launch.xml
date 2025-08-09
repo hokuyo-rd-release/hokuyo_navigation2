@@ -1,0 +1,7 @@
+<launch>
+  <arg name="params_file" default="$(find-pkg-share hokuyo_navigation2)/config/pcd_publisher_params.yaml" />
+
+  <node pkg="pcl_ros" exec="pcd_to_pointcloud" name="pcd_to_pointcloud_node" output="screen">
+    <param from="$(var params_file)" />
+  </node>
+</launch>

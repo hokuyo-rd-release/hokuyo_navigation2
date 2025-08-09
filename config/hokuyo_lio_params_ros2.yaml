@@ -1,0 +1,83 @@
+hokuyo_lio_node:
+  ros__parameters:
+    #==========name=========
+    imu_name: "/hokuyo3d/imu"
+    point_cloud_name: "/hokuyo3d/hokuyo_cloud2"
+
+    imu_pose_name: "/hokuyo_lio/imu_pose"
+    lidar_pose_name: "/hokuyo_lio/lidar_pose"
+    imu_odom_name: "/hokuyo_lio/imu_odom"
+    lidar_odom_name: "/hokuyo_lio/lidar_odom"
+    local_map_points_name: "/hokuyo_lio/local_map_points"
+    local_map_means_name: "/hokuyo_lio/local_map_means"
+    aligned_scan_points_name: "/hokuyo_lio/aligned_scan_points"
+
+    odom_frame: "lio_odom"
+      
+    #==========parameter=========
+    small_value_lie: 1.0e-4
+
+    filter_size: 0.05
+
+    omp_thread_num: 4
+
+    normal_points_num: 10
+    normal_eigen_val_thresh: 0.01
+
+    state_cov_mat_coef: 1.0
+    noise_cov_mat_coef: 1.0
+
+    gravity_direc_estimation_time: 1.0
+    rotation_noise_level: 0.1
+    position_noise_level: 0.1
+    velocity_noise_level: 0.1
+    acc_bias_noise_level: 1.0
+    gyro_bias_noise_level: 0.1
+
+    max_velocity_x: 5.0
+    max_velocity_y: 5.0
+    max_velocity_z: 2.0
+    max_acc_bias: 5.0
+    max_gyro_bias: 5.0
+    keyframe_num: 10
+    local_map_update_thresh: 0.95
+
+    scan_points_clip_range: 1.0
+    gravity_acc: 9.81
+
+    scan_matching_points_num: 5000
+    min_iter_num: 3
+    max_iter_num: 5
+    max_corresp_range: 1.0
+    convergence_thresh: 1.0
+
+    robust_kernel_variance: 0.1
+
+    hessian_cov_coef: 0.1
+
+    voxel_map_max_data_num: 1000
+    voxel_map_max_voxel_num: 500000
+    voxel_map_resolution: 0.1
+    voxel_map_layer_size: 3
+    voxel_map_update_dist: 5.0
+    voxel_map_max_dist: 35.0
+
+    #==========flag=========
+    estimate_gravity_direc: true
+    broadcast_tf: true
+    use_omp: true
+    verbose: false
+    use_robust_kernel: true
+    use_voxel_map: false
+    output_at_imu_rate: false
+      
+    #==========pose=========
+    initial_lidar_translation: "[ 0.0, 0.0, 0.0]"
+    initial_lidar_rotation: "[ 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]"
+
+    lidar_to_imu_translation: "[ -0.06125, 0.013, 0.01862]"
+    lidar_to_imu_rotation: "[ 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0]"
+
+
+    #==========other=========
+

@@ -16,8 +16,8 @@ class SequentialMapWaypointNav(Node):
 
         # パラメータの宣言と取得
         self.declare_parameter('map_waypoint_list_csv', 'map_waypoints.csv')
-        self.declare_parameter('map_base_path', '$(find expo_wizurg)/map/')
-        self.declare_parameter('waypoint_base_path', '$(find expo_wizurg)/waypoint/')
+        self.declare_parameter('map_base_path', '$(find hokuyo_navigation2)/map/')
+        self.declare_parameter('waypoint_base_path', '$(find hokuyo_navigation2)/waypoint/')
         self.declare_parameter('waypoint_tolerance_position', 0.2)
         self.declare_parameter('waypoint_tolerance_orientation', 0.2)
 

@@ -1,12 +1,17 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>expo_wizurg</name>
+  <name>hokuyo_navigation2</name>
   <version>0.0.0</version>
-  <description>A ROS2 package for the expo_wizurg robot.</description>
-  <maintainer email="your_email@example.com">Your Name</maintainer>
+  <description>A ROS2 package for the autonomous mobile robot.</description>
+  <maintainer email="s-takahashi@hokuyo-aut.co.jp">Takahashi Shotaro</maintainer>
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>rclcpp</depend>
+  <depend>std_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>jsk_rviz_plugins</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

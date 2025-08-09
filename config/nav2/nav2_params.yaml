@@ -1,0 +1,161 @@
+/**:
+  ros__parameters:
+    use_sim_time: false
+
+    # Controller Server
+    controller_server:
+      ros__parameters:
+        use_sim_time: false
+        controller_frequency: 10.0
+        min_x_velocity_threshold: 0.2
+        odom_topic: "lio_odom"
+        progress_checker:
+          plugin_name: "progress_checker"
+          plugin_type: "nav2_controller::SimpleProgressChecker"
+        plugins:
+          - name: "FollowPath"
+            type: "dwb_core::DWBLocalPlanner"
+          - name: "BackUp"
+            type: "nav2_controller::BackUpController"
+        
+        FollowPath:
+          plugin_name: "FollowPath"
+          min_vel_x: 0.0
+          max_vel_x: 1.1
+          min_vel_y: 0.0
+          max_vel_y: 0.0
+          min_speed_xy: 0.1
+          max_speed_xy: 1.1
+          min_speed_theta: 0.25
+          max_speed_theta: 1.0
+          acc_lim_x: 4.0
+          acc_lim_y: 0.0
+          acc_lim_theta: 3.2
+          xy_goal_tolerance: 0.1
+          yaw_goal_tolerance: 3.14
+          sim_time: 1.5
+          vx_samples: 20
+          vtheta_samples: 40
+          path_distance_bias: 32.0
+          goal_distance_bias: 20.0
+          occdist_scale: 0.01
+          forward_point_distance: 0.325
+          oscillation_reset_dist: 5.0
+          
+    # Planner Server
+    planner_server:
+      ros__parameters:
+        use_sim_time: false
+        expected_planner_frequency: 10.0
+        plugins:
+          - name: "GridBased"
+            type: "nav2_planner::GridBased"
+        
+        GridBased:
+          plugin_name: "GridBased"
+          tolerance: 0.1
+          use_astar: true
+          
+    # BT Navigator
+    bt_navigator:
+      ros__parameters:
+        use_sim_time: false
+        global_frame: map
+        robot_base_frame: base_link
+        recovery_behaviors:
+          - name: "spin"
+            type: "nav2_recoveries::Spin"
+          - name: "clear_local_costmap"
+            type: "nav2_recoveries::ClearCostmap"
+          - name: "clear_global_costmap"
+            type: "nav2_recoveries::ClearCostmap"
+        
+        bt_xml_path: "$(find nav2_bt_navigator)/behavior_trees/navigate_w_replanning_and_recovery.xml"
+
+    # Costmap Servers
+    global_costmap:
+      global_costmap:
+        ros__parameters:
+          update_frequency: 10.0
+          publish_frequency: 10.0
+          global_frame: map
+          robot_base_frame: base_link
+          use_sim_time: false
+          
+          plugins:
+            - name: "static_layer"
+              type: "nav2_costmap_2d::StaticLayer"
+            - name: "obstacle_layer"
+              type: "nav2_costmap_2d::VoxelLayer"
+            - name: "inflation_layer"
+              type: "nav2_costmap_2d::InflationLayer"
+
+          static_layer:
+            plugin_name: "static_layer"
+            map_topic: "/map"
+            track_unknown_space: false
+            subscribe_to_updates: true
+          
+          obstacle_layer:
+            plugin_name: "obstacle_layer"
+            observation_sources: "hokuyo3d"
+            hokuyo3d: {
+              sensor_frame: yvt,
+              data_type: "LaserScan",
+              topic: "/hokuyo3d/scan",
+              marking: true,
+              clearing: true,
+              observation_persistence: 0.0,
+              max_obstacle_range: 2.0,
+              min_obstacle_range: 0.0,
+              inf_is_valid: true
+            }
+            obstacle_range: 1.5
+            raytrace_range: 3.5
+
+          inflation_layer:
+            plugin_name: "inflation_layer"
+            inflation_radius: 0.8
+            cost_scaling_factor: 3.0
+            
+    local_costmap:
+      local_costmap:
+        ros__parameters:
+          update_frequency: 10.0
+          publish_frequency: 10.0
+          global_frame: odom
+          robot_base_frame: base_link
+          use_sim_time: false
+          
+          plugins:
+            - name: "obstacle_layer"
+              type: "nav2_costmap_2d::VoxelLayer"
+            - name: "inflation_layer"
+              type: "nav2_costmap_2d::InflationLayer"
+
+          obstacle_layer:
+            plugin_name: "obstacle_layer"
+            observation_sources: "hokuyo3d"
+            hokuyo3d: {
+              sensor_frame: yvt,
+              data_type: "LaserScan",
+              topic: "/hokuyo3d/scan",
+              marking: true,
+              clearing: true,
+              observation_persistence: 0.0,
+              max_obstacle_range: 2.0,
+              min_obstacle_range: 0.0,
+              inf_is_valid: true
+            }
+            obstacle_range: 1.5
+            raytrace_range: 3.5
+
+          inflation_layer:
+            plugin_name: "inflation_layer"
+            inflation_radius: 0.8
+            cost_scaling_factor: 3.0
+            
+          rolling_window: true
+          width: 3.0
+          height: 3.0
+          resolution: 0.05
