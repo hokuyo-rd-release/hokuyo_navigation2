@@ -6,22 +6,22 @@
   <!-- set connect param -->
   <!-- <arg name="camera_com" default="/dev/video0" /> -->
   <!--<arg name="gnss_com" default="/dev/ttyACM1" />-->
-  <!-- <arg name="gnss_com" default="/dev/GNSS_SERIAL" />
-  <arg name="gnss_baud" default="38400" />
+  <!-- <arg name="gnss_com" default="/dev/GNSS_SERIAL" /> 
+  <arg name="gnss_baud" default="38400" />-->
   <arg name="ust_ip" default="192.168.0.11" />
-  <arg name="ust2_ip" default="192.168.0.13" />  -->
+  <arg name="ust2_ip" default="192.168.0.13" />  
   <arg name="yvt_ip" default="192.168.0.10" />
-  <!-- <arg name="ylm_ip" default="192.168.0.10" />
-  <arg name="ylm_sensor_port_" default="10940" doc="Lumotive sensor UDP port number"/>
-  <let name="ylm_config_path" value="$(find-pkg-share ylm_ros2)/config/m20_configs.yaml"/> -->
+  <arg name="ylm_ip" default="192.168.0.10" />
+  <arg name="ylm_sensor_port" default="10940" description="Lumotive sensor UDP port number"/>
+  <arg name="ylm_config_path" default="$(find-pkg-share ylm_ros2)/config/m20_configs.yaml"/>
   
   <!-- set frame name -->
   <!-- <arg name="frame_camera" default="camera" /> 
-  <arg name="frame_gnss" default="gnss" />
+  <arg name="frame_gnss" default="gnss" /> -->
   <arg name="frame_ust" default="ust" />
-  <arg name="frame_ust2" default="ust2" /> -->
+  <arg name="frame_ust2" default="ust2" />
   <arg name="frame_yvt" default="yvt" />
-  <!-- <arg name="frame_ylm" default="ylm" /> -->
+  <arg name="frame_ylm" default="ylm" />
   
   <!-- camera module -->
   <!---->
@@ -53,20 +53,21 @@
 
   <!-- ust module -->
   <!---->
-  	<!-- <node pkg="urg_node" exec="urg_node" name="urg_node">
-		<param name="ip_address" value="$(arg ust_ip)" />
-		<param name="frame_id" value="$(arg frame_ust)" />
+  	<!----> 
+  <node pkg="urg_node2" exec="urg_node2_node" name="ust1">
+		<param name="ip_address" value="$(var ust_ip)" />
+		<param name="frame_id" value="$(var frame_ust)" />
 	       <param name="angle_min" value="-1.221730"/>
 	       <param name="angle_max" value="1.91986"/>
 		<remap from="/scan" to="/urg_node1/scan" />
 	</node>
-  	<node pkg="urg_node" exec="urg_node" name="urg_node2">
-		<param name="ip_address" value="$(arg ust2_ip)" />
-		<param name="frame_id" value="$(arg frame_ust2)" />
+  <node pkg="urg_node2" exec="urg_node2_node" name="ust2">
+		<param name="ip_address" value="$(var ust2_ip)" />
+		<param name="frame_id" value="$(var frame_ust2)" />
 	       <param name="angle_max" value="1.221730"/>
 	       <param name="angle_min" value="-1.91986"/>
 		<remap from="/scan" to="/urg_node2/scan" />
-	</node>	 -->
+	</node>	 
   <!---->
 
   <!-- yvt module -->
@@ -82,12 +83,13 @@
 
   <!-- ylm module -->
   <!---->
-	<!-- <node pkg="ylm_ros2" exec="lumotive_driver" name="lumotive_driver" output="screen">
+	<!----> 
+  <node pkg="ylm_ros2" exec="lumotive_driver" name="lumotive_driver" output="screen">
     <param from="$(var ylm_config_path)" />
-    <param name="sensor_ip" value="$(var ylm_ip_)" />
-    <param name="sensor_port" value="$(var ylm_sensor_port_)" />
+    <param name="sensor_ip" value="$(var ylm_ip)" />
+    <param name="sensor_port" value="$(var ylm_sensor_port)" />
     <param name="device_frame_id" value="$(var frame_ylm)" />
-  </node> -->
+  </node> 
 
   <!---->
   

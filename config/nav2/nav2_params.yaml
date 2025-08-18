@@ -1,14 +1,14 @@
 /**:
   ros__parameters:
-    use_sim_time: false
+    use_sim_time: True
 
     # Controller Server
     controller_server:
       ros__parameters:
-        use_sim_time: false
+        use_sim_time: True
         controller_frequency: 10.0
         min_x_velocity_threshold: 0.2
-        odom_topic: "lio_odom"
+        odom_topic: "odom"
         progress_checker:
           plugin_name: "progress_checker"
           plugin_type: "nav2_controller::SimpleProgressChecker"
@@ -45,7 +45,7 @@
     # Planner Server
     planner_server:
       ros__parameters:
-        use_sim_time: false
+        use_sim_time: True
         expected_planner_frequency: 10.0
         plugins:
           - name: "GridBased"
@@ -59,7 +59,7 @@
     # BT Navigator
     bt_navigator:
       ros__parameters:
-        use_sim_time: false
+        use_sim_time: True
         global_frame: map
         robot_base_frame: base_link
         recovery_behaviors:
@@ -70,7 +70,7 @@
           - name: "clear_global_costmap"
             type: "nav2_recoveries::ClearCostmap"
         
-        bt_xml_path: "$(find nav2_bt_navigator)/behavior_trees/navigate_w_replanning_and_recovery.xml"
+        bt_xml_path: "$(find-pkg-share nav2_bt_navigator)/behavior_trees/navigate_w_replanning_and_recovery.xml"
 
     # Costmap Servers
     global_costmap:
@@ -80,7 +80,7 @@
           publish_frequency: 10.0
           global_frame: map
           robot_base_frame: base_link
-          use_sim_time: false
+          use_sim_time: True
           
           plugins:
             - name: "static_layer"
@@ -125,7 +125,7 @@
           publish_frequency: 10.0
           global_frame: odom
           robot_base_frame: base_link
-          use_sim_time: false
+          use_sim_time: True
           
           plugins:
             - name: "obstacle_layer"
@@ -134,12 +134,12 @@
               type: "nav2_costmap_2d::InflationLayer"
 
           obstacle_layer:
-            plugin_name: "obstacle_layer"
+            plugin_name: "nav2_costmap_2d::obstacle_layer"
             observation_sources: "hokuyo3d"
             hokuyo3d: {
               sensor_frame: yvt,
               data_type: "LaserScan",
-              topic: "/hokuyo3d/scan",
+              topic: "/scan",
               marking: true,
               clearing: true,
               observation_persistence: 0.0,
@@ -151,7 +151,7 @@
             raytrace_range: 3.5
 
           inflation_layer:
-            plugin_name: "inflation_layer"
+            plugin_name: "nav2_costmap_2d::inflation_layer"
             inflation_radius: 0.8
             cost_scaling_factor: 3.0
             

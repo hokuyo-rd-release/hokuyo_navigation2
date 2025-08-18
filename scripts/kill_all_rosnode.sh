@@ -13,16 +13,17 @@ while true; do
         echo "Closing launch terminal!"
         pkill -f bringup
         sleep 1s
-        echo "Closing ypspur terminal!"
-        pkill -f ypspur
+        echo "Closing motor_drive terminal!"
+        pkill -f icart_mini
         sleep 1s
         echo "Closing Navigation terminal!"
-        pkill -f wizurg_navigation
+        pkill -f waypoint
         sleep 1s
         echo "Closing Waypoint terminal!"
         pkill -f waypoint
         sleep 1s
-        # ps aux | grep ros | grep -v grep | awk '{ print "kill -9", $2 }' | sh
+        echo "kill all ros2 nodes!"
+        ps aux | grep ros | grep -v grep | grep -v vizanti | awk '{ print "kill -9", $2 }' | sh
         exit 0
     fi
 done

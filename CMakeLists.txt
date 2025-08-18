@@ -40,7 +40,7 @@ install(TARGETS
 install(DIRECTORY urdf config launch rviz src scripts map waypoints
   DESTINATION share/${PROJECT_NAME})
 
-install(PROGRAMS scripts/expo_start.sh
+install(PROGRAMS scripts/coordinater.sh
   DESTINATION lib/${PROJECT_NAME})
 
 ament_export_dependencies(rclcpp jsk_rviz_plugins std_msgs sensor_msgs)
