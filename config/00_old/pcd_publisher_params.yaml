@@ -1,5 +1,0 @@
-/**:
-  ros__parameters:
-    tf_frame: "map"
-    publishing_period_ms: 3000
-    file_name: "/home/colcon_ws/src/hokuyo_navigation2/map/expo_ros2.pcd"

@@ -11,6 +11,12 @@ find_package(rclcpp REQUIRED)
 find_package(jsk_rviz_plugins REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(tf2_sensor_msgs REQUIRED)
+find_package(pcl_conversions REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -19,6 +25,7 @@ endif()
 
 # Add your new executable here
 add_executable(gnss_lio_debug src/gnss_lio_debug.cpp)
+add_executable(pcd_tf_transform src/pcd_tf_transform.cpp) # <--- 追加
 
 ament_target_dependencies(gnss_lio_debug
   rclcpp
@@ -27,13 +34,31 @@ ament_target_dependencies(gnss_lio_debug
   sensor_msgs
 )
 
+# 新しいノードの依存関係を追加
+ament_target_dependencies(pcd_tf_transform
+  rclcpp
+  nav_msgs
+  sensor_msgs
+  geometry_msgs
+  tf2
+  tf2_ros
+  tf2_sensor_msgs
+  pcl_conversions
+)
+
 # jsk_rviz_plugins のインクルードディレクトリを追加
 target_include_directories(gnss_lio_debug PUBLIC
   ${jsk_rviz_plugins_INCLUDE_DIRS}
 )
 
+# 新しいノードのインクルードディレクトリを追加
+target_include_directories(pcd_tf_transform PUBLIC
+  ${pcl_conversions_INCLUDE_DIRS}
+)
+
 install(TARGETS
   gnss_lio_debug
+  pcd_tf_transform # <--- 追加
   DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -43,6 +68,17 @@ install(DIRECTORY urdf config launch rviz src scripts map waypoints
 install(PROGRAMS scripts/coordinater.sh
   DESTINATION lib/${PROJECT_NAME})
 
-ament_export_dependencies(rclcpp jsk_rviz_plugins std_msgs sensor_msgs)
+ament_export_dependencies(
+  rclcpp
+  jsk_rviz_plugins
+  std_msgs
+  sensor_msgs
+  nav_msgs
+  geometry_msgs
+  tf2
+  tf2_ros
+  tf2_sensor_msgs
+  pcl_conversions
+)
 
 ament_package()

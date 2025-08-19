@@ -38,6 +38,6 @@ TITLE="Progress"
     done
 
     # 最後の更新
-    echo "#残り時間: 0 秒"
+    echo "#rosbag処理中。残り時間: 0 秒"
     echo "100"
 ) | zenity --progress --title="$TITLE" --auto-close

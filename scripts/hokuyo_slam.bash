@@ -10,6 +10,8 @@ export CMAKE_PREFIX_PATH=/opt/vtk8
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/vtk8/lib
 export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:/opt/pcl
 
+HOKUYO_SLAM_WS="/home/github/hokuyo_slam_ros2"
+
 if [ -z "$1" ]; then
   echo "Error: 引数が不足しています <フォルダ名>"
   exit 1
@@ -110,7 +112,7 @@ elif [ ${fix_rate} -eq 1 ] ; then
   echo 'error status:' ${result}
 
   if [ ${result} -eq 0 ] ; then
-    bash -c "/home/github/hokuyo_slam_ros2/build/run_p2o data/$2/output.p2o"
+    bash -c "${HOKUYO_SLAM_WS}/build/run_p2o data/$2/output.p2o"
     #bash -c "gnuplot atc_odom_gnss.plt"
 
     # p2o_fastlio_util
@@ -124,7 +126,7 @@ elif [ ${fix_rate} -eq 1 ] ; then
     find . | grep pcd > clouds.txt
     sort clouds.txt > sorted_clouds.txt
     paste sorted_clouds.txt poses.txt > concat.txt
-    bash -c "/home/github/hokuyo_slam_ros2/build/rearrange_pointcloud concat.txt $2"
+    bash -c "${HOKUYO_SLAM_WS}/build/rearrange_pointcloud concat.txt $2"
 
     # 絶対座標を相対座標に変換
     cd ../..
