@@ -5,21 +5,22 @@ cd /home/colcon_ws
 source install/setup.bash
 source ~/.bashrc
 
-WIZURG_OPTIONS=$(zenity --list --title="WIZURGの起動コマンド" --text="1つ選択してください" \
-    --width=800 --height=400 \
-    --print-column=1 --separator= \
-    --column="番号" --column="オプション" --column="オプションの説明" \
-    1 "control_opt" " ... manual operation only" \
-    2 "sensor_rosbag" " ... manual operation and rosbag record" \
-    3 "rosbag_filter" " ... rosbag filtering gui" \
-    4 "get_rosbag" " ... get rosbag for sync_odom fix hokuyo_cloud2" \
-    5 "hokuyo_slam" " ... run hokuyo_slam to make pcd file" \
-    6 "map_opt" " ... mapping pcd to pgm" \
-    7 "way_opt" " ... make waypoints" \
-    8 "edit_opt" " ... edit waypoints" \
-    9 "nav_opt" " ... single_map navigation" \
-    10 "plural_opt" " ... multi_map navigation" \
-    11 "pcd_opt" " ... generate hokuyo_lio raw_map " 2>/dev/null)
+WIZURG_OPTIONS=10
+# WIZURG_OPTIONS=$(zenity --list --title="WIZURGの起動コマンド" --text="1つ選択してください" \
+#     --width=800 --height=400 \
+#     --print-column=1 --separator= \
+#     --column="番号" --column="オプション" --column="オプションの説明" \
+#     1 "control_opt" " ... manual operation only" \
+#     2 "sensor_rosbag" " ... manual operation and rosbag record" \
+#     3 "rosbag_filter" " ... rosbag filtering gui" \
+#     4 "get_rosbag" " ... get rosbag for sync_odom fix hokuyo_cloud2" \
+#     5 "hokuyo_slam" " ... run hokuyo_slam to make pcd file" \
+#     6 "map_opt" " ... mapping pcd to pgm" \
+#     7 "way_opt" " ... make waypoints" \
+#     8 "edit_opt" " ... edit waypoints" \
+#     9 "nav_opt" " ... single_map navigation" \
+#     10 "plural_opt" " ... multi_map navigation" \
+#     11 "pcd_opt" " ... generate hokuyo_lio raw_map " 2>/dev/null)
  
 EXITCODE=$?
 echo "EXITCODE=$EXITCODE"

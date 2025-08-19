@@ -69,7 +69,7 @@ hokuyo_lio_node:
     verbose: false
     use_robust_kernel: true
     use_voxel_map: false
-    output_at_imu_rate: true
+    output_at_imu_rate: false
       
     #==========pose=========
     initial_lidar_translation: "[ 0.0, 0.0, 0.0]"

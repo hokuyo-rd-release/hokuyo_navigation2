@@ -149,6 +149,13 @@
     -->
     <group if="$(var use_localization)">
         <include file="$(var hokuyo_navigation_pkg_path)/launch/hokuyo_lio_node_with_yaml_ros2.xml">
+          <arg name="sync_enable" value="false"/>
+          <arg name="lio_frame" value="base_link"/>
+        </include>
+    </group>
+    <group unless="$(var use_localization)">
+        <include file="$(var hokuyo_navigation_pkg_path)/launch/hokuyo_lio_node_with_yaml_ros2.xml">
+          <arg name="sync_enable" value="true"/>
           <arg name="lio_frame" value="base_link"/>
         </include>
     </group>
