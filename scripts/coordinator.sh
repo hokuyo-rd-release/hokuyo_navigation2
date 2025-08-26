@@ -53,15 +53,15 @@ operation_str=${WIZURG_OPTIONS}
 case $operation_str in
   1) wizurg_opt="control_opt";;              #-- -C で control_opt.csv が入る (岡本11/10追記)--
   2) wizurg_opt="sensor_rosbag";;            #-- -B で sensor_rosbag.csv が入る (高橋11/6追記)--
-  3) gnome-terminal -- bash -c "source /opt/ros/humble/setup.bash; source ~/.bashrc; cd /home/colcon_ws; source install/setup.bash; cd ${HOKUYO_NAV2_PKG_PATH}; python3 src/MainWindow.py bash"; exit;;
-  4) tree -L 1 -a ${HOKUYO_NAV2_PKG_PATH}/rosbag ; inbagname=$(basename "$(zenity --file-selection --directory --title='choose your rosbag directory' --filename='/home/colcon_ws/src/hokuyo_navigation2/rosbag')") || { echo "エラー: ディレクトリの選択がキャンセルされました。" >&2; exit 1; } ; p2obagname=$(zenity --entry --title="input_rosbag" --text="input p2o rosbagfile name:" --entry-text "new file" \ map1) && [ -n "$p2obagname" ] || { echo "エラー: 入力がキャンセルされたか、空白です。" >&2; exit 1; } ; cd ${HOKUYO_NAV2_PKG_PATH}; scripts/get_rosbag.bash ${inbagname} rosbag/${p2obagname}; exit;;
+  3) gnome-terminal -- bash -c "source /opt/ros/humble/setup.bash; source ~/.bashrc; cd ${ROS2_WS}; source install/setup.bash; cd ${HOKUYO_NAV2_PKG_PATH}; python3 src/MainWindow.py bash"; exit;;
+  4) tree -L 1 -a ${HOKUYO_NAV2_PKG_PATH}/rosbag ; inbagname=$(zenity --file-selection --directory --title='choose your rosbag directory' --filename='/home/colcon_ws/src/hokuyo_navigation2/rosbag') || { echo "エラー: ディレクトリの選択がキャンセルされました。" >&2; exit 1; } ; p2obagname=$(zenity --entry --title="input_rosbag" --text="input p2o rosbagfile name:" --entry-text "new file" \ map1) && [ -n "$p2obagname" ] || { echo "エラー: 入力がキャンセルされたか、空白です。" >&2; exit 1; } ; cd ${HOKUYO_NAV2_PKG_PATH}; scripts/get_rosbag.bash ${inbagname} rosbag/${p2obagname}; exit;;
   5) tree -L 1 -a ${HOKUYO_NAV2_PKG_PATH}/rosbag ; p2obagname=$(basename "$(zenity --file-selection --directory --title='choose your directory' --filename='/home/colcon_ws/src/hokuyo_navigation2/rosbag')") || { echo "エラー: ディレクトリの選択がキャンセルされました。" >&2; exit 1; } ; p2omapname=$(zenity --entry --title="input_rosbag" --text="input p2o rosbagfile name:" --entry-text "new file") && [ -n "$p2omapname" ] || { echo "エラー: 入力がキャンセルされたか、空白です。" >&2; exit 1; } ; cd ${HOKUYO_NAV2_PKG_PATH}; scripts/hokuyo_slam.bash ${p2obagname} ${p2omapname}; exit;;
   6) wizurg_opt="map_opt";;                  #-- -M で map_opt.csv が入る --
   7) wizurg_opt="way_opt";;                  #-- -W で way_opt.csv が入る (岡本11/6追記) --
   8) wizurg_opt="edit_opt";;                 #-- -E で edit_opt.csv が入る (岡本11/6追記)--
   9) wizurg_opt="nav_opt";;                  #-- -N で nav_opt.csv が入る --
   10) wizurg_opt="plural_opt";;              #-- -P で plural_opt.csv が入る (岡本11/10追記)--
-  11) liomapname=$(zenity --entry --title="input lio raw map name" --text="input lio raw map name:" --entry-text "new file" \ map1) && [ -n "$liomapname" ] || { echo "エラー: 入力がキャンセルされたか、空白です。" >&2; exit 1; } ; cd ${ROS2_WS} ; ros2 launch hokuyo_navigation2 hlio_make_pcd_launch.xml map_name:=${liomapname}; exit;;
+  11) inbagname=$(zenity --file-selection --directory --title='choose your rosbag directory' --filename='/home/colcon_ws/src/hokuyo_navigation2/rosbag') || { echo "エラー: ディレクトリの選択がキャンセルされました。" >&2; exit 1; } ; liomapname=$(zenity --entry --title="input lio raw map name" --text="input lio raw map name:" --entry-text "new file" \ map1) && [ -n "$liomapname" ] || { echo "エラー: 入力がキャンセルされたか、空白です。" >&2; exit 1; } ; cd ${ROS2_WS} ; source /opt/ros/humble/setup.bash; source install/setup.bash; source ~/.bashrc; ros2 launch hokuyo_navigation2 hlio_make_pcd_launch.xml name:=${liomapname} bag_path:=${inbagname} play_bag:=true run_lio:=true; exit;;
 esac
 
 wizurg_opt="${wizurg_opt}_lio"
@@ -191,7 +191,7 @@ if [ "x${multi_map}" = "xtrue" ]; then
   sleep 2s
   echo "sleep 2"
   echo "start wizurg_navigation ${Rwayfile[$i-1]}"
-  cd ${HOKUYO_NAV2_PKG_PATH}/waypoints; ros2 run hokuyo_navigation2 waypoint_manager -r ${Rwayfile[$i-1]}.json once
+  cd ${HOKUYO_NAV2_PKG_PATH}/waypoints; ros2 run hokuyo_navigation2 waypoint_manager -x ${Rwayfile[$i-1]}.json once
   echo "finish map"
   cd -
  done
@@ -241,7 +241,7 @@ else
     echo "navigation_true"
     echo "wayfile = ${wayfile}.json"
     sleep 7.0s
-    cd ${HOKUYO_NAV2_PKG_PATH}/waypoints; ros2 run waypoint_manager waypoint_manager -r ${HOKUYO_NAV2_PKG_PATH}/waypoints/${wayfile}.json
+    cd ${HOKUYO_NAV2_PKG_PATH}/waypoints; ros2 run waypoint_manager waypoint_manager -x ${HOKUYO_NAV2_PKG_PATH}/waypoints/${wayfile}.json
     cd -
  fi
 

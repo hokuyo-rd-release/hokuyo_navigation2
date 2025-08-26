@@ -7,7 +7,7 @@ echo "スクリプトを終了します。コンテナ内のバックグラウ�
 
 # 停止対象のプロセスをリストアップ
 PROCESS_PATTERNS=(
-    "python3 .*expo_gui/server.py"
+    "python3 .*hokuyo_navigation2_gui/server.py"
     "ros2 launch vizanti_server vizanti_server.launch.py"
     "python3 .*rosbridge_websocket"
     "python3 .*vizanti_server/server.py"

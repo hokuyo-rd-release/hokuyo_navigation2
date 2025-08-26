@@ -2,10 +2,10 @@
 <launch>
   <arg name="use_sim_time" default="false" description="Use simulation (Gazebo) clock if true"/>
 
-  <let name="hokuyo_navigation_pkg_path" value="$(find-pkg-share hokuyo_navigation2)"/>
-  <let name="icart_mini_driver_pkg_path" value="$(find-pkg-share icart_mini_driver)"/>
-  <let name="urdf_path" value="$(var hokuyo_navigation_pkg_path)/urdf/arno.xacro"/>
-  <let name="robot_description" value="$(command 'xacro $(var urdf_path)')"/>
+  <arg name="hokuyo_navigation_pkg_path" default="$(find-pkg-share hokuyo_navigation2)"/>
+  <arg name="icart_mini_driver_pkg_path" default="$(find-pkg-share icart_mini_driver)"/>
+  <arg name="urdf_path" default="$(var hokuyo_navigation_pkg_path)/urdf/arno.xacro"/>
+  <arg name="robot_description" default="$(command 'xacro $(var urdf_path)')"/>
 
   <node pkg="robot_state_publisher" exec="robot_state_publisher" name="robot_state_publisher" output="screen">
     <param name="robot_description" value="$(var robot_description)"/>

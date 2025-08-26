@@ -65,7 +65,7 @@ install(TARGETS
 install(DIRECTORY urdf config launch rviz src scripts map waypoints
   DESTINATION share/${PROJECT_NAME})
 
-install(PROGRAMS scripts/coordinater.sh
+install(PROGRAMS scripts/coordinator.sh
   DESTINATION lib/${PROJECT_NAME})
 
 ament_export_dependencies(

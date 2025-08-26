@@ -11,6 +11,7 @@ cleanup() {
     PROCESS_PATTERNS=(
         "python3 .*hokuyo_navigation2_gui/server.py"
         "ros2 launch vizanti_server vizanti_server.launch.py"
+        "ros2 run hokuyo_navigation2 coordinator.sh"
         "python3 .*rosbridge_websocket"
         "python3 .*vizanti_server/server.py"
         "vizanti_cpp/tf_consolidator"
@@ -67,5 +68,6 @@ docker exec -d "$CONTAINER_NAME" bash -c "source /opt/ros/humble/setup.bash && s
 
 # 5. コンテナ内のシェルに接続
 # このコマンドはユーザーが exit するまで終了しない
-echo "Connecting to the container's shell. Type 'exit' to disconnect."
-docker exec -it "$CONTAINER_NAME" /bin/bash
+echo "Starting nav2 coordinator in the container's shell. Type 'exit' to disconnect."
+docker exec -it "$CONTAINER_NAME" bash -c "source /opt/ros/humble/setup.bash && source /home/colcon_ws/install/setup.bash && ros2 run hokuyo_navigation2 coordinator.sh; bash"
+#docker exec -it "$CONTAINER_NAME" /bin/bash

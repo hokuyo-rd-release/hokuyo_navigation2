@@ -60,10 +60,9 @@ source /home/colcon_ws/install/setup.bash
 #gnome-terminal --tab -t "Tab 0" -- bash -c "roscore; bash"
 #sleep 2
 if [ "x${run_lio}" = "xtrue" ]; then
- gnome-terminal --tab -t "hokuyo_lio" -- bash -c "ros2 launch hokuyo_navigation2 hokuyo_lio_node_with_yaml_ros2.xml; bash"
+ gnome-terminal --tab -t "hokuyo_lio" -- bash -c "ros2 launch hokuyo_navigation2 hokuyo_lio_node_with_yaml_ros2.xml sync_enable:=true; bash"
 fi
 gnome-terminal --tab -t "ros2 bag play" -- bash -c "cd ${CURRENT}; ros2 bag play \"$1\"; bash"
-# gnome-terminal --tab -t "sync_lio_pc" -- bash -c "echo sync_lio_pc working!!; ros2 run sync_lio_pc sub_pc_pub_odom; bash" # rosrun を落としてもroscoreが起動しているとrosrun でパラメータを変更しても残る。
 
 # --- 修正箇所: ros2 bag info の duration を確実に整数に変換 ---
 # rosbagディレクトリ内の .db3 ファイルを検索し、そのファイルパスを使用

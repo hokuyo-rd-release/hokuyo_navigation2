@@ -192,7 +192,7 @@ if [ "x${multi_map}" = "xtrue" ]; then
   sleep 2s
   echo "sleep 2"
   echo "start wizurg_navigation ${Rwayfile[$i-1]}"
-  cd ${HOKUYO_NAV2_PKG_PATH}/waypoints; ros2 run hokuyo_navigation2 waypoint_manager -r ${Rwayfile[$i-1]}.json once
+  cd ${HOKUYO_NAV2_PKG_PATH}/waypoints; ros2 run hokuyo_navigation2 waypoint_manager -x ${Rwayfile[$i-1]}.json once
   echo "finish map"
   cd -
  done
@@ -238,13 +238,13 @@ else
  fi
  # ---------------------------------------
  
- if [ "x${navigation}" = "xtrue" ]; then
-    echo "navigation_true"
-    echo "wayfile = ${wayfile}.json"
-    sleep 7.0s
-    cd ${HOKUYO_NAV2_PKG_PATH}/waypoints; ros2 run waypoint_manager waypoint_manager -r ${HOKUYO_NAV2_PKG_PATH}/waypoints/${wayfile}.json
-    cd -
- fi
+#  if [ "x${navigation}" = "xtrue" ]; then
+#     echo "navigation_true"
+#     echo "wayfile = ${wayfile}.json"
+#     sleep 7.0s
+#     cd ${HOKUYO_NAV2_PKG_PATH}/waypoints; ros2 run waypoint_manager waypoint_manager -x ${HOKUYO_NAV2_PKG_PATH}/waypoints/${wayfile}.json
+#     cd -
+#  fi
 
 fi
 

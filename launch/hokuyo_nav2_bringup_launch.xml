@@ -264,6 +264,10 @@
 
   <group if="$(var use_loader)">
     <!-- <include file="$(var hokuyo_navigation_pkg_path)/launch/nav2_launch.xml"/> -->
+    <include file="$(find-pkg-share lio_nav2_bringup)/launch/navigation_launch.py">
+      <arg name="map" value="$(var map_dir)/$(var map_file).yaml"/>
+      <!-- <arg name="params_file" value="$(var hokuyo_navigation_pkg_path)/config/nav2/nav2_params.yaml"/> -->
+    </include>
     <group if="$(var use_lio)">
       <node pkg="simple_fastlio_localization" exec="localization_node" name="localization_node" output="screen" launch-prefix="bash -c 'sleep 5.0; $0 $@'">
         <param name="map_file" value="$(var map_dir)/$(var map_file).pcd"/>
@@ -288,11 +292,17 @@
     <!-- <include file="$(var hokuyo_navigation_pkg_path)/launch/nav2_launch.xml">
       <arg name="cmd_vel_topic" value="/dummy/cmd_vel"/>
     </include> -->
+    <include file="$(find-pkg-share lio_nav2_bringup)/launch/navigation_launch.py">
+      <arg name="map" value="$(var map_dir)/$(var map_file).yaml"/>
+      <!-- <arg name="params_file" value="$(var hokuyo_navigation_pkg_path)/config/nav2/nav2_params.yaml"/> -->
+    </include>
+
     <node pkg="pcl_ros" exec="pcd_to_pointcloud" name="pcd_to_pointcloud_node" output="screen">
       <param name="tf_frame" value="map" />
       <param name="publishing_period_ms" value="3000" />
       <param name="file_name" value="$(var map_dir)/$(var map_file).pcd" />
     </node>
+
     <!-- <node pkg="nav2_map_server" exec="map_server" name="map_server" output="screen">
       <param name="topic_name" value="map"/>
       <param name="frame_id" value="map"/>

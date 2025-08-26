@@ -1,21 +1,36 @@
 <?xml version="1.0"?>
-<launch>
-  <arg name="map_name" default="map.pcd" description="Map name to save"/>
-  <arg name="sub_topic" default="/hokuyo_lio/aligned_scan_points" description="Input point cloud topic"/>
-  <arg name="sub_odom" default="/hokuyo_lio/lidar_odom" description="Input odometry topic"/>
-  <arg name="pub_topic" default="/dummy/point_cloud" description="Output point cloud topic"/>
-  <arg name="target_frame" default="dummy" description="Target frame for transform"/>
-  <arg name="map_dir" default="$(find-pkg-share hokuyo_navigation2)/map" description="Directory to save map"/>
-  <arg name="pc_save_distance" default="0.1" description="Distance threshold to save point cloud"/>
 
-  <node pkg="hokuyo_navigation2" exec="pcd_tf_transform" name="pcd_tf_transform_node" output="screen">
-    <param name="save_map" value="true" />
-    <param name="sub_topic" value="$(var sub_topic)" />
-    <param name="sub_odom_topic" value="$(var sub_odom)" />
-    <param name="pub_topic" value="$(var pub_topic)" />
-    <param name="target_frame" value="$(var target_frame)" />
-    <param name="map_dir" value="$(var map_dir)" />
-    <param name="map_name" value="$(var map_name)" />
-    <param name="pc_save_distance" value="$(var pc_save_distance)" />
+<launch>
+  <arg name="topic" default="hokuyo_lio/aligned_scan_points"/>
+  <arg name="odom_topic" default="hokuyo_lio/lidar_odom"/>
+  <arg name="dir" default="/home/colcon_ws/src/hokuyo_navigation2/map"/>
+  <arg name="name" default="map.pcd"/>
+  <arg name="distance" default="1"/>
+  <arg name="run_lio" default="false"/>
+  <arg name="play_bag" default="false"/>
+  <arg name="bag_path" default="$(find-pkg-share hokuyo_navigation2)/rosbag"/>
+
+  <group if="$(var run_lio)">
+    <include file="$(find-pkg-share hokuyo_navigation2)/launch/hokuyo_lio_node_with_yaml_ros2.xml">
+      <arg name="sync_enable" value="true"/>
+      <arg name="lio_frame" value="base_link"/>
+    </include>
+  </group>
+
+  <group if="$(var play_bag)">
+    <executable cmd="ros2 bag play $(var bag_path)" output="screen"/>
+  </group>
+
+  <!-- ノードの起動 -->
+  <node pkg="test_tools" exec="pcd_tf_transform" output="screen">
+    <!-- パラメータの設定 -->
+    <param name="save_map" value="true"/>
+    <param name="sub_topic" value="$(var topic)"/>
+    <param name="sub_odom_topic" value="$(var odom_topic)"/>
+    <param name="pub_topic" value="/dummy/point_cloud"/>
+    <param name="target_frame" value="dummy"/>
+    <param name="map_dir" value="$(var dir)"/>
+    <param name="map_name" value="$(var name)"/>
+    <param name="pc_save_distance" value="$(var distance)"/>
   </node>
 </launch>

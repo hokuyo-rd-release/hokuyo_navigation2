@@ -27,7 +27,7 @@ TITLE="Progress"
         
         # Zenityに渡すテキストとパーセンテージを組み立て
         # `#`で始まる行はzenityのテキストが更新されます
-        echo "#残り時間: ${REMAINING_SECONDS} 秒"
+        echo "#rosbag処理中。残り時間: ${REMAINING_SECONDS} 秒"
         echo "$PERCENTAGE"
         
         # 1秒待機
