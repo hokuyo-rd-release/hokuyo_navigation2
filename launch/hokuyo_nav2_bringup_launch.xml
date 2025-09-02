@@ -4,8 +4,7 @@
   <arg name="icart_mini_driver_pkg_path" default="$(find-pkg-share icart_mini_driver)"/>
   <arg name="pcd2pgm_pkg_path" default="$(find-pkg-share pcd2pgm)"/>
   <arg name="pointcloud_to_laserscan_pkg_path" default="$(find-pkg-share pointcloud_to_laserscan)"/>
-  <!-- <arg name="coordinate_transform_pkg_path" value="$(find-pkg-share coordinate_transform)"/> -->
-
+  <arg name="coordinate_transform_pkg_path" default="$(find-pkg-share coordinate_transform)"/>
   <arg name="urdf_path" default="$(var hokuyo_navigation_pkg_path)/urdf/arno.xacro"/>
   <arg name="robot_description" default="$(command 'xacro $(var urdf_path)')"/>
   <arg name="lifecycle_nodes" default="['map_server']" />
@@ -23,11 +22,8 @@
   <arg name="use_unity_sim" default="false"/>
   <arg name="is_indoor" default="false"/>
   <arg name="stop_uam_manage" default="true"/>
-  <arg name="use_ekf" default="false"/>
-  <arg name="use_switch" default="false"/>
-  <arg name="use_gnss_only" default="false"/>
-  <arg name="use_switch_only" default="false"/>
-  <arg name="use_localization" default="true"/>
+  <arg name="use_switch_only" default="true"/>
+  <arg name="use_localization" default="false"/>
 
   <arg name="map_dir" default="$(var hokuyo_navigation_pkg_path)/map"/>
   <arg name="map_file" default="test"/>
@@ -38,10 +34,10 @@
   <arg name="sub_odom_name" default="/hokuyo_lio/lidar_odom" />
   <arg name="sub_cloud_name" default="/hokuyo_lio/aligned_scan_points" />
   <arg name="nav2_param_" default="$(var hokuyo_navigation_pkg_path)/config/nav2/nav2_params.yaml"/>
-  <arg name="fix2xyz_params_indoor_" default="$(var hokuyo_navigation_pkg_path)/config/expo_fix2xyz_indoor.yaml"/>
-  <arg name="xyz2fix_params_indoor_" default="$(var hokuyo_navigation_pkg_path)/config/expo_xyz2fix_indoor.yaml"/>
-  <arg name="fix2xyz_params_outdoor_" default="$(var hokuyo_navigation_pkg_path)/config/expo_fix2xyz_outdoor.yaml"/>
-  <arg name="xyz2fix_params_outdoor_" default="$(var hokuyo_navigation_pkg_path)/config/expo_xyz2fix_outdoor.yaml"/>
+  <arg name="fix2xyz_params_indoor_" default="$(var hokuyo_navigation_pkg_path)/config/fix2xyz_indoor.yaml"/>
+  <arg name="xyz2fix_params_indoor_" default="$(var hokuyo_navigation_pkg_path)/config/xyz2fix_indoor.yaml"/>
+  <arg name="fix2xyz_params_outdoor_" default="$(var hokuyo_navigation_pkg_path)/config/fix2xyz_outdoor.yaml"/>
+  <arg name="xyz2fix_params_outdoor_" default="$(var hokuyo_navigation_pkg_path)/config/xyz2fix_outdoor.yaml"/>
   <arg name="gnss_tf_param" default="$(var hokuyo_navigation_pkg_path)/config/gnss_tf.yaml"/>
   <arg name="switch_tf_param" default="$(var hokuyo_navigation_pkg_path)/config/switch_tf.yaml"/>
   <arg name="switch_only_tf_param" default="$(var hokuyo_navigation_pkg_path)/config/switch_only_tf.yaml"/>
@@ -53,45 +49,47 @@
   <arg name="latlon_pose" default="35.0 135.0 40.0"/>
   <arg name="navigation_with_switch_only" default="$(var use_switch_only)"/>
 
-<!-- 
+  <!-- 
   <group unless="$(var use_navigation)">
-    <param name="use_sim_time" value="false"/>
-  </group> -->
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
+  </group>
+  -->
  
   <group if="$(var use_sensor)">
     <include file="$(var hokuyo_navigation_pkg_path)/launch/sensors_launch.xml" />
   </group>
-    <!--
+  
+  <!--
   <group if="$(var use_joy)">
     <include file="$(var hokuyo_navigation_pkg_path)/launch/teleop_joy_launch.xml">
       <arg name="cmd_vel" value="/wizurg/cmd_vel"/>
     </include>
   </group>
+  -->
 
   <group unless="$(var is_indoor)">
-    <node pkg="expo_fix2xyz" exec="expo_fix2xyz" name="expo_fix2xyz_out" output="log">
+    <node pkg="fix2xyz" exec="fix2xyz_node" name="fix2xyz_out" output="log">
       <param from="$(var fix2xyz_params_outdoor_)" />
       <param name="origin_pose" value="$(var latlon_pose)" />
     </node>
-    <node pkg="expo_fix2xyz" exec="expo_xyz2fix" name="expo_xyz2fix_out" output="log">
+    <node pkg="fix2xyz" exec="xyz2fix_node" name="xyz2fix_out" output="log">
       <param from="$(var xyz2fix_params_outdoor_)" />
       <param name="origin_pose" value="$(var latlon_pose)" />
     </node>
   </group>
-
+  <!--
   <node name="expo_cmdvel_manager" pkg="expo_safety_manage" exec="expo_cmdvel_manager" output="log">
     <param name="stop_manage" value="$(var stop_uam_manage)" />
   </node>
   <node name="expo_cmdvel_stopper" pkg="expo_safety_manage" exec="expo_cmdvel_stopper" output="log"/>
   <node name="expo_sensor_checker" pkg="expo_safety_manage" exec="expo_sensor_checker" output="log"/>
-  <node name="sb_pub" pkg="expo_safety_manage" exec="sb_pub.py" output="log"/>
-    -->
-
+  -->
+  
   <node name="gnss_lio_debug" pkg="hokuyo_navigation2" exec="gnss_lio_debug" output="log"/>
-
   <!--icart no default no odom-->
 
-  <!-- <group if="$(var use_icart)">
+  <!-- 
+  <group if="$(var use_icart)">
     <group if="$(var use_lio)">
       <include file="$(var hokuyo_navigation_pkg_path)/launch/icart_mini_drive_launch.xml" >
         </include>
@@ -100,44 +98,25 @@
       <include file="$(var hokuyo_navigation_pkg_path)/launch/icart_mini_drive_launch.xml">
         </include>
     </group>
-  </group> -->
-  <node pkg="rviz2" exec="rviz2" name="gnss_rviz" args="-d $(var hokuyo_navigation_pkg_path)/rviz/gnss_lio_debug.rviz"/>
+  </group>
+  -->
+  <node pkg="rviz2" exec="rviz2" name="gnss_rviz" args="-d $(var hokuyo_navigation_pkg_path)/rviz/gnss_lio_debug.rviz" output="log"/>
 
   <group if="$(var use_lio)">
-  <!--
-    <group if="$(eval 'use_ekf')">
-      <node pkg="hokuyo_lio" exec="hokuyo_lio_node" name="hokuyo_lio" output="log">
-        <param from="$(var hokuyo_lio_param)"/>
-        <param name="lidar_frame" value="lio_base_link"/>
-      </node>
-    </group>
-
-    <group if="$(eval 'use_switch or use_switch_only')">
-      <node pkg="hokuyo_lio" exec="hokuyo_lio_node" name="hokuyo_lio_switch" output="log">
-        <param from="$(var hokuyo_lio_param)"/>
-        <param name="lidar_frame" value="lio_base_link"/>
-      </node>
+    <group if="$(var use_switch_only)">
+      <include file="$(var hokuyo_navigation_pkg_path)/launch/hokuyo_lio_node_with_yaml_ros2.xml">
+        <arg name="sync_enable" value="false"/>
+        <arg name="lio_frame" value="lio_base_link"/>
+      </include>
       <node pkg="test_tools" exec="imu_coordinate_changer" name="imu_coordinate_changer">
         <param name="sub_topic_name" value="hokuyo3d/imu" />
         <param name="pub_topic_name" value="hokuyo3d/imu_transed" />
         <param name="averaging_num" value="7" />
       </node>
-    </group>
-
-    <group if="$(eval 'use_switch')">
-      <include file="$(var coordinate_transform_pkg_path)/launch/gnss_lio_switch_launch.xml">
-        <arg name="param_file" value="$(var gnss_lio_switch_param)" />
-      </include>
-      <node pkg="expo_wizurg" exec="odom_frame_changer" name="switch_odom_tf">
-        <param from="$(var switch_tf_param)" />
-      </node>
-    </group>
-
-    <group if="$(eval 'use_switch_only')">
       <include file="$(var coordinate_transform_pkg_path)/launch/gnss_lio_switch_launch.xml">
         <arg name="param_file" value="$(var gnss_lio_switch_only_param)" />
       </include>
-      <node pkg="expo_fix_msgs" exec="fix_odom_to_fix_orient" name="fix_odom_to_fix_orient">
+      <node pkg="fix2xyz" exec="fix_odom_to_fix_orient" name="fix_odom_to_fix_orient">
         <param name="utm_odom_topic" value="odometry/utm" />
         <param name="fix_topic" value="fix/switch" />
         <param name="fix_with_orient_topic" value="/fix_with_orient/switch" />
@@ -146,18 +125,20 @@
         <param from="$(var switch_only_tf_param)" />
       </node>
     </group>
-    -->
-    <group if="$(var use_localization)">
-        <include file="$(var hokuyo_navigation_pkg_path)/launch/hokuyo_lio_node_with_yaml_ros2.xml">
-          <arg name="sync_enable" value="false"/>
-          <arg name="lio_frame" value="base_link"/>
-        </include>
-    </group>
-    <group unless="$(var use_localization)">
-        <include file="$(var hokuyo_navigation_pkg_path)/launch/hokuyo_lio_node_with_yaml_ros2.xml">
-          <arg name="sync_enable" value="true"/>
-          <arg name="lio_frame" value="base_link"/>
-        </include>
+    
+    <group unless="$(var use_switch_only)">
+      <group if="$(var use_localization)">
+          <include file="$(var hokuyo_navigation_pkg_path)/launch/hokuyo_lio_node_with_yaml_ros2.xml">
+            <arg name="sync_enable" value="false"/>
+            <arg name="lio_frame" value="base_link"/>
+          </include>
+      </group>
+      <group unless="$(var use_localization)">
+          <include file="$(var hokuyo_navigation_pkg_path)/launch/hokuyo_lio_node_with_yaml_ros2.xml">
+            <arg name="sync_enable" value="true"/>
+            <arg name="lio_frame" value="base_link"/>
+          </include>
+      </group>
     </group>
   </group>
 
@@ -169,7 +150,7 @@
       <remap from="/tf" to="tf"/>
       <remap from="/tf_static" to="tf_static"/>
     </node>
-    <node pkg="nav2_lifecycle_manager" exec="lifecycle_manager" name="lifecycle_manager" output="screen">
+    <node pkg="nav2_lifecycle_manager" exec="lifecycle_manager" name="lifecycle_manager" output="log">
       <param name="use_sim_time" value="false"/>
       <param name="autostart" value="true" />
       <param name="node_names" value="$(var lifecycle_nodes)" />
@@ -194,46 +175,6 @@
   <group if="$(var use_navigation)">
     <group if="$(var use_lio)">
       <node pkg="rviz2" exec="rviz2" name="navigation_rviz" args="-d $(var hokuyo_navigation_pkg_path)/rviz/wizurg_navigation.rviz"/>
-      <group if="$(var use_gnss_only)">
-        <!-- <node pkg="hokuyo_navigation2" exec="odom_frame_changer" name="gnss_tf" output="screen">
-          <param from="$(var gnss_tf_param)"/>
-        </node> -->
-      </group>
-      <group if="$(var use_ekf)">
-        <!-- <node pkg="robot_localization" exec="ekf_localization_node" name="ekf_localization" output="screen">
-          <param from="$(var ekf_param)"/>
-          <remap from="odometry/filtered" to="odometry/filtered"/>
-        </node>
-        <node pkg="simple_fastlio_localization" exec="localization_node" name="localization_node_ekf" output="screen">
-          <param from="$(var lio_localization_param)"/>
-          <param name="initial_pose" value="$(var initial_pose)"/>
-          <param name="map_file" value="$(var map_dir)/$(var map_file).pcd"/>
-          <param name="frames_accumulate" value="1"/>
-          <param name="min_registration_interval" value="0.0"/>
-          <param name="asynchronous_registration" value="true"/>
-          <param name="child_frame_id" value="lio_odom"/>
-          <remap from="/Odometry" to="$(var sub_odom_name)"/>
-          <remap from="/cloud_registered_body" to="$(var sub_cloud_name)" />
-        </node> -->
-      </group>
-      <group if="$(var use_switch)">
-        <!-- <node pkg="simple_fastlio_localization" exec="localization_node" name="localization_node" output="screen" launch-prefix="bash -c 'sleep 5.0; $0 $@'">
-          <param name="map_file" value="$(var map_dir)/$(var map_file).pcd"/>
-          <param name="initial_pose" value="$(var initial_pose)"/>
-          <param name="frames_accumulate" value="4"/>
-          <param name="min_registration_interval" value="0.0"/>
-          <param name="asynchronous_registration" value="true"/>
-          <param name="publish_2d_pose" value="true"/>
-          <param name="visualize_registration_result" value="true"/>
-          <param name="enable_sound" value="true"/>
-          <param name="enable_lio_only_update" value="true"/>
-          <param name="rviz" value="false"/>
-          <remap from="/Odometry" to="$(var sub_odom_name)"/>
-          <remap from="/cloud_registered" to="$(var sub_cloud_name)"/>
-          <remap from="/estimated_pose" to="/estimated_pose"/>
-          <remap from="/map_cloud" to="/map_cloud"/>
-        </node> -->
-      </group>
       <group if="$(var use_localization)">
         <node pkg="simple_fastlio_localization" exec="localization_node" name="localization_node" output="screen" launch-prefix="bash -c 'sleep 1.0; $0 $@'">
           <param name="map_file" value="$(var map_dir)/$(var map_file).pcd"/>

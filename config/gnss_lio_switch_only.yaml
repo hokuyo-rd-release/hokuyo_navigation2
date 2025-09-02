@@ -1,0 +1,55 @@
+gnss_lio_switch:
+  ros__parameters:
+    topics:
+        imu_topic: "/hokuyo3d/imu_transed"
+        odom_topic: "/hokuyo_lio/lidar_odom"
+        gnss_topic: "/fix"
+        odom_switch_topic: "/odometry/switch"
+        gnss_switch_topic: "/fix/switch"
+
+        odom_trans_topic: "/odometry/to_trans"
+        gnss_trans_topic: "/fix/to_trans"
+        odom_transed_topic: "/odometry/transed"
+        gnss_transed_topic: "/fix/transed"
+
+    LatLonUtmTrans:
+        rot_cov: 1000000000.0
+        make_angle_from_movement: true
+
+    UtmOdomTrans:
+        min_range: 1.0
+        lambda: 0.99
+        start_utm_threshold: 20.0 # 25/06/19 変更.
+        threshold_ease_number: 1000
+        threshold_mag: 6.0
+
+    UtmOdomSwitch:
+        supplement_gnss_with_lio: true
+        supplement_gnss_with_velocity: false
+        use_covariance: true
+        use_pseudo_odometry_system: true
+
+        average_time_auto: false #7/15 false
+        SD_odom2utm_auto: false #7/15 false
+        SD_thre_width_auto: true #7/15 true
+        reset_diatance_auto: false #7/15 false
+        reset_time_auto: false #7/15 false
+        SD_thre_auto:  false #7/15 false
+        lio_average_time: 1.0
+        gnss_average_time: 30.5
+        SD_odom2utm_ratio: 20.0
+        #SD_thre_width: 30 # [%]
+        lio_SD_thre: 1.0
+        gnss_SD_thre: 1.0
+        reset_distance: 0.5
+        reset_time: 3.0
+
+    option:
+        reset_lio_enable: true
+        use_imu_grav: true
+        interval_time: 1.0
+        publish_mode: 1
+        #publish_modeにとる値は1~3の整数
+        # 1 : odometry取得時にfix出力
+        # 2 : gps取得時にfix出力
+        # 3 : interval_time秒間隔でfix出力

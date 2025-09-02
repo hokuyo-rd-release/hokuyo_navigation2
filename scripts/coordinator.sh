@@ -1,7 +1,7 @@
 #!/bin/bash
 
 source /opt/ros/humble/setup.bash
-cd /home/colcon_ws
+cd ~/colcon_ws
 source install/setup.bash
 source ~/.bashrc
 
@@ -206,9 +206,16 @@ else
     i=`expr $i + 1`
   #   echo ${init_pose}
   done
+  j=0
+  for init_latlon in `cat ${HOKUYO_NAV2_PKG_PATH}/data/${mapfile}/init_lat_lon_alt.txt`
+  do
+    j=`expr $j + 1`
+  done
+
   IFS=$IFS_BACKUP
 
   pose_arr=( `echo ${init_pose} | tr -s ',' ' '`)
+  latlon_arr=( `echo ${init_latlon} | tr -s ',' ' '`)
   pose1=${pose_arr[0]}
   pose2=${pose_arr[1]}
   pose3=${pose_arr[2]}
@@ -216,6 +223,9 @@ else
   pose5=${pose_arr[4]}
   pose6=${pose_arr[5]}
   pose7=${pose_arr[6]}
+  latlon1=${latlon_arr[0]}
+  latlon2=${latlon_arr[1]}
+  latlon3=${latlon_arr[2]}
 
   echo ${pose1} ${pose2} ${pose3} ${pose4} ${pose5} ${pose6} ${pose7}
 
@@ -225,7 +235,7 @@ else
      gnome-terminal -- bash -c "sleep 2; cd ${rosbag_dir}; ros2 bag record -a -o ${mapfile}; bash"
   fi
 #-------------------------------------
- gnome-terminal -- bash -c "ros2 launch hokuyo_navigation2 hokuyo_nav2_bringup_launch.xml use_joy:=${use_joy} use_mapping:=${mapping} use_navigation:=${navigation} use_loader:=${loader} use_editor:=${editor} use_sensor:=${sensor} use_icart:=${icart}  use_lio:=${use_lio} use_unity_sim:=${use_unity} use_sensor:=${sensor} use_icart:=${icart} map_file:=${mapfile} initial_pose:="${pose1},${pose2},${pose3},${pose4},${pose5},${pose6},${pose7}" ;bash"
+ gnome-terminal -- bash -c "ros2 launch hokuyo_navigation2 hokuyo_nav2_bringup_launch.xml use_joy:=${use_joy} use_mapping:=${mapping} use_navigation:=${navigation} use_loader:=${loader} use_editor:=${editor} use_sensor:=${sensor} use_icart:=${icart}  use_lio:=${use_lio} use_unity_sim:=${use_unity} use_sensor:=${sensor} use_icart:=${icart} map_file:=${mapfile} initial_pose:="${pose1},${pose2},${pose3},${pose4},${pose5},${pose6},${pose7}" latlon_pose:="${latlon1},${latlon2},${latlon3}" ;bash"
  sleep 1
  if [ "x${loader}" = "xtrue" ]; then
     gnome-terminal -- bash -c "cd ${rosbag_dir}; ros2 bag play ${mapfile}" # rosbag play → ./remap.sh

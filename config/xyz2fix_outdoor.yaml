@@ -1,0 +1,17 @@
+xyz2fix_out:
+  ros__parameters:
+  # マップ原点の設定
+    origin_pose: 35.5714468751,134.3927247194,39.9810747664
+    origin_quat: 0.0,0.0,0.0,1.0
+
+    # nav_msgs::Odometry => expo_fix_msgs::FixWithOrientation
+    sub_odom_topic1: "hokuyo_lio/sync_odom"
+    pub_fix_topic1: "odom_fix"
+
+    # geometry_msgs::PoseStamped => sensor_msgs::NavSatFix
+    sub_pose_topic2: "pose"
+    pub_fix_topic2: "fix/from_pose"
+
+    # geometry_msgs::PoseWithCovarianceStamped => sensor_msgs::NavSatFix
+    sub_posecov_topic3: "posecov"
+    pub_fix_topic3: "fix/from_posecov"

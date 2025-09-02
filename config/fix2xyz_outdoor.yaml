@@ -1,0 +1,25 @@
+fix2xyz_out:
+  ros__parameters:
+    # マップ原点の設定
+    origin_pose: 35.5714468751,134.3927247194,39.9810747664
+    origin_quat: 0.0,0.0,0.0,1.0
+
+    # sensor_msgs::NavSatFix => nav_msgs::Odometry
+    sub_fix_topic0: "fix"
+    pub_odom_topic0: "odometry/fix"
+
+    # expo_fix_msgs::FixWithOrientation => nav_msgs::Odometry
+    sub_fix_topic1: "fix_with_orient/switch"
+    pub_odom_topic1: "odometry/switch_on_map"
+
+    # sensor_msgs::NavSatFix => geometry_msgs::PoseStamped
+    sub_fix_topic2: "expo_waypoint"
+    pub_pose_topic2: "goal"
+
+    # sensor_msgs::NavSatFix => geometry_msgs::PoseWithCovarianceStamped
+    sub_fix_topic3: "expo_initpose"
+    pub_posecov_topic3: "initialpose"
+
+    # その他のオプション
+    rot_cov: 1000000000.0
+    make_angle_from_movement: true
