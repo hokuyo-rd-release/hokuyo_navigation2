@@ -27,7 +27,7 @@ try:
         
         # p2o_origin を点群の新しい原点として使用します
         p2o_origin = p2o_data[1, :3]
-        initial_lat_lon_alt_data = p2o_data[0, 7:]
+        initial_lat_lon_alt_data = p2o_data[1, 7:]
         initial_quat = p2o_data[1, 3:7]
 
 except FileNotFoundError as err:

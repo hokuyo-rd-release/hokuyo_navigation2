@@ -250,7 +250,7 @@ if __name__ == "__main__":
         gnss_positions = np.array([latlon_to_xyz(transformer, msg.latitude, msg.longitude, msg.altitude)
                                    for _, msg in valid_gnss_data])
         mean_gnss = np.mean(gnss_positions, axis=0)
-        vertices[0] = f'VERTEX_SE3:QUAT 0 {mean_gnss[0]} {mean_gnss[1]} {mean_gnss[2]} 0 0 0 1'
+        vertices[0] = f'VERTEX_SE3:QUAT 0 {mean_gnss[1]} {mean_gnss[0]} {mean_gnss[2]} 0 0 0 1'
 
         for timestamp, msg in valid_gnss_data:
             gnss_xyz = latlon_to_xyz(transformer, msg.latitude, msg.longitude, msg.altitude)
