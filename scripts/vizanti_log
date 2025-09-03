@@ -1,0 +1,415 @@
+[INFO] [launch]: All log files can be found below /home/hokuyo/.ros/log/2025-09-03-16-21-02-737266-hokuyo-EliteMini-Series-118020
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [rosbridge_websocket-1]: process started with pid [118022]
+[INFO] [rosapi_node-2]: process started with pid [118024]
+[INFO] [server.py-3]: process started with pid [118026]
+[INFO] [tf_consolidator-4]: process started with pid [118028]
+[INFO] [service_handler.py-5]: process started with pid [118030]
+[tf_consolidator-4] [INFO] [1756884062.787552754] [vizanti_tf_handler_node]: TF handler ready.
+[server.py-3] [INFO] [1756884062.976319412] [vizanti_flask_node]: Default widget config set to /home/hokuyo/colcon_ws/install/vizanti_server/share/vizanti_server/public/assets/default_layout.json
+[server.py-3] [INFO] [1756884062.978484109] [vizanti_flask_node]: Flask server running at http://0.0.0.0:5000
+[server.py-3] [INFO] [1756884062.980248011] [vizanti_flask_node]: Public directory set as /home/hokuyo/colcon_ws/install/vizanti_server/share/vizanti_server/public/
+[service_handler.py-5] [INFO] [1756884063.016202289] [vizanti_service_handler_node]: Service handler ready.
+[rosbridge_websocket-1] [WARN] [1756884063.058078895] [vizanti_rosbridge]: The 'default_call_service_timeout' parameter is currently set to 0.0, which means service calls will block indefinitely if no response is received. Please note that in the Jazzy and later releases, the default value for this parameter will be updated to 5.0 seconds.
+[rosbridge_websocket-1] [WARN] [1756884063.058396185] [vizanti_rosbridge]: The 'call_services_in_new_thread' parameter is currently set to False, which means service calls will block the main thread. Please note that in the Jazzy and later releases, the default value for this parameter will be updated to True.
+[rosbridge_websocket-1] [WARN] [1756884063.058595195] [vizanti_rosbridge]: The 'send_action_goals_in_new_thread' parameter is currently set to False, which means sending action goals will block the main thread. Please note that in the Jazzy and later releases, the default value for this parameter will be updated to True.
+[rosbridge_websocket-1] [INFO] [1756884063.060059149] [vizanti_rosbridge]: Rosbridge WebSocket server started on port 5001
+[rosbridge_websocket-1] [INFO] [1756884093.909142164] [vizanti_rosbridge]: Calling services in existing thread
+[rosbridge_websocket-1] [INFO] [1756884093.909591449] [vizanti_rosbridge]: Sending action goals in existing thread
+[rosbridge_websocket-1] [INFO] [1756884093.910476606] [vizanti_rosbridge]: Client connected. 1 clients total.
+[rosbridge_websocket-1] [INFO] [1756884093.955868393] [vizanti_rosbridge]: Client disconnected. 0 clients total.
+[rosbridge_websocket-1] [INFO] [1756884094.068275101] [vizanti_rosbridge]: Calling services in existing thread
+[rosbridge_websocket-1] [INFO] [1756884094.068626725] [vizanti_rosbridge]: Sending action goals in existing thread
+[rosbridge_websocket-1] [INFO] [1756884094.069295860] [vizanti_rosbridge]: Client connected. 1 clients total.
+[rosbridge_websocket-1] [INFO] [1756884094.118440855] [vizanti_rosbridge]: [Client 664a7c92-b7d1-4db9-b538-69ca6f47cb58] Subscribed to /vizanti/tf_consolidated
+[rosbridge_websocket-1] [INFO] [1756884094.119119057] [vizanti_rosbridge]: [Client 664a7c92-b7d1-4db9-b538-69ca6f47cb58] Subscribed to /tf_static
+[rosbridge_websocket-1] [INFO] [1756884094.268508629] [vizanti_rosbridge]: [Client 664a7c92-b7d1-4db9-b538-69ca6f47cb58] Subscribed to /expo_initpose
+[rosbridge_websocket-1] [INFO] [1756884094.342197395] [vizanti_rosbridge]: [Client 664a7c92-b7d1-4db9-b538-69ca6f47cb58] Subscribed to /map
+[rosbridge_websocket-1] [INFO] [1756884105.831653608] [vizanti_rosbridge]: Client disconnected. 0 clients total.
+[rosbridge_websocket-1] [INFO] [1756884122.484401153] [vizanti_rosbridge]: Calling services in existing thread
+[rosbridge_websocket-1] [INFO] [1756884122.484670865] [vizanti_rosbridge]: Sending action goals in existing thread
+[rosbridge_websocket-1] [INFO] [1756884122.485144746] [vizanti_rosbridge]: Client connected. 1 clients total.
+[rosbridge_websocket-1] [INFO] [1756884122.534502919] [vizanti_rosbridge]: [Client 376de428-5655-4ee5-bcc0-dd7adc20a36a] Subscribed to /vizanti/tf_consolidated
+[rosbridge_websocket-1] [INFO] [1756884122.538872104] [vizanti_rosbridge]: [Client 376de428-5655-4ee5-bcc0-dd7adc20a36a] Subscribed to /tf_static
+[server.py-3] [WARNING] [2025-09-03 16:22:02,749] [waitress]: Task queue depth is 1 
+[server.py-3] [WARNING] [2025-09-03 16:22:02,750] [waitress]: Task queue depth is 2 
+[rosbridge_websocket-1] [INFO] [1756884122.949224328] [vizanti_rosbridge]: [Client 376de428-5655-4ee5-bcc0-dd7adc20a36a] Subscribed to /expo_initpose
+[rosbridge_websocket-1] [INFO] [1756884123.421724834] [vizanti_rosbridge]: [Client 376de428-5655-4ee5-bcc0-dd7adc20a36a] Subscribed to /map
+[service_handler.py-5] [INFO] [1756884130.037293850] [vizanti_service_handler_node]: Recording ros2 bag to /home/hokuyo/colcon_ws/src/hokuyo_navigation2/rosbag/2025-09-03-16-22-nav2_toyonaka_loc
+[tf_consolidator-4] [WARN] [1756884132.785952014] [vizanti_tf_handler_node]: Removed old TF link: map -> 
+[rosbridge_websocket-1] [INFO] [1756884160.368528126] [vizanti_rosbridge]: Client disconnected. 0 clients total.
+[rosbridge_websocket-1] [WARN] [1756884160.371906126] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [INFO] [1756885344.224675085] [vizanti_rosbridge]: Calling services in existing thread
+[rosbridge_websocket-1] [INFO] [1756885344.225134884] [vizanti_rosbridge]: Sending action goals in existing thread
+[rosbridge_websocket-1] [INFO] [1756885344.225794611] [vizanti_rosbridge]: Client connected. 1 clients total.
+[rosbridge_websocket-1] [INFO] [1756885344.282897092] [vizanti_rosbridge]: Client disconnected. 0 clients total.
+[rosbridge_websocket-1] [INFO] [1756885344.406347812] [vizanti_rosbridge]: Calling services in existing thread
+[rosbridge_websocket-1] [INFO] [1756885344.406744542] [vizanti_rosbridge]: Sending action goals in existing thread
+[rosbridge_websocket-1] [INFO] [1756885344.408076410] [vizanti_rosbridge]: Client connected. 1 clients total.
+[rosbridge_websocket-1] [INFO] [1756885344.445925426] [vizanti_rosbridge]: [Client e9ed775f-1b22-4d4b-8eba-680c7612c502] Subscribed to /vizanti/tf_consolidated
+[rosbridge_websocket-1] [INFO] [1756885344.448413479] [vizanti_rosbridge]: [Client e9ed775f-1b22-4d4b-8eba-680c7612c502] Subscribed to /tf_static
+[rosbridge_websocket-1] [INFO] [1756885344.613999087] [vizanti_rosbridge]: [Client e9ed775f-1b22-4d4b-8eba-680c7612c502] Subscribed to /expo_initpose
+[rosbridge_websocket-1] [INFO] [1756885344.705998765] [vizanti_rosbridge]: [Client e9ed775f-1b22-4d4b-8eba-680c7612c502] Subscribed to /map
+[rosbridge_websocket-1] [INFO] [1756885374.403820886] [vizanti_rosbridge]: Client disconnected. 0 clients total.
+[rosbridge_websocket-1] [WARN] [1756885374.414482046] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [INFO] [1756885374.492972379] [vizanti_rosbridge]: Calling services in existing thread
+[rosbridge_websocket-1] [INFO] [1756885374.493283557] [vizanti_rosbridge]: Sending action goals in existing thread
+[rosbridge_websocket-1] [INFO] [1756885374.493770557] [vizanti_rosbridge]: Client connected. 1 clients total.
+[rosbridge_websocket-1] [INFO] [1756885374.526092826] [vizanti_rosbridge]: [Client 1430b2ce-071f-4f67-94d2-8ef35706ec55] Subscribed to /vizanti/tf_consolidated
+[rosbridge_websocket-1] [INFO] [1756885374.531620989] [vizanti_rosbridge]: [Client 1430b2ce-071f-4f67-94d2-8ef35706ec55] Subscribed to /tf_static
+[rosbridge_websocket-1] [INFO] [1756885374.737649000] [vizanti_rosbridge]: [Client 1430b2ce-071f-4f67-94d2-8ef35706ec55] Subscribed to /expo_initpose
+[rosbridge_websocket-1] [INFO] [1756885374.762987536] [vizanti_rosbridge]: [Client 1430b2ce-071f-4f67-94d2-8ef35706ec55] Subscribed to /map
+[rosbridge_websocket-1] [WARN] [1756885376.260769437] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885377.263554365] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885378.308021097] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885379.330867417] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885380.387525469] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885381.444466202] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885382.466457299] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885383.522010895] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885384.546025210] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885385.600903524] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885386.657347231] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885387.712953452] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885388.736710763] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885389.791741101] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885390.814981022] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885391.849706902] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885392.862842702] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885393.917305790] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885394.940829473] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885395.963390148] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885396.986871390] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885398.009405974] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885399.032600935] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885400.089187731] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885401.111534829] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885402.167199791] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885403.201912023] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885404.213314298] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885405.236537791] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885406.237675610] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885407.249989210] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885408.271892483] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885409.328878573] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885410.384057350] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885411.440446049] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885412.496505636] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885413.553194859] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885414.575004044] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885415.600293860] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885416.654156928] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885417.710755979] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885418.734048807] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885419.756060148] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885420.811839401] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885421.868823958] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885422.891269050] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885423.913788484] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885424.937523114] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885425.960387132] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885427.015931833] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885428.071795795] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885429.095096290] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885430.118568872] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885431.141353569] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885432.164740484] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885433.187545483] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885434.210650972] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885435.233363713] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885436.256610424] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885437.279617025] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [INFO] [1756885438.138531493] [vizanti_rosbridge]: Client disconnected. 0 clients total.
+[server.py-3] [WARNING] [2025-09-03 16:43:58,159] [waitress]: Task queue depth is 1 
+[rosbridge_websocket-1] [INFO] [1756885438.259755451] [vizanti_rosbridge]: Calling services in existing thread
+[rosbridge_websocket-1] [INFO] [1756885438.260124687] [vizanti_rosbridge]: Sending action goals in existing thread
+[rosbridge_websocket-1] [INFO] [1756885438.260875103] [vizanti_rosbridge]: Client connected. 1 clients total.
+[rosbridge_websocket-1] [INFO] [1756885438.282566187] [vizanti_rosbridge]: [Client a716e16b-e711-4e9e-852a-979c49b7a581] Subscribed to /vizanti/tf_consolidated
+[rosbridge_websocket-1] [INFO] [1756885438.284781747] [vizanti_rosbridge]: [Client a716e16b-e711-4e9e-852a-979c49b7a581] Subscribed to /tf_static
+[rosbridge_websocket-1] [WARN] [1756885438.306972253] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [INFO] [1756885438.398927630] [vizanti_rosbridge]: [Client a716e16b-e711-4e9e-852a-979c49b7a581] Subscribed to /expo_initpose
+[rosbridge_websocket-1] [INFO] [1756885438.491565386] [vizanti_rosbridge]: [Client a716e16b-e711-4e9e-852a-979c49b7a581] Subscribed to /map
+[rosbridge_websocket-1] [WARN] [1756885440.010195636] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885441.041411769] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885442.065204509] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885443.087308777] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885444.110542209] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885445.133902824] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885446.156185048] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885447.180923408] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885448.236429059] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885449.258292673] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885450.281218584] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885451.337454929] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885452.393081516] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885453.417105848] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885454.439705207] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885455.495555163] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885456.518551978] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885457.542263947] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885458.597879539] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885459.620401601] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885460.645658164] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885461.666839507] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885462.689724276] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885463.712270953] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885464.736926541] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885465.758722642] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885466.792345519] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885467.805005030] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885468.827726551] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885469.851635987] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885470.873875819] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885471.897064015] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885472.952847795] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885474.009085714] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885475.031795401] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885476.087363463] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885477.110972916] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885478.167482441] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885479.190380814] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885480.212485066] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885481.269680476] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885482.291079128] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885483.347547347] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885484.371935987] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885485.393927053] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885486.417558918] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885487.472652735] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885488.495429400] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885489.520079532] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885490.541376250] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885491.564425328] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885492.587497595] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885493.610554541] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885494.667669044] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885495.722803049] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885496.745200269] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885497.768854285] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885498.791647436] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885499.814063442] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885500.837469793] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885501.893103034] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885502.916641086] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885503.940027980] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [INFO] [1756885504.182028212] [vizanti_rosbridge]: Client disconnected. 0 clients total.
+[rosbridge_websocket-1] [INFO] [1756885504.325094554] [vizanti_rosbridge]: Calling services in existing thread
+[rosbridge_websocket-1] [INFO] [1756885504.325654099] [vizanti_rosbridge]: Sending action goals in existing thread
+[rosbridge_websocket-1] [INFO] [1756885504.326348637] [vizanti_rosbridge]: Client connected. 1 clients total.
+[rosbridge_websocket-1] [INFO] [1756885504.350304411] [vizanti_rosbridge]: [Client fe147f8c-aa05-4b3e-99a8-dff2140a8bfa] Subscribed to /vizanti/tf_consolidated
+[rosbridge_websocket-1] [INFO] [1756885504.363307265] [vizanti_rosbridge]: [Client fe147f8c-aa05-4b3e-99a8-dff2140a8bfa] Subscribed to /tf_static
+[rosbridge_websocket-1] [INFO] [1756885504.488481821] [vizanti_rosbridge]: [Client fe147f8c-aa05-4b3e-99a8-dff2140a8bfa] Subscribed to /expo_initpose
+[rosbridge_websocket-1] [INFO] [1756885504.605843704] [vizanti_rosbridge]: [Client fe147f8c-aa05-4b3e-99a8-dff2140a8bfa] Subscribed to /map
+[rosbridge_websocket-1] [WARN] [1756885506.139355524] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885507.140722201] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885508.196804369] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885509.219812932] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885510.242673795] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885511.266162138] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885512.288792080] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885513.311908338] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885514.334637143] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885515.357708783] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885516.413852611] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885517.438495897] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885518.459814787] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885519.494614384] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885520.538949352] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885521.562280478] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885522.584826644] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885523.607762231] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885524.631281287] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885525.664690893] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885526.710007878] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885527.766278374] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885528.822159985] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885529.822736665] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885530.869173560] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885531.890851717] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885532.914692186] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885533.969933821] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885534.992714912] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [INFO] [1756885535.730106966] [vizanti_rosbridge]: Client disconnected. 0 clients total.
+[rosbridge_websocket-1] [WARN] [1756885536.048983385] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885537.104508295] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885538.161374398] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885539.183654129] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885540.207185788] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885541.230295210] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885542.254317822] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885543.308796231] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885544.331829067] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885545.354525460] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885546.410595973] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885547.433669866] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885548.456304842] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885549.512372156] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885550.569463887] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885551.592354733] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885552.647511909] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885553.671478130] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885554.693364065] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885555.749753378] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885556.773123467] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885557.828422987] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885558.852140961] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885559.907618835] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885560.963603933] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885561.997441370] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885563.009785462] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885564.033010550] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885565.055532986] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885566.079421465] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885567.102246593] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885568.125245941] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885569.182256608] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885570.203938096] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885571.226957845] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885572.260759211] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885573.272320743] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885574.306705250] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885575.318649857] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885576.342354753] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885577.397884456] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885578.422067474] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885579.476744373] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885580.501578249] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885581.522771425] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885582.523637663] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885583.536685633] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885584.559169405] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885585.581857072] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885586.648718742] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885587.693641621] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885588.749970198] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885589.805328649] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885590.840021659] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885591.851893142] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885592.907472974] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885593.930716954] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885594.953853173] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885596.009520534] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885597.033405005] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885598.055874326] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885599.078486099] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885600.134396302] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885601.190612323] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885602.213285047] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885603.236898745] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885604.260899144] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885605.315395527] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885606.338950333] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885607.394245844] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885608.417476816] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885609.473810695] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885610.496726440] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885611.520018286] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885612.542500613] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885613.566071922] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885614.566913011] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885615.612720813] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885616.668579726] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885617.692427881] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885618.724398540] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [INFO] [1756885618.904561997] [vizanti_rosbridge]: Calling services in existing thread
+[rosbridge_websocket-1] [INFO] [1756885618.904969814] [vizanti_rosbridge]: Sending action goals in existing thread
+[rosbridge_websocket-1] [INFO] [1756885618.905892179] [vizanti_rosbridge]: Client connected. 1 clients total.
+[rosbridge_websocket-1] [INFO] [1756885618.935637909] [vizanti_rosbridge]: Client disconnected. 0 clients total.
+[rosbridge_websocket-1] [INFO] [1756885619.044606608] [vizanti_rosbridge]: Calling services in existing thread
+[rosbridge_websocket-1] [INFO] [1756885619.045091480] [vizanti_rosbridge]: Sending action goals in existing thread
+[rosbridge_websocket-1] [INFO] [1756885619.045900161] [vizanti_rosbridge]: Client connected. 1 clients total.
+[rosbridge_websocket-1] [INFO] [1756885619.061746472] [vizanti_rosbridge]: [Client 960825fe-f4ef-4497-a9f1-0afa87bb434d] Subscribed to /vizanti/tf_consolidated
+[rosbridge_websocket-1] [INFO] [1756885619.064281902] [vizanti_rosbridge]: [Client 960825fe-f4ef-4497-a9f1-0afa87bb434d] Subscribed to /tf_static
+[rosbridge_websocket-1] [INFO] [1756885619.270698403] [vizanti_rosbridge]: [Client 960825fe-f4ef-4497-a9f1-0afa87bb434d] Subscribed to /expo_initpose
+[rosbridge_websocket-1] [INFO] [1756885619.552373775] [vizanti_rosbridge]: [Client 960825fe-f4ef-4497-a9f1-0afa87bb434d] Subscribed to /map
+[rosbridge_websocket-1] [WARN] [1756885621.124744487] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885622.146219614] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885623.201815671] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885624.257793859] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885625.280516213] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885626.304294717] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885627.327376385] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885628.350273000] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885629.372918756] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885630.428854225] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885631.484673338] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [INFO] [1756885632.500598095] [vizanti_rosbridge]: Client disconnected. 0 clients total.
+[rosbridge_websocket-1] [WARN] [1756885632.508012380] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [INFO] [1756885632.607279154] [vizanti_rosbridge]: Calling services in existing thread
+[rosbridge_websocket-1] [INFO] [1756885632.607622520] [vizanti_rosbridge]: Sending action goals in existing thread
+[rosbridge_websocket-1] [INFO] [1756885632.608343216] [vizanti_rosbridge]: Client connected. 1 clients total.
+[rosbridge_websocket-1] [INFO] [1756885632.636769283] [vizanti_rosbridge]: [Client 114d2af8-c0e0-4622-ac1e-84da25ba954a] Subscribed to /vizanti/tf_consolidated
+[rosbridge_websocket-1] [INFO] [1756885632.643977422] [vizanti_rosbridge]: [Client 114d2af8-c0e0-4622-ac1e-84da25ba954a] Subscribed to /tf_static
+[rosbridge_websocket-1] [INFO] [1756885632.799188773] [vizanti_rosbridge]: [Client 114d2af8-c0e0-4622-ac1e-84da25ba954a] Subscribed to /expo_initpose
+[rosbridge_websocket-1] [INFO] [1756885632.919397467] [vizanti_rosbridge]: [Client 114d2af8-c0e0-4622-ac1e-84da25ba954a] Subscribed to /map
+[server.py-3] [WARNING] [2025-09-03 16:47:14,158] [waitress]: Task queue depth is 1 
+[server.py-3] [WARNING] [2025-09-03 16:47:14,161] [waitress]: Task queue depth is 2 
+[rosbridge_websocket-1] [INFO] [1756885634.495854066] [vizanti_rosbridge]: Client disconnected. 0 clients total.
+[rosbridge_websocket-1] [INFO] [1756885634.497283063] [vizanti_rosbridge]: Calling services in existing thread
+[rosbridge_websocket-1] [INFO] [1756885634.497638051] [vizanti_rosbridge]: Sending action goals in existing thread
+[rosbridge_websocket-1] [INFO] [1756885634.498277814] [vizanti_rosbridge]: Client connected. 1 clients total.
+[rosbridge_websocket-1] [INFO] [1756885634.498702914] [vizanti_rosbridge]: Client disconnected. 0 clients total.
+[rosbridge_websocket-1] [INFO] [1756885634.499314965] [vizanti_rosbridge]: Calling services in existing thread
+[rosbridge_websocket-1] [INFO] [1756885634.499682696] [vizanti_rosbridge]: Sending action goals in existing thread
+[rosbridge_websocket-1] [INFO] [1756885634.500303755] [vizanti_rosbridge]: Client connected. 1 clients total.
+[rosbridge_websocket-1] [WARN] [1756885634.505037288] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [INFO] [1756885634.509304685] [vizanti_rosbridge]: [Client 592fc0db-2c66-477a-92d4-6b736f6f4025] Subscribed to /vizanti/tf_consolidated
+[rosbridge_websocket-1] [INFO] [1756885634.511516164] [vizanti_rosbridge]: [Client 592fc0db-2c66-477a-92d4-6b736f6f4025] Subscribed to /tf_static
+[rosbridge_websocket-1] [INFO] [1756885634.589110870] [vizanti_rosbridge]: [Client 592fc0db-2c66-477a-92d4-6b736f6f4025] Subscribed to /expo_initpose
+[rosbridge_websocket-1] [INFO] [1756885634.593269793] [vizanti_rosbridge]: [Client 592fc0db-2c66-477a-92d4-6b736f6f4025] Subscribed to /map
+[rosbridge_websocket-1] [WARN] [1756885636.153627151] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885637.160606508] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [INFO] [1756885637.997109623] [vizanti_rosbridge]: Client disconnected. 0 clients total.
+[rosbridge_websocket-1] [INFO] [1756885638.098117867] [vizanti_rosbridge]: Calling services in existing thread
+[rosbridge_websocket-1] [INFO] [1756885638.098470501] [vizanti_rosbridge]: Sending action goals in existing thread
+[rosbridge_websocket-1] [INFO] [1756885638.099167912] [vizanti_rosbridge]: Client connected. 1 clients total.
+[rosbridge_websocket-1] [INFO] [1756885638.132562080] [vizanti_rosbridge]: [Client 2c6a5882-f049-48a0-b733-8fa02971a338] Subscribed to /vizanti/tf_consolidated
+[rosbridge_websocket-1] [INFO] [1756885638.134900768] [vizanti_rosbridge]: [Client 2c6a5882-f049-48a0-b733-8fa02971a338] Subscribed to /tf_static
+[server.py-3] [WARNING] [2025-09-03 16:47:18,182] [waitress]: Task queue depth is 1 
+[server.py-3] [WARNING] [2025-09-03 16:47:18,184] [waitress]: Task queue depth is 2 
+[rosbridge_websocket-1] [WARN] [1756885638.216344747] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [INFO] [1756885638.280345589] [vizanti_rosbridge]: [Client 2c6a5882-f049-48a0-b733-8fa02971a338] Subscribed to /expo_initpose
+[rosbridge_websocket-1] [INFO] [1756885638.373946001] [vizanti_rosbridge]: [Client 2c6a5882-f049-48a0-b733-8fa02971a338] Subscribed to /map
+[rosbridge_websocket-1] [WARN] [1756885639.937562838] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885640.988934836] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885642.045185351] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885643.101890815] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885644.156681893] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885645.212896491] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885646.268448587] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885647.292103772] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885648.325496615] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885649.338904150] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885650.361626577] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885651.383643904] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885652.406993051] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885653.430380055] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885654.453965437] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885655.509139684] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885656.533652662] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885657.588306911] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885658.610753173] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885659.635245618] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885660.657146476] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885661.681374326] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885662.702732486] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885663.759461307] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885664.782344395] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885665.837636113] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885666.893306659] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [INFO] [1756885667.651997715] [vizanti_rosbridge]: Client disconnected. 0 clients total.
+[rosbridge_websocket-1] [WARN] [1756885667.893733304] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[rosbridge_websocket-1] [WARN] [1756885669.698400637] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[service_handler.py-5] [INFO] [1756885672.749288895] [vizanti_service_handler_node]: Recording stopped.
+[service_handler.py-5] [INFO] [1756885672.750748068] [vizanti_service_handler_node]: Recording stopped.
+[service_handler.py-5] [INFO] [1756885672.751443015] [vizanti_service_handler_node]: Recording stopped.
+[service_handler.py-5] [INFO] [1756885672.751836164] [vizanti_service_handler_node]: Recording stopped.
+[service_handler.py-5] [INFO] [1756885672.752095491] [vizanti_service_handler_node]: Recording stopped.
+[service_handler.py-5] [INFO] [1756885672.752280299] [vizanti_service_handler_node]: Recording stopped.
+[rosbridge_websocket-1] [WARN] [1756885672.765310285] [vizanti_rosbridge]: WebSocketClosedError: Tried to write to a closed websocket
+[tf_consolidator-4] [WARN] [1756885682.794570153] [vizanti_tf_handler_node]: Removed old TF link: odom -> base_link
+[tf_consolidator-4] [WARN] [1756885682.795271902] [vizanti_tf_handler_node]: Removed old TF link: odom -> dummy_base_link
+[tf_consolidator-4] [WARN] [1756885682.795812227] [vizanti_tf_handler_node]: Removed old TF link: base_link -> left_wheel
+[tf_consolidator-4] [WARN] [1756885682.796040386] [vizanti_tf_handler_node]: Removed old TF link: map -> lio_odom
+[tf_consolidator-4] [WARN] [1756885682.796299102] [vizanti_tf_handler_node]: Removed old TF link: map -> odom
+[tf_consolidator-4] [WARN] [1756885682.796537831] [vizanti_tf_handler_node]: Removed old TF link: base_link -> right_wheel

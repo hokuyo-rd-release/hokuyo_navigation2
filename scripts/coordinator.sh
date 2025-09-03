@@ -30,8 +30,8 @@ if [ -z "$WIZURG_OPTIONS" ]; then
   exit 1
 fi
 
-ROS2_WS="/home/colcon_ws"
-HOKUYO_NAV2_PKG_PATH="/home/colcon_ws/src/hokuyo_navigation2"
+ROS2_WS="$HOME/colcon_ws"
+HOKUYO_NAV2_PKG_PATH="$HOME/colcon_ws/src/hokuyo_navigation2"
 
 cd ${HOKUYO_NAV2_PKG_PATH}
 

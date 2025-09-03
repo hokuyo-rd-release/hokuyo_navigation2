@@ -5,8 +5,19 @@
 
   <!-- set connect param -->
   <!-- <arg name="camera_com" default="/dev/video0" /> -->
-  <arg name="gnss_com" default="/dev/ttyACM1" />
-  <!-- <arg name="gnss_com" default="/dev/GNSS_SERIAL" /> -->
+  <!-- <arg name="gnss_com" default="/dev/ttyACM1" /> -->
+  
+  <arg name="gnss_com" default="/dev/GNSS_SERIAL" />
+  <!-- GNSSポート設定方法(wizurg2号機の場合)
+    $ lsusb
+    GNSS電源USB：Bus 001 Device 011: ID 1915:520f Nordic Semiconductor ASA nRF52 USB CDC Demo
+        -> ベンダーID: 1915 プロダクトID: 520f
+    GNSS通信USB：Bus 001 Device 012: ID 1546:01a9 U-Blox AG u-blox GNSS receiver
+        -> べンダーID: 1546 プロダクトID: 01a9
+    /etc/udev/rules.d/99-seeed-serial.rulesを以下のように編集
+                                                                                                       
+  -->
+
   <arg name="gnss_baud" default="38400" />
   <arg name="ust_ip" default="192.168.0.11" />
   <arg name="ust2_ip" default="192.168.0.13" />  
