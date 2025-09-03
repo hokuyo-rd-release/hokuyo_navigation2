@@ -2,6 +2,26 @@
 
 #------- 環境変数の確認 -------
 # ros1 echo ros workspace: ${ROS_WORKSPACE:?ROS_WORKSPACE is Undefined}
+# Docker環境かどうかを判定する
+# コンテナの起動時に -e DOCKER_ENV=1 を指定することで、Docker環境とみなすことができます。
+if [ -n "$DOCKER_ENV" ]; then
+    source /opt/ros/humble/setup.bash
+    cd ${HOME}/colcon_ws
+    source install/setup.bash
+    source ~/.bashrc
+    ROS2_WS="${HOME}/colcon_ws"
+    HOKUYO_NAV2_PKG_PATH="${HOME}/colcon_ws/src/hokuyo_navigation2"
+else
+    source /opt/ros/humble/setup.bash
+    # ワークスペースのパスもホストOSのものに合わせる
+    # 実際のホストOSのワークスペースパスに置き換えてください
+    cd ${HOME}/colcon_ws
+    source install/setup.bash
+    source ~/.bashrc
+    ROS2_WS="${HOME}/colcon_ws"
+    HOKUYO_NAV2_PKG_PATH="${HOME}/colcon_ws/src/hokuyo_navigation2"
+fi
+
 
 #------- 引数の確認 -------
 # 第1引数
@@ -16,7 +36,7 @@ if [ -z "$2" ]; then
 fi
 
 #------- カレントディレクトリの取得 -------
-CURRENT=$HOME/colcon_ws/src/hokuyo_navigation2
+CURRENT=$HOKUYO_NAV2_PKG_PATH
 echo current dir: $CURRENT
 rosbag_dir=$CURRENT/rosbag;
 echo rosbag dir: $rosbag_dir
@@ -34,7 +54,7 @@ fi
 #------- config.csv 読み込み -------
 if [ "$3" = "" ]; then
   # ヘッダー行をスキップするために tail -n +2 を追加
-  options=(`cat config/config.csv | tail -n +2`)
+  options=(`cat ${CURRENT}/config/config.csv | tail -n +2`)
   echo "option (from config/config.csv): ${options[@]}"
 else
   options=(`cat "$3" | tail -n +2`)
@@ -102,5 +122,5 @@ if [ "$RECORD_DURATION" -le 0 ]; then
     exit 0
 fi
 #gnome-terminal --tab -t "ros2 bag record" -- bash -c "cd ${CURRENT}; echo 'Recording for ${RECORD_DURATION} seconds'; timeout ${RECORD_DURATION} ros2 bag record -o \"$2\" $gnss_topic $pointcloud_topic $lio_topic; bash"
-gnome-terminal --tab -t "ros2 bag record" -- bash -c "/home/colcon_ws/src/hokuyo_navigation2/scripts/rosbag_record_with_timeout.bash $2 ${rosbag_dir} ${RECORD_DURATION} ${gnss_topic} ${pointcloud_topic} ${lio_topic}; bash"
-gnome-terminal --tab -t "progress bar" -- bash -c "/home/colcon_ws/src/hokuyo_navigation2/scripts/progress_bar.bash ${BAG_DURATION}; bash"
+gnome-terminal --tab -t "ros2 bag record" -- bash -c "$HOKUYO_NAV2_PKG_PATH/scripts/rosbag_record_with_timeout.bash $2 ${rosbag_dir} ${RECORD_DURATION} ${gnss_topic} ${pointcloud_topic} ${lio_topic}; bash"
+gnome-terminal --tab -t "progress bar" -- bash -c "$HOKUYO_NAV2_PKG_PATH/scripts/progress_bar.bash ${BAG_DURATION}; bash"

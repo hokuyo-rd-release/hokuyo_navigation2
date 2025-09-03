@@ -1,5 +1,27 @@
 #!/bin/bash
 
+# Docker環境かどうかを判定する
+# コンテナの起動時に -e DOCKER_ENV=1 を指定することで、Docker環境とみなすことができます。
+if [ -n "$DOCKER_ENV" ]; then
+    source /opt/ros/humble/setup.bash
+    cd ${HOME}/colcon_ws
+    source install/setup.bash
+    source ~/.bashrc
+    ROS2_WS="${HOME}/colcon_ws"
+    HOKUYO_SLAM_WS="${HOME}/github/hokuyo_slam_ros2"
+    HOKUYO_NAV2_PKG_PATH=${ROS2_WS}/src/hokuyo_navigation2
+else
+    source /opt/ros/humble/setup.bash
+    # ワークスペースのパスもホストOSのものに合わせる
+    # 実際のホストOSのワークスペースパスに置き換えてください
+    cd ${HOME}/colcon_ws
+    source install/setup.bash
+    source ~/.bashrc
+    ROS2_WS="${HOME}/colcon_ws"
+    HOKUYO_SLAM_WS="${HOME}/github/hokuyo_slam_ros2"
+    HOKUYO_NAV2_PKG_PATH=${ROS2_WS}/src/hokuyo_navigation2
+fi
+
 # 実行方法
 # ./hokuyo_slam.bash <rosbagファイル> <ディレクトリ名> <option>
 # 第三引数はconfig/config.csvが読み込まれるため、必要に応じてcsvを編集することで
@@ -10,7 +32,8 @@ export CMAKE_PREFIX_PATH=/opt/vtk8
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/vtk8/lib
 export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:/opt/pcl
 
-HOKUYO_SLAM_WS="/home/github/hokuyo_slam_ros2"
+# HOKUYO_SLAM_WS="/home/github/hokuyo_slam_ros2"
+echo $HOKUYO_SLAM_WS
 
 if [ -z "$1" ]; then
   echo "Error: 引数が不足しています <フォルダ名>"
@@ -24,7 +47,7 @@ if [ -z "$2" ]; then
 fi
 
 # チェックするパス
-PATH_TO_CHECK="rosbag/$1"
+PATH_TO_CHECK="${HOKUYO_NAV2_PKG_PATH}/rosbag/$1"
 
 # ファイルが存在するかチェック
 if [ -f "$PATH_TO_CHECK" ]; then
@@ -37,10 +60,11 @@ else
 fi
 
 #------- カレントディレクトリの取得 -------
-CURRENT=$(cd $(dirname $0);pwd)
+# CURRENT=$(cd $(dirname $0);pwd)
+CURRENT=$HOKUYO_NAV2_PKG_PATH
 echo current dir: $CURRENT
 rosbag_dir=$CURRENT/rosbag;
-map_dir=$CURRENT;
+map_dir=$CURRENT/map;
 echo rosbag dir: $rosbag_dir
 echo 'ouput directory_name: '"$2"
 echo 'rosbag file: ' "$1"
@@ -48,7 +72,7 @@ echo "All args are checked."
 
 #------- config.csv 読み込み -------
 if [ "$3" = "" ]; then
-  options=(`cat config/config.csv`)
+  options=(`cat ${CURRENT}/config/config.csv`)
   echo option: $options
 else
   options=(`cat $3`)
@@ -72,6 +96,8 @@ echo 'pointcloud_topic: '${pointcloud_topic}
 echo 'lio_topic: '${lio_topic}
 echo 'gnss_cov_thre: '${gnss_cov_thre}
 sleep 1
+
+cd $HOKUYO_NAV2_PKG_PATH
 
 # ディレクトリ作成
 mkdir -p data/$2
