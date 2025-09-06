@@ -189,6 +189,7 @@ private:
     std::string child_frame_id_;
 
     bool tf_en_;
+    bool initial_tf_en_;
     bool odom_en_;
     bool mode_2d_;
     bool use_init_R_;
@@ -224,6 +225,7 @@ public:
         this->declare_parameter<std::string>("frame_id", "body");
         this->declare_parameter<std::string>("child_frame_id", "base_link");
         this->declare_parameter<bool>("tf_en", true);
+        this->declare_parameter<bool>("initial_tf_en", true);
         this->declare_parameter<bool>("odom_en", true);
         this->declare_parameter<bool>("mode_2d", false);
         this->declare_parameter<bool>("use_init_R", false);
@@ -236,6 +238,7 @@ public:
         this->get_parameter("frame_id", frame_id_);
         this->get_parameter("child_frame_id", child_frame_id_);
         this->get_parameter("tf_en", tf_en_);
+        this->get_parameter("initial_tf_en", initial_tf_en_);
         this->get_parameter("odom_en", odom_en_);
         this->get_parameter("mode_2d", mode_2d_);
         this->get_parameter("use_init_R", use_init_R_);
@@ -264,6 +267,22 @@ public:
         );
 
         tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
+
+
+        if (tf_en_ && initial_tf_en_) {
+            geometry_msgs::msg::TransformStamped odom_trans;
+            odom_trans.header.stamp = this->now();
+            odom_trans.header.frame_id = frame_id_;
+            odom_trans.child_frame_id = child_frame_id_;
+            odom_trans.transform.translation.x = 0.0;
+            odom_trans.transform.translation.y = 0.0;
+            odom_trans.transform.translation.z = 0.0;
+            odom_trans.transform.rotation.x = 0.0;
+            odom_trans.transform.rotation.y = 0.0;
+            odom_trans.transform.rotation.z = 0.0;
+            odom_trans.transform.rotation.w = 1.0;
+            tf_broadcaster_->sendTransform(odom_trans);
+        }
     }
 
     void callback(const nav_msgs::msg::Odometry::SharedPtr msg) {

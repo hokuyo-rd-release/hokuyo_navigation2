@@ -246,7 +246,7 @@ else
     echo "navigation_true"
     echo "wayfile = ${wayfile}.json"
     sleep 7.0s
-    cd ${HOKUYO_NAV2_PKG_PATH}/waypoints; ros2 run waypoint_manager waypoint_manager -x ${HOKUYO_NAV2_PKG_PATH}/waypoints/${wayfile}.json --ros-args -p use_gnss_switch:=${use_gnss_switch}
+    cd ${HOKUYO_NAV2_PKG_PATH}/waypoints; ros2 run waypoint_manager waypoint_manager -x ${HOKUYO_NAV2_PKG_PATH}/waypoints/${wayfile}.json once --ros-args -p use_gnss_switch:=${use_gnss_switch}
     cd -
  fi
 

@@ -107,22 +107,6 @@
         <arg name="sync_enable" value="false"/>
         <arg name="lio_frame" value="lio_base_link"/>
       </include>
-      <node pkg="test_tools" exec="imu_coordinate_changer" name="imu_coordinate_changer">
-        <param name="sub_topic_name" value="hokuyo3d/imu" />
-        <param name="pub_topic_name" value="hokuyo3d/imu_transed" />
-        <param name="averaging_num" value="7" />
-      </node>
-      <include file="$(var coordinate_transform_pkg_path)/launch/gnss_lio_switch_launch.xml">
-        <arg name="param_file" value="$(var gnss_lio_switch_only_param)" />
-      </include>
-      <node pkg="fix2xyz" exec="fix_odom_to_fix_orient" name="fix_odom_to_fix_orient">
-        <param name="utm_odom_topic" value="odometry/utm" />
-        <param name="fix_topic" value="fix/switch" />
-        <param name="fix_with_orient_topic" value="/fix_with_orient/switch" />
-      </node>
-      <node pkg="hokuyo_navigation2" exec="odom_frame_changer" name="switch_odom_tf">
-        <param from="$(var switch_only_tf_param)" />
-      </node>
     </group>
     
     <group unless="$(var use_gnss_switch)">
@@ -150,7 +134,7 @@
       <remap from="/tf_static" to="tf_static"/>
     </node>
     <node pkg="nav2_lifecycle_manager" exec="lifecycle_manager" name="lifecycle_manager" output="log">
-      <param name="use_sim_time" value="false"/>
+      <param name="use_sim_time" value="$(var use_sim_time)"/>
       <param name="autostart" value="true" />
       <param name="node_names" value="$(var lifecycle_nodes)" />
     </node>
@@ -174,6 +158,30 @@
   <group if="$(var use_navigation)">
     <group if="$(var use_lio)">
       <node pkg="rviz2" exec="rviz2" name="navigation_rviz" args="-d $(var hokuyo_navigation_pkg_path)/rviz/wizurg_navigation.rviz"/>
+      <group if="$(var use_gnss_switch)">
+        <node pkg="test_tools" exec="imu_coordinate_changer" name="imu_coordinate_changer">
+          <param name="sub_topic_name" value="hokuyo3d/imu" />
+          <param name="pub_topic_name" value="hokuyo3d/imu_transed" />
+          <param name="averaging_num" value="7" />
+        </node>
+        <include file="$(var coordinate_transform_pkg_path)/launch/gnss_lio_switch_launch.xml">
+          <arg name="param_file" value="$(var gnss_lio_switch_only_param)" />
+        </include>
+        <node pkg="fix2xyz" exec="fix_odom_to_fix_orient" name="fix_odom_to_fix_orient">
+          <param name="utm_odom_topic" value="odometry/utm" />
+          <param name="fix_topic" value="fix/switch" />
+          <param name="fix_with_orient_topic" value="/fix_with_orient/switch" />
+        </node>
+        <node pkg="hokuyo_navigation2" exec="odom_frame_changer" name="switch_odom_tf">
+          <param from="$(var switch_only_tf_param)" />
+        </node>
+
+        <include file="$(find-pkg-share lio_nav2_bringup)/launch/navigation_launch.py">
+          <arg name="map" value="$(var map_dir)/$(var map_file).yaml"/>
+          <arg name="params_file" value="$(var hokuyo_navigation_pkg_path)/config/nav2/nav2_gnss_switch_params.yaml"/>
+        </include>
+      </group>
+
       <group unless="$(var use_gnss_switch)">
         <group if="$(var use_localization)">
           <node pkg="simple_fastlio_localization" exec="localization_node" name="localization_node" output="screen" launch-prefix="bash -c 'sleep 1.0; $0 $@'">
@@ -192,12 +200,12 @@
             <remap from="/estimated_pose" to="/estimated_pose"/>
             <remap from="/map_cloud" to="/map_cloud"/>
           </node>
-        </group>
       </group>
       <include file="$(find-pkg-share lio_nav2_bringup)/launch/navigation_launch.py">
         <arg name="map" value="$(var map_dir)/$(var map_file).yaml"/>
         <!-- <arg name="params_file" value="$(var hokuyo_navigation_pkg_path)/config/nav2/nav2_params.yaml"/> -->
       </include>
+      </group>
       <!-- <include file="$(var pointcloud_to_laserscan_pkg_path)/launch/pointcloud_to_laserscan_launch.py"/> -->
       <node pkg="rviz2" exec="rviz2" name="waypoint_rviz_editor" args="-d $(var hokuyo_navigation_pkg_path)/rviz/nav2.rviz"/>
     </group>
