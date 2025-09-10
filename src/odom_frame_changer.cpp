@@ -220,13 +220,13 @@ public:
         position_arr_.resize(3);
         position_arr_={0.0,0.0,0.0};
 
-        this->declare_parameter<std::string>("sub_topic_name", "hokuyo_lio/lidar_odom");
-        this->declare_parameter<std::string>("pub_topic_name", "hokuyo_lio/trans_odom");
-        this->declare_parameter<std::string>("frame_id", "body");
+        this->declare_parameter<std::string>("sub_topic_name", "odometry/switch_on_map");
+        this->declare_parameter<std::string>("pub_topic_name", "dummy");
+        this->declare_parameter<std::string>("frame_id", "map");
         this->declare_parameter<std::string>("child_frame_id", "base_link");
         this->declare_parameter<bool>("tf_en", true);
         this->declare_parameter<bool>("initial_tf_en", true);
-        this->declare_parameter<bool>("odom_en", true);
+        this->declare_parameter<bool>("odom_en", false);
         this->declare_parameter<bool>("mode_2d", false);
         this->declare_parameter<bool>("use_init_R", false);
         this->declare_parameter<int>("init_num", 5);

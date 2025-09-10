@@ -5,6 +5,7 @@ switch_odom_tf:
     frame_id: "map"
     child_frame_id: "base_link"
     tf_en: true
+    initial_tf_en: true
     odom_en: false
     use_init_R: false
     init_num: 5

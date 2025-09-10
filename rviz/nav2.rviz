@@ -258,9 +258,9 @@ Visualization Manager:
               Enabled: true
               Invert Rainbow: false
               Max Color: 255; 255; 255
-              Max Intensity: 3943
+              Max Intensity: 969
               Min Color: 0; 0; 0
-              Min Intensity: 16
+              Min Intensity: 72
               Name: aligned_scan_points
               Position Transformer: XYZ
               Selectable: true
@@ -356,9 +356,9 @@ Visualization Manager:
               Enabled: true
               Invert Rainbow: false
               Max Color: 255; 255; 255
-              Max Intensity: 1157
+              Max Intensity: 1677
               Min Color: 0; 0; 0
-              Min Intensity: 12
+              Min Intensity: 16
               Name: loc_cloud
               Position Transformer: XYZ
               Selectable: true
@@ -491,6 +491,18 @@ Visualization Manager:
             Reliability Policy: Reliable
             Value: /waypoints
           Value: true
+        - Class: rviz_default_plugins/MarkerArray
+          Enabled: true
+          Name: MarkerArray
+          Namespaces:
+            {}
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /waypoint_markers_array
+          Value: true
       Enabled: true
       Name: Waypoint
     - Class: rviz_common/Group
@@ -528,7 +540,7 @@ Visualization Manager:
           Color: 255; 255; 255
           Color Transformer: FlatColor
           Decay Time: 0
-          Enabled: false
+          Enabled: true
           Invert Rainbow: false
           Max Color: 255; 255; 255
           Max Intensity: 0
@@ -549,7 +561,7 @@ Visualization Manager:
             Value: /map_cloud
           Use Fixed Frame: true
           Use rainbow: true
-          Value: false
+          Value: true
         - Alpha: 1
           Autocompute Intensity Bounds: true
           Autocompute Value Bounds:
@@ -617,7 +629,7 @@ Visualization Manager:
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
-    Fixed Frame: lio_odom
+    Fixed Frame: map
     Frame Rate: 30
   Name: root
   Tools:
@@ -660,25 +672,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 8.922389030456543
+      Distance: 14.472330093383789
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.7992390394210815
-        Y: -2.6509265899658203
-        Z: 3.156688928604126
+        X: 1.607094168663025
+        Y: 2.5362818241119385
+        Z: 0.9964349269866943
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.7403977513313293
+      Pitch: 0.5097971558570862
       Target Frame: base_link
       Value: Orbit (rviz)
-      Yaw: 5.382216930389404
+      Yaw: 4.3608479499816895
     Saved: ~
 Window Geometry:
   Displays:
