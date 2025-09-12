@@ -1,9 +1,13 @@
 #!/bin/bash
 
 source /opt/ros/humble/setup.bash
-cd /home/colcon_ws
+cd $HOME/colcon_ws
 source install/setup.bash
 source ~/.bashrc
+
+# =====================（岡本→高橋）ここを引数にして使ってください==========================
+use_gnss_switch="true" #-- コア技術でナビゲーションする場合は "true" にする. マップ作成・ウェイポイント作成などの場合は"false" --
+# ===========================================================================================
 
 WIZURG_OPTIONS=9
 # WIZURG_OPTIONS=$(zenity --list --title="WIZURGの起動コマンド" --text="1つ選択してください" \
@@ -31,8 +35,8 @@ if [ -z "$WIZURG_OPTIONS" ]; then
   exit 1
 fi
 
-ROS2_WS="/home/colcon_ws"
-HOKUYO_NAV2_PKG_PATH="/home/colcon_ws/src/hokuyo_navigation2"
+ROS2_WS="$HOME/colcon_ws"
+HOKUYO_NAV2_PKG_PATH="$ROS2_WS/src/hokuyo_navigation2"
 
 cd ${HOKUYO_NAV2_PKG_PATH}
 
@@ -188,11 +192,11 @@ if [ "x${multi_map}" = "xtrue" ]; then
     echo "ros2 bag record"
     gnome-terminal -- bash -c "sleep 2; cd ${rosbag_dir}; ros2 bag record -a -o ${Rmapfile[$i-1]}; bash"
   fi
-  gnome-terminal -- bash -c "ros2 launch hokuyo_navigation2 hokuyo_nav2_bringup_launch.xml use_joy:=${use_joy} use_mapping:=${mapping} use_navigation:=${navigation} use_loader:=${loader} use_editor:=${editor} use_sensor:=${sensor} use_icart:=${icart} use_lio:=${use_lio} use_unity_sim:=${use_unity} map_file:=${Rmapfile[$i-1]} initial_pose:="${Rpose1},${Rpose2},${Rpose3},${Rpose4},${Rpose5},${Rpose6},${Rpose7}";bash"
+  gnome-terminal -- bash -c "ros2 launch hokuyo_navigation2 hokuyo_nav2_bringup_launch.xml use_joy:=${use_joy} use_mapping:=${mapping} use_navigation:=${navigation} use_loader:=${loader} use_editor:=${editor} use_sensor:=${sensor} use_icart:=${icart} use_lio:=${use_lio} use_unity_sim:=${use_unity} use_gnss_switch:=${use_gnss_switch} map_file:=${Rmapfile[$i-1]} initial_pose:="${Rpose1},${Rpose2},${Rpose3},${Rpose4},${Rpose5},${Rpose6},${Rpose7}";bash"
   sleep 2s
   echo "sleep 2"
   echo "start wizurg_navigation ${Rwayfile[$i-1]}"
-  cd ${HOKUYO_NAV2_PKG_PATH}/waypoints; ros2 run hokuyo_navigation2 waypoint_manager -x ${Rwayfile[$i-1]}.json once
+  cd ${HOKUYO_NAV2_PKG_PATH}/waypoints; ros2 run hokuyo_navigation2 waypoint_manager -x ${Rwayfile[$i-1]}.json once --ros-args -p use_gnss_switch:=${use_gnss_switch}
   echo "finish map"
   cd -
  done
@@ -207,9 +211,15 @@ else
     i=`expr $i + 1`
   #   echo ${init_pose}
   done
+  j=0
+  for init_latlon in `cat ${HOKUYO_NAV2_PKG_PATH}/data/${mapfile}/init_lat_lon_alt.txt`
+  do
+    j=`expr $j + 1`
+  done
   IFS=$IFS_BACKUP
 
   pose_arr=( `echo ${init_pose} | tr -s ',' ' '`)
+  latlon_arr=( `echo ${init_latlon} | tr -s ',' ' '`)
   pose1=${pose_arr[0]}
   pose2=${pose_arr[1]}
   pose3=${pose_arr[2]}
@@ -217,6 +227,9 @@ else
   pose5=${pose_arr[4]}
   pose6=${pose_arr[5]}
   pose7=${pose_arr[6]}
+  latlon1=${latlon_arr[0]}
+  latlon2=${latlon_arr[1]}
+  latlon3=${latlon_arr[2]}
 
   echo ${pose1} ${pose2} ${pose3} ${pose4} ${pose5} ${pose6} ${pose7}
 
@@ -226,7 +239,7 @@ else
      gnome-terminal -- bash -c "sleep 2; cd ${rosbag_dir}; ros2 bag record -a -o ${mapfile}; bash"
   fi
 #-------------------------------------
- gnome-terminal -- bash -c "ros2 launch hokuyo_navigation2 hokuyo_nav2_bringup_launch.xml use_joy:=${use_joy} use_mapping:=${mapping} use_navigation:=${navigation} use_loader:=${loader} use_editor:=${editor} use_sensor:=${sensor} use_icart:=${icart}  use_lio:=${use_lio} use_unity_sim:=${use_unity} use_sensor:=${sensor} use_icart:=${icart} map_file:=${mapfile} initial_pose:="${pose1},${pose2},${pose3},${pose4},${pose5},${pose6},${pose7}" ;bash"
+ gnome-terminal -- bash -c "ros2 launch hokuyo_navigation2 hokuyo_nav2_bringup_launch.xml use_joy:=${use_joy} use_mapping:=${mapping} use_navigation:=${navigation} use_loader:=${loader} use_editor:=${editor} use_sensor:=${sensor} use_icart:=${icart}  use_lio:=${use_lio} use_unity_sim:=${use_unity} use_gnss_switch:=${use_gnss_switch} use_sensor:=${sensor} use_icart:=${icart} map_file:=${mapfile} initial_pose:="${pose1},${pose2},${pose3},${pose4},${pose5},${pose6},${pose7}" latlon_pose:="${latlon1},${latlon2},${latlon3}" ;bash"
  sleep 1
  if [ "x${loader}" = "xtrue" ]; then
     gnome-terminal -- bash -c "cd ${rosbag_dir}; ros2 bag play ${mapfile}" # rosbag play → ./remap.sh
@@ -237,14 +250,6 @@ else
     ros2 run waypoint_manager waypoint_manager -e ${HOKUYO_NAV2_PKG_PATH}/waypoints/${wayfile}.json
  fi
  # ---------------------------------------
- 
-#  if [ "x${navigation}" = "xtrue" ]; then
-#     echo "navigation_true"
-#     echo "wayfile = ${wayfile}.json"
-#     sleep 7.0s
-#     cd ${HOKUYO_NAV2_PKG_PATH}/waypoints; ros2 run waypoint_manager waypoint_manager -x ${HOKUYO_NAV2_PKG_PATH}/waypoints/${wayfile}.json
-#     cd -
-#  fi
 
 fi
 

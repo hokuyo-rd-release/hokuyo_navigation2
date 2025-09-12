@@ -7,7 +7,7 @@
   <arg name="coordinate_transform_pkg_path" default="$(find-pkg-share coordinate_transform)"/>
   <arg name="urdf_path" default="$(var hokuyo_navigation_pkg_path)/urdf/arno.xacro"/>
   <arg name="robot_description" default="$(command 'xacro $(var urdf_path)')"/>
-  <arg name="lifecycle_nodes" default="['map_server']" />
+  <!-- <arg name="lifecycle_nodes" default="['map_server']" /> -->
 
 
   <arg name="use_sim_time" default="false"/>
@@ -125,7 +125,12 @@
     </group>
   </group>
 
-  <group if="$(eval &quot; '$(var use_loader)'=='true' or '$(var use_editor)'=='true'&quot;)">
+  <!-- <group if="$(var use_editor)">
+    <include file="$(find-pkg-share lio_nav2_bringup)/launch/navigation_launch.py">
+      <arg name="map" value="$(var map_dir)/$(var map_file).yaml"/>
+      <arg name="params_file" value="$(var hokuyo_navigation_pkg_path)/config/nav2/nav2_params.yaml"/>
+    </include>
+
     <node pkg="nav2_map_server" exec="map_server" name="map_server" output="screen" launch-prefix="bash -c 'sleep 1.0; $0 $@'">
       <param name="topic_name" value="map"/>
       <param name="frame_id" value="map"/>
@@ -138,7 +143,7 @@
       <param name="autostart" value="true" />
       <param name="node_names" value="$(var lifecycle_nodes)" />
     </node>
-  </group>
+  </group> -->
 
   <group if="$(var use_mapping)">
     <group if="$(var use_lio)">
@@ -203,7 +208,7 @@
       </group>
       <include file="$(find-pkg-share lio_nav2_bringup)/launch/navigation_launch.py">
         <arg name="map" value="$(var map_dir)/$(var map_file).yaml"/>
-        <!-- <arg name="params_file" value="$(var hokuyo_navigation_pkg_path)/config/nav2/nav2_params.yaml"/> -->
+        <arg name="params_file" value="$(var hokuyo_navigation_pkg_path)/config/nav2/nav2_params.yaml"/>
       </include>
       </group>
       <!-- <include file="$(var pointcloud_to_laserscan_pkg_path)/launch/pointcloud_to_laserscan_launch.py"/> -->
@@ -215,7 +220,7 @@
     <!-- <include file="$(var hokuyo_navigation_pkg_path)/launch/nav2_launch.xml"/> -->
     <include file="$(find-pkg-share lio_nav2_bringup)/launch/navigation_launch.py">
       <arg name="map" value="$(var map_dir)/$(var map_file).yaml"/>
-      <!-- <arg name="params_file" value="$(var hokuyo_navigation_pkg_path)/config/nav2/nav2_params.yaml"/> -->
+      <arg name="params_file" value="$(var hokuyo_navigation_pkg_path)/config/nav2/nav2_params.yaml"/>
     </include>
     <group if="$(var use_lio)">
       <node pkg="simple_fastlio_localization" exec="localization_node" name="localization_node" output="screen" launch-prefix="bash -c 'sleep 5.0; $0 $@'">
@@ -243,7 +248,7 @@
     </include> -->
     <include file="$(find-pkg-share lio_nav2_bringup)/launch/navigation_launch.py">
       <arg name="map" value="$(var map_dir)/$(var map_file).yaml"/>
-      <!-- <arg name="params_file" value="$(var hokuyo_navigation_pkg_path)/config/nav2/nav2_params.yaml"/> -->
+      <arg name="params_file" value="$(var hokuyo_navigation_pkg_path)/config/nav2/nav2_params.yaml"/>
     </include>
 
     <node pkg="pcl_ros" exec="pcd_to_pointcloud" name="pcd_to_pointcloud_node" output="screen">

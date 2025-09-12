@@ -22,8 +22,8 @@ while true; do
         echo "Closing Waypoint terminal!"
         pkill -f waypoint
         sleep 1s
-        # echo "kill all ros2 nodes!"
-        # ps aux | grep ros2 | grep -v grep | grep -v vizanti | grep -v rosapi | grep -v rosbridge_websocket | grep -v server | awk '{ print "kill -9", $2 }' | sh
+        echo "kill all ros2 nodes!"
+        ps aux | grep ros2 | grep -v grep | grep -v vizanti | grep -v rosapi | grep -v rosbridge_websocket | grep -v server | awk '{ print "kill -9", $2 }' | sh
         exit 0
     fi
 done

@@ -16,7 +16,7 @@ if [ -z "$2" ]; then
 fi
 
 #------- カレントディレクトリの取得 -------
-CURRENT=/home/colcon_ws/src/hokuyo_navigation2
+CURRENT=$HOME/colcon_ws/src/hokuyo_navigation2
 echo current dir: $CURRENT
 rosbag_dir=$CURRENT/rosbag;
 echo rosbag dir: $rosbag_dir
@@ -33,4 +33,4 @@ fi
 
 sleep 1
 
-gnome-terminal -- bash -c "/home/colcon_ws/src/hokuyo_navigation2/scripts/rosbag_lio_fix_pc.bash $1 $2 $3; bash"
+gnome-terminal -- bash -c "$CURRENT/scripts/rosbag_lio_fix_pc.bash $1 $2 $3; bash"

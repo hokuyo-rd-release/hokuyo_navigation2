@@ -102,5 +102,5 @@ if [ "$RECORD_DURATION" -le 0 ]; then
     exit 0
 fi
 #gnome-terminal --tab -t "ros2 bag record" -- bash -c "cd ${CURRENT}; echo 'Recording for ${RECORD_DURATION} seconds'; timeout ${RECORD_DURATION} ros2 bag record -o \"$2\" $gnss_topic $pointcloud_topic $lio_topic; bash"
-gnome-terminal --tab -t "ros2 bag record" -- bash -c "/home/colcon_ws/src/hokuyo_navigation2/scripts/rosbag_record_with_timeout.bash $2 ${rosbag_dir} ${RECORD_DURATION} ${gnss_topic} ${pointcloud_topic} ${lio_topic}; bash"
-gnome-terminal --tab -t "progress bar" -- bash -c "/home/colcon_ws/src/hokuyo_navigation2/scripts/progress_bar.bash ${BAG_DURATION}; bash"
+gnome-terminal --tab -t "ros2 bag record" -- bash -c "$CURRENT/scripts/rosbag_record_with_timeout.bash $2 ${rosbag_dir} ${RECORD_DURATION} ${gnss_topic} ${pointcloud_topic} ${lio_topic}; bash"
+gnome-terminal --tab -t "progress bar" -- bash -c "$CURRENT/scripts/progress_bar.bash ${BAG_DURATION}; bash"
