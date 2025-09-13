@@ -1,7 +1,7 @@
 #!/bin/bash
 
 source /opt/ros/humble/setup.bash
-cd ~/colcon_ws
+cd $HOME/colcon_ws
 source install/setup.bash
 source ~/.bashrc
 

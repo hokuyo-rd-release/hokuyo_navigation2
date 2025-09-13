@@ -164,10 +164,10 @@
             0.8155481046961393
         ],
         {
-            "type": "normal",
-            "value": 0,
-            "xy_tolerance": 1.0,
-            "yaw_tolerance": 3.14
+            "type": "stop",
+            "value": 1.0,
+            "xy_tolerance": 0.1,
+            "yaw_tolerance": 1.0
         }
     ],
     [
@@ -278,10 +278,10 @@
             0.9680270870483788
         ],
         {
-            "type": "normal",
-            "value": 0,
-            "xy_tolerance": 1.0,
-            "yaw_tolerance": 3.14
+            "type": "stop",
+            "value": 1.0,
+            "xy_tolerance": 0.1,
+            "yaw_tolerance": 1.0
         }
     ],
     [

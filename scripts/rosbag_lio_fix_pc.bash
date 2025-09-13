@@ -55,7 +55,7 @@ run_lio="${option_arr[3]}";
 sleep 3
 
 source /opt/ros/$ROS_DISTRO/setup.bash
-source /home/colcon_ws/install/setup.bash
+source $HOME/colcon_ws/install/setup.bash
 
 #gnome-terminal --tab -t "Tab 0" -- bash -c "roscore; bash"
 #sleep 2
