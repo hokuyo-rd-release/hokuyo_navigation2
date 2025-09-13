@@ -17,6 +17,7 @@ find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2_sensor_msgs REQUIRED)
 find_package(pcl_conversions REQUIRED)
+find_package(Eigen3 REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -25,7 +26,8 @@ endif()
 
 # Add your new executable here
 add_executable(gnss_lio_debug src/gnss_lio_debug.cpp)
-add_executable(pcd_tf_transform src/pcd_tf_transform.cpp) # <--- 追加
+add_executable(pcd_tf_transform src/pcd_tf_transform.cpp)
+add_executable(odom_frame_changer src/odom_frame_changer.cpp)
 
 ament_target_dependencies(gnss_lio_debug
   rclcpp
@@ -34,7 +36,6 @@ ament_target_dependencies(gnss_lio_debug
   sensor_msgs
 )
 
-# 新しいノードの依存関係を追加
 ament_target_dependencies(pcd_tf_transform
   rclcpp
   nav_msgs
@@ -46,6 +47,16 @@ ament_target_dependencies(pcd_tf_transform
   pcl_conversions
 )
 
+ament_target_dependencies(odom_frame_changer
+  rclcpp
+  std_msgs
+  sensor_msgs
+  geometry_msgs
+  nav_msgs
+  tf2_ros
+  Eigen3
+)
+
 # jsk_rviz_plugins のインクルードディレクトリを追加
 target_include_directories(gnss_lio_debug PUBLIC
   ${jsk_rviz_plugins_INCLUDE_DIRS}
@@ -55,10 +66,14 @@ target_include_directories(gnss_lio_debug PUBLIC
 target_include_directories(pcd_tf_transform PUBLIC
   ${pcl_conversions_INCLUDE_DIRS}
 )
+target_include_directories( odom_frame_changer PUBLIC
+  "/usr/local/include/eigen3"
+)
 
 install(TARGETS
   gnss_lio_debug
-  pcd_tf_transform # <--- 追加
+  pcd_tf_transform
+  odom_frame_changer
   DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -67,6 +82,7 @@ install(DIRECTORY urdf config launch rviz src scripts map waypoints
 
 install(PROGRAMS scripts/coordinator.sh
   DESTINATION lib/${PROJECT_NAME})
+
 
 ament_export_dependencies(
   rclcpp

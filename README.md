@@ -31,9 +31,21 @@
 
 ## ビルド
 
+linuxターミナルコマンドのインストール
+```
+sudo apt-get install tree
+sudo apt-get install xdotool
+sudo apt-get install wmctrl
+
+```
+
+UAMノード       : https://github.com/f-wada/safety_urg_node2  
+SPELコア技術    : https://github.com/Hokuyo-RD/fusion_tools_ros2  
+緯度経度-マップ座標変換: https://github.com/Hokuyo-RD/fix2xyz_packages_ros2  
+
 ypspurのインストール
 ```
-cd ~/catkin_ws/src
+cd ~/colcon_ws/src
 git clone https://github.com/BND-tc/yp-spur.git
 cd yp-spur
 mkdir build
@@ -45,51 +57,39 @@ sudo make install
 
 icart3のインストール
 ```
-cd ~/catkin_ws/src
+cd ~/colcon_ws/src
 git clone https://github.com/Hokuyo-RD/icart_mini_driver_ros2
 ```
 hokuyo パッケージ群 (urg_node, hokuyo3d, base_local_planner, ylm_ros, hokuyo_navigation2)
 ```
-<!-- sudo apt-get install ros-noetic-urg-node
-sudo apt-get install ros-noetic-hokuyo3d -->
-<!-- sudo apt-get install ros-noetic-ira-laser-tools
-sudo apt-get install ros-noetic-gmapping -->
-<!-- sudo apt-get install ros-noetic-move-base
-sudo apt-get install ros-noetic-dwa-local-planner
-sudo apt-get install ros-noetic-base-local-planner
-sudo apt-get install ros-noetic-jsk-rviz-plugins -->
-sudo apt-get install ros-noetic-pointcloud-to-laserscan
-
-cd ~/catkin_ws/src
-git clone -b ros2 --recursive https://github.com/Hokuyo-RD/hokuyo_navigation2.git
-<!-- git clone https://github.com/Hokuyo-RD/ylm_ros -->
+cd ~/colcon_ws/src
+git clone -b okamoto_devel --recursive https://github.com/Hokuyo-RD/hokuyo_navigation2.git
 ```
 pointcloud_to_laserscan
 ```
-git clone https://github.com/Hokuyo-RD/pointcloud_to_laserscan.git
+git clone -b humble https://github.com/Hokuyo-RD/pointcloud_to_laserscan_ros2.git
 ```
 nmea_navsat_driver のインストール
 ```
-sudo apt-get install ros-noetic-nmea-navsat-driver
-git clone -b ros2 https://github.com/Hokuyo-RD/nmea_navsat_driver.git
+git clone -b ros2 https://github.com/Hokuyo-RD/nmea_navsat_driver_ros2.git
 ```
 rosdep による WizURGの依存関係パッケージのインストール
 ```
 sudo apt-get install python3-rosdep
 
-cd ~/catkin_ws/src
+cd ~/colcon_ws/src
 rosdep install -i --from-paths hokuyo_navigation2
 rosdep update
-catkin_make or catkin build
+colcon build --symlink-install
 ```
 .py .sh に実行権限を付与
 ```
-cd ~/catkin_ws/src/hokuyo_navigation2/src
+cd ~/colcon_ws/src/hokuyo_navigation2/src
 chmod +x wizurg_navigation.py
 chmod +x wizurg_waypoint_editor.py
 chmod +x wizurg_waypoint_maker.py
 
-cd ~/catkin_ws/src/hokuyo_navigation2/scripts
+cd ~/colcon_ws/src/hokuyo_navigation2/scripts
 chmod +x rosbag_mapping.sh
 chmod +x waypoint_editor.sh
 chmod +x waypoint_maker.sh
@@ -102,7 +102,7 @@ chmod +x wizurg_start.sh
 ypspur-coordinator -d /dev/ttyUSB0 --blvr -p ~/colcon_ws/src/hokuyo_navigation2/params/icart_ypspur_params/iCart3_100W.param
 
 端末 2
-cd ~/catkin_ws/src/yp-spur/build/sample
+cd ~/colcon_ws/src/yp-spur/build/sample
 ./run-test
 ```
 ### Docker の場合 
@@ -110,7 +110,7 @@ colcon build --symlink-install --packages-select icart_mini_driver
 でビルドしないとシェルスクリプトに実行権限が付与されない。
 
 ```
-sudo chown -R root:root /home/colcon_ws
+sudo chown -R root:root /home/ubuntu/colcon_ws
 ```
 ## プログラムの実行手順
 

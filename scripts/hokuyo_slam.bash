@@ -142,7 +142,7 @@ elif [ ${fix_rate} -eq 1 ] ; then
     #bash -c "gnuplot atc_odom_gnss.plt"
 
     # p2o_fastlio_util
-    cd data/$2/PCDs 
+    cd ${HOKUYO_NAV2_PKG_PATH}/data/$2/PCDs 
 
     bash -c "python3 ../../../src/extract_pcd_ros2.py ../$1 $pointcloud_topic" # ~/p2o_fastlio_util/extract_pcd 引数1 + 引数2
 

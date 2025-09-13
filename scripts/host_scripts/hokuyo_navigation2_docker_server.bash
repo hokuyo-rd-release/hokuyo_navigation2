@@ -11,11 +11,11 @@ cleanup() {
     PROCESS_PATTERNS=(
         "python3 .*hokuyo_navigation2_gui/server.py"
         "ros2 launch vizanti_server vizanti_server.launch.py"
-        "python3 .*rosbridge_websocket"
-        "python3 .*vizanti_server/server.py"
-        "vizanti_cpp/tf_consolidator"
-        "python3 .*rosapi/rosapi_node"
-        "python3 .*vizanti_server/service_handler.py"
+        # "python3 .*rosbridge_websocket"
+        # "python3 .*vizanti_server/server.py"
+        # "vizanti_cpp/tf_consolidator"
+        # "python3 .*rosapi/rosapi_node"
+        # "python3 .*vizanti_server/service_handler.py"
     )
 
     # すべての対象プロセスのPIDを取得し、降順にソート

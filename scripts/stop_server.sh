@@ -21,11 +21,11 @@ fi
 PROCESS_PATTERNS=(
     "python3 .*hokuyo_navigation2_gui/server.py"
     "ros2 launch vizanti_server vizanti_server.launch.py"
-    "python3 .*rosbridge_websocket"
-    "python3 .*vizanti_server/server.py"
-    "vizanti_cpp/tf_consolidator"
-    "python3 .*rosapi/rosapi_node"
-    "python3 .*vizanti_server/service_handler.py"
+    # "python3 .*rosbridge_websocket"
+    # "python3 .*vizanti_server/server.py"
+    # "vizanti_cpp/tf_consolidator"
+    # "python3 .*rosapi/rosapi_node"
+    # "python3 .*vizanti_server/service_handler.py"
 )
 
 # すべての対象プロセスのPIDを取得
@@ -62,13 +62,13 @@ else
 fi
 
 # ros2-daemon を安全に停止する
-echo "Attempting to stop ros2-daemon gracefully..."
-if [ -n "$DOCKER_ENV" ]; then
-    docker exec "$CONTAINER_NAME" bash -c "source /opt/ros/humble/setup.bash && ros2 daemon stop"
-else
-    source /opt/ros/humble/setup.bash && ros2 daemon stop
-fi
-sleep 1
+#echo "Attempting to stop ros2-daemon gracefully..."
+#if [ -n "$DOCKER_ENV" ]; then
+#    docker exec "$CONTAINER_NAME" bash -c "source /opt/ros/humble/setup.bash && ros2 daemon stop"
+#else
+#    source /opt/ros/humble/setup.bash && ros2 daemon stop
+#fi
+#sleep 1
 
 # Docker環境の場合のみコンテナを停止
 if [ -n "$DOCKER_ENV" ]; then
