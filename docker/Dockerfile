@@ -54,6 +54,7 @@ RUN apt install -y ros-$ROS_DISTRO-desktop-full ros-$ROS_DISTRO-turtlesim ros-$R
     source /etc/bash_completion && \
     apt clean && \
     rm -rf /var/lib/apt/lists/* && \
+	source /usr/share/bash-completion/completions/apt && \
     echo "succesfully"
 	
 WORKDIR /home/colcon_ws
