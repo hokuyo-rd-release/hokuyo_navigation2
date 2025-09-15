@@ -115,3 +115,18 @@ sudo chown -R root:root /home/ubuntu/colcon_ws
 ## プログラムの実行手順
 
 ### プログラムの実行の流れ
+
+## Docker
+### Optionの使用例 (GPU有り　コンテナ名=naviton　共有フォルダ=/home/$USER/share)
+```bash:bash
+./docker/run.bash -n hokuyo_navigation2 -s /home/$USER/share
+```
+
+ ## コンテナ作成後
+exitしてコンテナの外に出るとhomeディレクトリにCONTAINER_NAME.bash (CONTAINER_NAMEは自分で作成したコンテナの名前)が生成されている
+
+```bash:bash
+cd
+./CONTAINER_NAME.bash
+```
+次回からは上記のスクリプトを実行すると自動でコンテナをスタートしてコンテナ内に入れる
