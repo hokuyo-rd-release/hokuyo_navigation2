@@ -21,7 +21,7 @@
   <arg name="use_lio" default="false"/>
   <arg name="use_unity_sim" default="false"/>
   <arg name="is_indoor" default="false"/>
-  <arg name="stop_uam_manage" default="true"/>
+  <arg name="stop_uam_manage" default="false"/>
   <arg name="use_gnss_switch" default="false"/>
   <arg name="use_localization" default="true"/>
 
@@ -76,13 +76,10 @@
       <param name="origin_pose" value="$(var latlon_pose)" />
     </node>
   </group>
-  <!--
-  <node name="expo_cmdvel_manager" pkg="expo_safety_manage" exec="expo_cmdvel_manager" output="log">
+  <node name="cmdvel_manager" pkg="robot_safety_manage" exec="cmdvel_manager" output="log">
     <param name="stop_manage" value="$(var stop_uam_manage)" />
   </node>
-  <node name="expo_cmdvel_stopper" pkg="expo_safety_manage" exec="expo_cmdvel_stopper" output="log"/>
-  <node name="expo_sensor_checker" pkg="expo_safety_manage" exec="expo_sensor_checker" output="log"/>
-  -->
+  <node name="cmdvel_stopper" pkg="robot_safety_manage" exec="cmdvel_stopper" output="log"/>
   
   <node name="gnss_lio_debug" pkg="hokuyo_navigation2" exec="gnss_lio_debug" output="log"/>
   <!--icart no default no odom-->
@@ -183,6 +180,7 @@
 
         <include file="$(find-pkg-share lio_nav2_bringup)/launch/navigation_launch.py">
           <arg name="map" value="$(var map_dir)/$(var map_file).yaml"/>
+          <arg name="cmd_vel_topic" value="wizurg/cmd_vel"/>
           <arg name="params_file" value="$(var hokuyo_navigation_pkg_path)/config/nav2/nav2_gnss_switch_params.yaml"/>
         </include>
       </group>
@@ -208,6 +206,7 @@
       </group>
       <include file="$(find-pkg-share lio_nav2_bringup)/launch/navigation_launch.py">
         <arg name="map" value="$(var map_dir)/$(var map_file).yaml"/>
+        <arg name="cmd_vel_topic" value="wizurg/cmd_vel"/>
         <arg name="params_file" value="$(var hokuyo_navigation_pkg_path)/config/nav2/nav2_params.yaml"/>
       </include>
       </group>

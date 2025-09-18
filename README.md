@@ -39,7 +39,8 @@ sudo apt-get install wmctrl
 
 ```
 
-UAMノード       : https://github.com/f-wada/safety_urg_node2  
+UAMノード       : https://github.com/f-wada/safety_urg_node2
+安全停止        : https://github.com/Hokuyo-RD/robot_safety_manage_ros2.git
 SPELコア技術    : https://github.com/Hokuyo-RD/fusion_tools_ros2  
 緯度経度-マップ座標変換: https://github.com/Hokuyo-RD/fix2xyz_packages_ros2  
 

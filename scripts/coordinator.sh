@@ -207,7 +207,7 @@ if [ "x${multi_map}" = "xtrue" ]; then
   sleep 2s
   echo "sleep 2"
   echo "start wizurg_navigation ${Rwayfile[$i-1]}"
-  cd ${HOKUYO_NAV2_PKG_PATH}/waypoints; ros2 run hokuyo_navigation2 waypoint_manager -x ${Rwayfile[$i-1]}.json once --ros-args -p use_gnss_switch:=${use_gnss_switch}
+  cd ${HOKUYO_NAV2_PKG_PATH}/waypoints; ros2 run waypoint_manager waypoint_manager -x ${Rwayfile[$i-1]}.json once --ros-args -p use_gnss_switch:=${use_gnss_switch} -p cmd_vel_topic:=wizurg/cmd_vel
   echo "finish map"
   cd -
  done
@@ -267,7 +267,7 @@ else
     echo "navigation_true"
     echo "wayfile = ${wayfile}.json"
     sleep 7.0s
-    cd ${HOKUYO_NAV2_PKG_PATH}/waypoints; ros2 run waypoint_manager waypoint_manager -x ${HOKUYO_NAV2_PKG_PATH}/waypoints/${wayfile}.json once --ros-args -p use_gnss_switch:=${use_gnss_switch}
+    cd ${HOKUYO_NAV2_PKG_PATH}/waypoints; ros2 run waypoint_manager waypoint_manager -x ${HOKUYO_NAV2_PKG_PATH}/waypoints/${wayfile}.json once --ros-args -p use_gnss_switch:=${use_gnss_switch} -p cmd_vel_topic:=wizurg/cmd_vel
     cd -
  fi
 
