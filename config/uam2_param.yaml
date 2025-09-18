@@ -1,0 +1,12 @@
+safety_urg_node2_2:
+  ros__parameters:
+    scan_topic: 'scan'
+    safety_topic: 'uam2'
+    ip_address: '192.168.0.15'
+    ip_port: 10940
+    frame_id: 'laser'
+    calibrate_time: false
+    synchronize_time: false
+    error_limit: 4
+    error_reset_period: 10.0
+    continuous_mode: false

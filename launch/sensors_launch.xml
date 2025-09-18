@@ -44,14 +44,7 @@
   <!---->
 
   <!--uam module-->
-  <!-- <include file="$(find safety_urg)/launch/safety_urg_node.launch">
-    <arg name="param_file" default="$(find expo_wizurg)/config/uam1_param.yaml" />
-    <arg name="name" default="uam1_node"/>
-  </include>
-  <include file="$(find safety_urg)/launch/safety_urg_node.launch">
-    <arg name="param_file" default="$(find expo_wizurg)/config/uam2_param.yaml" />
-    <arg name="name" default="uam2_node"/>
-  </include> -->
+    <include file="$(find-pkg-share hokuyo_navigation2)/launch/safety_urg_node2_2sensor.launch.py" />
   
   <!-- gnss module -->
   <!---->
