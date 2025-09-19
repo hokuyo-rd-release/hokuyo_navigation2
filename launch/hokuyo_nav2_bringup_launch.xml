@@ -203,12 +203,12 @@
             <remap from="/estimated_pose" to="/estimated_pose"/>
             <remap from="/map_cloud" to="/map_cloud"/>
           </node>
-      </group>
-      <include file="$(find-pkg-share lio_nav2_bringup)/launch/navigation_launch.py">
-        <arg name="map" value="$(var map_dir)/$(var map_file).yaml"/>
-        <arg name="cmd_vel_topic" value="wizurg/cmd_vel"/>
-        <arg name="params_file" value="$(var hokuyo_navigation_pkg_path)/config/nav2/nav2_params.yaml"/>
-      </include>
+          </group>
+          <include file="$(find-pkg-share lio_nav2_bringup)/launch/navigation_launch.py">
+            <arg name="map" value="$(var map_dir)/$(var map_file).yaml"/>
+            <arg name="cmd_vel_topic" value="wizurg/cmd_vel"/>
+            <arg name="params_file" value="$(var hokuyo_navigation_pkg_path)/config/nav2/nav2_params.yaml"/>
+          </include>
       </group>
       <!-- <include file="$(var pointcloud_to_laserscan_pkg_path)/launch/pointcloud_to_laserscan_launch.py"/> -->
       <node pkg="rviz2" exec="rviz2" name="waypoint_rviz_editor" args="-d $(var hokuyo_navigation_pkg_path)/rviz/nav2.rviz"/>
