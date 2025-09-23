@@ -208,7 +208,7 @@ if __name__ == "__main__":
     id_counter = 0
 
     # Sample convert to Japan Plane Rectangular Coordinate System No. 6
-    transformer = Transformer.from_crs("epsg:4326", 'epsg:6674')
+    transformer = Transformer.from_crs("epsg:4326", 'epsg:32653')
 
     # Process LIO data
     for i in range(num_lio):
@@ -250,7 +250,7 @@ if __name__ == "__main__":
         gnss_positions = np.array([latlon_to_xyz(transformer, msg.latitude, msg.longitude, msg.altitude)
                                    for _, msg in valid_gnss_data])
         mean_gnss = np.mean(gnss_positions, axis=0)
-        vertices[0] = f'VERTEX_SE3:QUAT 0 {mean_gnss[1]} {mean_gnss[0]} {mean_gnss[2]} 0 0 0 1'
+        vertices[0] = f'VERTEX_SE3:QUAT 0 {mean_gnss[0]} {mean_gnss[1]} {mean_gnss[2]} 0 0 0 1'
 
         for timestamp, msg in valid_gnss_data:
             gnss_xyz = latlon_to_xyz(transformer, msg.latitude, msg.longitude, msg.altitude)
@@ -272,7 +272,7 @@ if __name__ == "__main__":
                     closest_lio_id = j + 1
 
             if closest_lio_id > 0 and closest_lio_id <= id_counter:
-                edges.append(f'EDGE_LIN3D 0 {closest_lio_id} {y} {x} {z} {gnss_infom}')
+                edges.append(f'EDGE_LIN3D 0 {closest_lio_id} {x} {y} {z} {gnss_infom}')
                 edges.append(f'EDGE_LLA 0 {closest_lio_id} {msg.latitude} {msg.longitude} {msg.altitude}')
 
     for v in vertices:
