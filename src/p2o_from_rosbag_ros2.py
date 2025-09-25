@@ -14,6 +14,14 @@ from rosbag2_py import SequentialReader, StorageFilter, ConverterOptions, Storag
 # parameters
 odom_infom = '1e2 0 0 0 0 0 1e2 0 0 0 0 1e2 0 0 0 1e2 0 0 1e2 0 1e2'
 
+def judge_utm_zone(longitude: float) -> int:
+    zone = int((longitude + 180.0 + 5) / 6)
+    return zone
+
+def utm_zone_to_epsg(utm_zone: int) -> str:
+    epsg_num = utm_zone + 32600
+    return f"EPSG:{epsg_num}"
+
 def find_db_file(bag_folder):
     db_files = glob.glob(os.path.join(bag_folder, '*.db3'))
     if db_files:
@@ -152,9 +160,11 @@ def latlon_to_xyz(trans, lat, lon, alt):
 
 if __name__ == "__main__":
     args = sys.argv
-    assert len(args) >= 5, "Usage: ros2 run your_package_name your_script_name <bag_folder> <lio_topic> <gnss_topic> <gnss_cov_threshold>"
+    assert len(args) >= 5, "Usage: ros2 run your_package_name your_script_name <bag_folder> <lio_topic> <gnss_topic> <gnss_cov_threshold> <output_center_lla_file_path> <output_center_utm_path>"
 
     bag_folder = os.path.normpath(os.path.join(os.getcwd(), args[1]))
+    center_lat_lon_alt_path = os.path.normpath(os.path.join(os.getcwd(), args[5]))
+    center_utm_path = os.path.normpath(os.path.join(os.getcwd(), args[6]))
     lio_topic_name = args[2]
     gnss_topic_name = args[3]
     gnss_cov_thre = float(args[4])
@@ -168,6 +178,8 @@ if __name__ == "__main__":
     gnss_timestamps = []
     gnss_msgs = []
     gnss_msg_type_str = None
+    utm_zone = -1
+    epsg_code = ""
 
     if mcap_files:
         bag_file = mcap_files[0]
@@ -190,6 +202,8 @@ if __name__ == "__main__":
 
         lio_msgs = [deserialize_message(msg, get_message(lio_msg_type_str)) for msg in lio_msgs_data]
         gnss_msgs = [deserialize_message(msg, get_message(gnss_msg_type_str)) for msg in gnss_msgs_data]
+        utm_zone = judge_utm_zone(gnss_msgs[0].longitude)
+        epsg_code = utm_zone_to_epsg(utm_zone)
 
         close(conn)
         get_message_func = get_message
@@ -208,7 +222,8 @@ if __name__ == "__main__":
     id_counter = 0
 
     # Sample convert to Japan Plane Rectangular Coordinate System No. 6
-    transformer = Transformer.from_crs("epsg:4326", 'epsg:32653')
+    transformer = Transformer.from_crs("epsg:4326", epsg_code)
+    transformer_inverse = Transformer.from_crs(epsg_code, "epsg:4326")
 
     # Process LIO data
     for i in range(num_lio):
@@ -250,7 +265,15 @@ if __name__ == "__main__":
         gnss_positions = np.array([latlon_to_xyz(transformer, msg.latitude, msg.longitude, msg.altitude)
                                    for _, msg in valid_gnss_data])
         mean_gnss = np.mean(gnss_positions, axis=0)
-        vertices[0] = f'VERTEX_SE3:QUAT 0 {mean_gnss[0]} {mean_gnss[1]} {mean_gnss[2]} 0 0 0 1'
+        # center_utm
+        with open(center_utm_path, "w") as f:
+            f.write(f"{utm_zone}," +",".join(map(str, mean_gnss)) + "\n")
+        # center_lla
+        with open(center_lat_lon_alt_path, "w") as f:
+            mean_ll = transformer_inverse.transform(mean_gnss[0], mean_gnss[1])
+            f.write(",".join(map(str, mean_ll)) + ","+ str(mean_gnss[2]) + "\n")
+        
+        vertices[0] = f'VERTEX_SE3:QUAT 0 0 0 0 0 0 0 1'
 
         for timestamp, msg in valid_gnss_data:
             gnss_xyz = latlon_to_xyz(transformer, msg.latitude, msg.longitude, msg.altitude)
