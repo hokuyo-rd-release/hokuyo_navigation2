@@ -96,7 +96,7 @@
     </group>
   </group>
   -->
-  <node pkg="rviz2" exec="rviz2" name="gnss_rviz" args="-d $(var hokuyo_navigation_pkg_path)/rviz/gnss_lio_debug.rviz" output="log"/>
+  <!-- <node pkg="rviz2" exec="rviz2" name="gnss_rviz" args="-d $(var hokuyo_navigation_pkg_path)/rviz/gnss_lio_debug.rviz" output="log"/> -->
 
   <group if="$(var use_lio)">
     <group if="$(var use_gnss_switch)">
@@ -159,7 +159,7 @@
   
   <group if="$(var use_navigation)">
     <group if="$(var use_lio)">
-      <node pkg="rviz2" exec="rviz2" name="navigation_rviz" args="-d $(var hokuyo_navigation_pkg_path)/rviz/wizurg_navigation.rviz"/>
+      <!-- <node pkg="rviz2" exec="rviz2" name="navigation_rviz" args="-d $(var hokuyo_navigation_pkg_path)/rviz/wizurg_navigation.rviz"/> -->
       <group if="$(var use_gnss_switch)">
         <node pkg="test_tools" exec="imu_coordinate_changer" name="imu_coordinate_changer">
           <param name="sub_topic_name" value="hokuyo3d/imu" />
