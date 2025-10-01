@@ -79,7 +79,7 @@
   <node name="cmdvel_manager" pkg="robot_safety_manage" exec="cmdvel_manager" output="log">
     <param name="stop_manage" value="$(var stop_uam_manage)" />
   </node>
-  <node name="cmdvel_stopper" pkg="robot_safety_manage" exec="cmdvel_stopper" output="log"/>
+  <node name="cmdvel_stopper" pkg="hokuyo_navigation2" exec="cmdvel_stopper" output="log"/>
   
   <node name="gnss_lio_debug" pkg="hokuyo_navigation2" exec="gnss_lio_debug" output="log"/>
   <!--icart no default no odom-->

@@ -28,6 +28,7 @@ endif()
 add_executable(gnss_lio_debug src/gnss_lio_debug.cpp)
 add_executable(pcd_tf_transform src/pcd_tf_transform.cpp)
 add_executable(odom_frame_changer src/odom_frame_changer.cpp)
+add_executable(cmdvel_stopper src/cmdvel_stopper.cpp)
 
 ament_target_dependencies(gnss_lio_debug
   rclcpp
@@ -57,6 +58,13 @@ ament_target_dependencies(odom_frame_changer
   Eigen3
 )
 
+ament_target_dependencies(cmdvel_stopper
+  rclcpp
+  std_msgs
+  sensor_msgs
+  geometry_msgs
+)
+
 # jsk_rviz_plugins のインクルードディレクトリを追加
 target_include_directories(gnss_lio_debug PUBLIC
   ${jsk_rviz_plugins_INCLUDE_DIRS}
@@ -74,6 +82,7 @@ install(TARGETS
   gnss_lio_debug
   pcd_tf_transform
   odom_frame_changer
+  cmdvel_stopper
   DESTINATION lib/${PROJECT_NAME}
 )
 
