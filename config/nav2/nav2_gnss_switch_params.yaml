@@ -27,31 +27,39 @@ local_costmap:
     ros__parameters:
       global_frame: map
       robot_base_frame: base_link
+      use_sim_time: True
       track_unknown_space: true
       rolling_window: true
-      width: 10
-      height: 10
-      resolution: 0.05
+      width: 50
+      height: 50
+      resolution: 0.1
+      robot_radius: 0.5
       update_frequency: 10.0
       publish_frequency: 2.0
       plugins: ["obstacle_layer", "inflation_layer"]
-
+      inflation_layer:
+        enabled: true
+        plugin: "nav2_costmap_2d::InflationLayer"
+        cost_scaling_factor: 3.0
+        inflation_radius: 0.5
       obstacle_layer:
+        enabled: true
         plugin: "nav2_costmap_2d::ObstacleLayer"
-        observation_sources: laserscan
-        laserscan:
-          topic: /scan
-          data_type: LaserScan
+        observation_sources: depth_cloud
+        depth_cloud:
+          topic: /hokuyo3d/hokuyo_cloud2
+          sensor_frame: yvt  # センサーフレーム（TFで定義されているもの）
+          data_type: PointCloud2
           marking: true
           clearing: true
-          obstacle_max_range: 12.0
-          raytrace_max_range: 14.0
-          min_obstacle_height: -0.3
-          max_obstacle_height: 2.5
-
-      inflation_layer:
-        plugin: "nav2_costmap_2d::InflationLayer"
-        inflation_radius: 0.5
+          inf_is_valid: true
+          obstacle_max_range: 25.0
+          obstacle_min_range: 0.5
+          raytrace_max_range: 28.0
+          min_obstacle_height: -0.5
+          max_obstacle_height: 1.5
+          observation_persistence: 0.0
+          expected_update_rate: 0.05
 
 behavior_server:
   ros__parameters:
