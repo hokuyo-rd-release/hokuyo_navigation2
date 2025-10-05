@@ -102,11 +102,11 @@ controller_server:
       debug_trajectory_details: True
       min_vel_x: 0.0
       min_vel_y: 0.0
-      max_vel_x: 0.5
+      max_vel_x: 1.5 # more than max_speed_xy 
       max_vel_y: 0.0
       max_vel_theta: 1.0
       min_speed_xy: 0.0
-      max_speed_xy: 0.26
+      max_speed_xy: 1.12
       min_speed_theta: 0.0
       # Add high threshold velocity for turtlebot 3 issue.
       # https://github.com/ROBOTIS-GIT/turtlebot3_simulations/issues/75
@@ -147,8 +147,8 @@ local_costmap:
       use_sim_time: True
       track_unknown_space: true
       rolling_window: true
-      width: 50
-      height: 50
+      width: 10
+      height: 10
       resolution: 0.1
       robot_radius: 0.5
       update_frequency: 10.0
