@@ -160,15 +160,17 @@ def latlon_to_xyz(trans, lat, lon, alt):
 
 if __name__ == "__main__":
     args = sys.argv
-    assert len(args) >= 5, "Usage: ros2 run your_package_name your_script_name <bag_folder> <lio_topic> <gnss_topic> <gnss_cov_threshold> <output_center_lla_file_path> <output_center_utm_path>"
+    assert len(args) >= 7, "Usage: ros2 run your_package_name your_script_name <bag_folder> <lio_topic> <gnss_topic> <gnss_cov_threshold> <output_center_lla_file_path> <output_center_utm_path> <output_lio_edge_timestamps_path>"
 
     bag_folder = os.path.normpath(os.path.join(os.getcwd(), args[1]))
     center_lat_lon_alt_path = os.path.normpath(os.path.join(os.getcwd(), args[5]))
     center_utm_path = os.path.normpath(os.path.join(os.getcwd(), args[6]))
+    lio_edge_timestamps_path = os.path.normpath(os.path.join(os.getcwd(), args[7]))
     lio_topic_name = args[2]
     gnss_topic_name = args[3]
     gnss_cov_thre = float(args[4])
-    gnss_xyz_diff_thre_min = 0 #取り敢えず決め打ちにしている。パラメーター化したい。
+    gnss_min_movement_thre = 4.0 # [m] # GNSSの移動距離のしきい値を設定.
+    lio_min_movement_thre = 0.1 # [m] # LIOの移動距離のしきい値を設定.
 
     mcap_files = glob.glob(os.path.join(bag_folder, '*.mcap'))
     db_file = find_db_file(bag_folder)
@@ -203,8 +205,6 @@ if __name__ == "__main__":
 
         lio_msgs = [deserialize_message(msg, get_message(lio_msg_type_str)) for msg in lio_msgs_data]
         gnss_msgs = [deserialize_message(msg, get_message(gnss_msg_type_str)) for msg in gnss_msgs_data]
-        utm_zone = judge_utm_zone(gnss_msgs[0].longitude)
-        epsg_code = utm_zone_to_epsg(utm_zone)
 
         close(conn)
         get_message_func = get_message
@@ -215,37 +215,53 @@ if __name__ == "__main__":
     if not lio_msgs or not gnss_msgs:
         print("Error: Could not retrieve LIO or GNSS messages.")
         exit()
+    
+    utm_zone = judge_utm_zone(gnss_msgs[0].longitude)
+    epsg_code = utm_zone_to_epsg(utm_zone)
 
     num_lio = len(lio_timestamps)
-    vertices = [None] * (num_lio + 1)  # Pre-allocate list for vertices
+    vertices = []  # Pre-allocate list for vertices
     edges = []
-    np_poses_list = [None] * num_lio
-    id_counter = 0
+    np_poses_list = []
+    id_counter = 1
+    lio_edge_timestamps = []
 
     # Sample convert to Japan Plane Rectangular Coordinate System No. 6
     transformer = Transformer.from_crs("epsg:4326", epsg_code)
     transformer_inverse = Transformer.from_crs(epsg_code, "epsg:4326")
 
     # Process LIO data
+    last_lio_position = [-10,0,0]
     for i in range(num_lio):
         timestamp = lio_timestamps[i] * 1e-9 if mcap_files else lio_timestamps[i] * 1e-9
         pose = lio_msgs[i].pose.pose
-
-        id_counter += 1
-        np_poses_list[i] = np.array([timestamp,
-                                      pose.position.x, pose.position.y, pose.position.z,
-                                      pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w])
-
+        position = [pose.position.x, pose.position.y, pose.position.z]
         q = pose.orientation
         qstr = f'{q.x} {q.y} {q.z} {q.w}'
-        vertices[id_counter] = f'VERTEX_SE3:QUAT {id_counter} {pose.position.x} {pose.position.y} {pose.position.z} {qstr}'
+        lio_movement_sq = (last_lio_position[0]-position[0])*(last_lio_position[0]-position[0]) + (last_lio_position[1]-position[1])*(last_lio_position[1]-position[1]) + (last_lio_position[2]-position[2])*(last_lio_position[2]-position[2])
+        
+        if i == 0 :
+            vertices.append(f'VERTEX_SE3:QUAT 0 0 0 0 0 0 0 1')
+            vertices.append(f'VERTEX_SE3:QUAT 1 {pose.position.x} {pose.position.y} {pose.position.z} {qstr}')                
+            np_poses_list.append(np.array([timestamp,
+                                      pose.position.x, pose.position.y, pose.position.z,
+                                      pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w]))
+            lio_edge_timestamps.append(timestamp)
+        else :
+            if lio_movement_sq > lio_min_movement_thre*lio_min_movement_thre:
+                id_counter += 1
+                np_poses_list.append(np.array([timestamp,
+                                        pose.position.x, pose.position.y, pose.position.z,
+                                        pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w]))
 
-        if i > 0:
-            prev_pose_np = np_poses_list[i-1][1:]
-            current_pose_np = np_poses_list[i][1:]
-            dp = kgeom3d.ominus_se3(current_pose_np, prev_pose_np)
-            edges.append(f'EDGE_SE3:QUAT {id_counter-1} {id_counter} {dp[0]} {dp[1]} {dp[2]} {dp[3]} {dp[4]} {dp[5]} {dp[6]} {odom_infom}')
-
+                vertices.append(f'VERTEX_SE3:QUAT {id_counter} {pose.position.x} {pose.position.y} {pose.position.z} {qstr}')
+                prev_pose_np = np_poses_list[id_counter-2][1:]
+                current_pose_np = np_poses_list[id_counter-1][1:]
+                dp = kgeom3d.ominus_se3(current_pose_np, prev_pose_np)
+                edges.append(f'EDGE_SE3:QUAT {id_counter-1} {id_counter} {dp[0]} {dp[1]} {dp[2]} {dp[3]} {dp[4]} {dp[5]} {dp[6]} {odom_infom}')
+                last_lio_position = position
+                lio_edge_timestamps.append(timestamp)
+    
     np_poses = np.array(np_poses_list)
 
     # Process GNSS data
@@ -254,18 +270,18 @@ if __name__ == "__main__":
     for i, timestamp in enumerate(gnss_timestamps):
         msg = gnss_msgs[i]
         gnss_xyz = latlon_to_xyz(transformer, msg.latitude, msg.longitude, msg.altitude)
-        gnss_xyz_diff_sq = (last_gnss_xyz[0]-gnss_xyz[0])*(last_gnss_xyz[0]-gnss_xyz[0]) + (last_gnss_xyz[1]-gnss_xyz[1])*(last_gnss_xyz[1]-gnss_xyz[1]) + (last_gnss_xyz[2]-gnss_xyz[2])*(last_gnss_xyz[2]-gnss_xyz[2])
+        gnss_movement_sq = (last_gnss_xyz[0]-gnss_xyz[0])*(last_gnss_xyz[0]-gnss_xyz[0]) + (last_gnss_xyz[1]-gnss_xyz[1])*(last_gnss_xyz[1]-gnss_xyz[1]) + (last_gnss_xyz[2]-gnss_xyz[2])*(last_gnss_xyz[2]-gnss_xyz[2])
         if hasattr(msg, 'status') and hasattr(msg.status, 'status') and \
            (msg.status.status == 0 or msg.status.status == 2) and \
            hasattr(msg, 'position_covariance') and len(msg.position_covariance) >= 9 and \
            msg.position_covariance[0] < gnss_cov_thre and \
-           gnss_xyz_diff_sq > gnss_xyz_diff_thre_min*gnss_xyz_diff_thre_min:
+           gnss_movement_sq > gnss_min_movement_thre*gnss_min_movement_thre:
             valid_gnss_data.append((timestamp * 1e-9 if mcap_files else timestamp * 1e-9, msg))
             last_gnss_xyz = gnss_xyz
         elif not hasattr(msg, 'status') and \
            hasattr(msg, 'position_covariance') and len(msg.position_covariance) >= 9 and \
            msg.position_covariance[0] < gnss_cov_thre and \
-           gnss_xyz_diff_sq > gnss_xyz_diff_thre_min*gnss_xyz_diff_thre_min:
+           gnss_movement_sq > gnss_min_movement_thre*gnss_min_movement_thre:
             # ROS 1 の場合 status がないことがあるため、covariance のみで判定
             valid_gnss_data.append((timestamp * 1e-9 if mcap_files else timestamp * 1e-9, msg))
             last_gnss_xyz = gnss_xyz
@@ -283,8 +299,6 @@ if __name__ == "__main__":
             mean_ll = transformer_inverse.transform(mean_gnss[0], mean_gnss[1])
             f.write(",".join(map(str, mean_ll)) + ","+ str(mean_gnss[2]) + "\n")
         
-        vertices[0] = f'VERTEX_SE3:QUAT 0 0 0 0 0 0 0 1'
-
         for timestamp, msg in valid_gnss_data:
             gnss_xyz = latlon_to_xyz(transformer, msg.latitude, msg.longitude, msg.altitude)
             x = gnss_xyz[0] - mean_gnss[0]
@@ -307,6 +321,11 @@ if __name__ == "__main__":
             if closest_lio_id > 0 and closest_lio_id <= id_counter:
                 edges.append(f'EDGE_LIN3D 0 {closest_lio_id} {x} {y} {z} {gnss_infom}')
                 edges.append(f'EDGE_LLA 0 {closest_lio_id} {msg.latitude} {msg.longitude} {msg.altitude}')
+
+    # LIOのtimestampの保存
+    with open(lio_edge_timestamps_path, "w") as f:
+        for ts in lio_edge_timestamps:
+            f.write(f"{ts}\n")
 
     for v in vertices:
         if v is not None:

@@ -100,6 +100,7 @@ sleep 1
 cd $HOKUYO_NAV2_PKG_PATH
 
 # ディレクトリ作成
+rm -rf data/$2
 mkdir -p data/$2
 mkdir -p data/$2/PCDs
 
@@ -132,19 +133,19 @@ elif [ ${fix_rate} -eq 1 ] ; then
 
   sleep 1
   # p2o　正常終了の場合のみ処理を実行したい。
-  bash -c "python3 src/p2o_from_rosbag_ros2.py data/$2/$1 $lio_topic $gnss_topic $gnss_cov_thre > data/$2/output.p2o" # 引数2 input.bag
+  bash -c "python3 src/p2o_from_rosbag_ros2.py data/$2/$1 $lio_topic $gnss_topic $gnss_cov_thre data/$2/center_lat_lon_alt.txt data/$2/center_utm.txt data/$2/lio_edge_timestamps.txt > data/$2/output.p2o" # 引数2 input.bag
   result=$?
 
   echo 'error status:' ${result}
 
   if [ ${result} -eq 0 ] ; then
-    bash -c "${HOKUYO_SLAM_WS}/build/run_p2o data/$2/output.p2o"
+    bash -c "${HOKUYO_SLAM_WS}/build/run_p2o data/$2/center_utm.txt data/$2/output.p2o"
     #bash -c "gnuplot atc_odom_gnss.plt"
 
     # p2o_fastlio_util
     cd ${HOKUYO_NAV2_PKG_PATH}/data/$2/PCDs 
 
-    bash -c "python3 ../../../src/extract_pcd_ros2.py ../$1 $pointcloud_topic" # ~/p2o_fastlio_util/extract_pcd 引数1 + 引数2
+    bash -c "python3 ../../../src/extract_pcd_ros2.py ../$1 $pointcloud_topic $HOKUYO_NAV2_PKG_PATH/data/$2/lio_edge_timestamps.txt" # ~/p2o_fastlio_util/extract_pcd 引数1 + 引数2
 
     # p2o_fastlio_util におけるファイル整理
     cd ./..

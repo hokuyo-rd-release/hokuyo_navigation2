@@ -148,15 +148,25 @@ def getMsgType(cursor, topic_name, print_out=False):
         print(f'\nTopic {topic_name} not found.')
     return msg_type
 
-def extract_and_save_pointcloud_mcap(bag_file, topic_name):
+def find_closest_index(timestamps, target_time):
+    """timestampsの中からtarget_timeに最も近いインデックスを返す"""
+    timestamps = np.array(timestamps)
+    idx = np.argmin(np.abs(timestamps * 1e-9 - target_time))
+    return idx
+
+def extract_and_save_pointcloud_mcap(bag_file, topic_name, lio_edge_timestamps_path):
     timestamps, msgs = read_all_messages_mcap(bag_file, topic_name)
-    if msgs is None:
+    if msgs is None or not timestamps:
         return
 
-    count = 1
+    # LIOエッジタイムスタンプの読み込み
+    with open(lio_edge_timestamps_path, "r") as f:
+        lio_edge_times = [float(line.strip()) for line in f if line.strip()]
+
     print(f"Processing topic (mcap): {topic_name}")
-    for i, msg in enumerate(msgs):
-        # より効率的な点の抽出
+    for count, edge_time in enumerate(lio_edge_times, 1):
+        idx = find_closest_index(timestamps, edge_time)
+        msg = msgs[idx]
         data = np.frombuffer(msg.data, dtype=np.uint8).view(dtype=np.float32)
         if msg.point_step != 0:
             points = data.reshape(-1, msg.point_step // 4)[:, :3]
@@ -164,16 +174,15 @@ def extract_and_save_pointcloud_mcap(bag_file, topic_name):
             points = np.array([])
 
         if points.size == 0:
-            print(f"Warning: No valid points found in message at timestamp {timestamps[i]}. Skipping.")
+            print(f"Warning: No valid points found in message at timestamp {timestamps[idx]}. Skipping.")
             continue
 
         pcd = o3d.geometry.PointCloud()
         pcd.points = o3d.utility.Vector3dVector(points)
         o3d.io.write_point_cloud(f'cloud_{count:05}.pcd', pcd)
-        count += 1
-    print(f"Saved {count - 1} point cloud files (mcap).")
+    print(f"Saved {len(lio_edge_times)} point cloud files (mcap).")
 
-def extract_and_save_pointcloud_db(db_file, topic_name):
+def extract_and_save_pointcloud_db(db_file, topic_name, lio_edge_timestamps_path):
     conn, c = connect(db_file)
     msg_type_str = getMsgType(c, topic_name)
     if not msg_type_str:
@@ -186,13 +195,16 @@ def extract_and_save_pointcloud_db(db_file, topic_name):
         return
 
     timestamps, msgs_data = getAllMessagesInTopic(c, topic_name)
-    count = 1
-    print(f"Processing topic (db): {topic_name}")
-    for i, msg_data in enumerate(msgs_data):
-        msg_type = get_message(msg_type_str)
-        deserialized_msg = deserialize_message(bytes(msg_data), msg_type) # ROS 1 は bytes で渡す
+    # LIOエッジタイムスタンプの読み込み
+    with open(lio_edge_timestamps_path, "r") as f:
+        lio_edge_times = [float(line.strip()) for line in f if line.strip()]
 
-        # より効率的な点の抽出
+    print(f"Processing topic (db): {topic_name}")
+    for count, edge_time in enumerate(lio_edge_times, 1):
+        idx = find_closest_index(timestamps, edge_time)
+        msg_type = get_message(msg_type_str)
+        deserialized_msg = deserialize_message(bytes(msgs_data[idx]), msg_type)
+
         data = np.frombuffer(deserialized_msg.data, dtype=np.uint8).view(dtype=np.float32)
         if deserialized_msg.point_step != 0:
             points = data.reshape(-1, deserialized_msg.point_step // 4)[:, :3]
@@ -200,33 +212,33 @@ def extract_and_save_pointcloud_db(db_file, topic_name):
             points = np.array([])
 
         if points.size == 0:
-            print(f"Warning: No valid points found in message at timestamp {timestamps[i]}. Skipping.")
+            print(f"Warning: No valid points found in message at timestamp {timestamps[idx]}. Skipping.")
             continue
 
         pcd = o3d.geometry.PointCloud()
         pcd.points = o3d.utility.Vector3dVector(points)
         o3d.io.write_point_cloud(f'cloud_{count:05}.pcd', pcd)
-        count += 1
     close(conn)
-    print(f"Saved {count - 1} point cloud files (db).")
+    print(f"Saved {len(lio_edge_times)} point cloud files (db).")
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        print("Usage: python your_script_name.py <bag_folder> <pointcloud_topic_name>")
+    if len(sys.argv) != 4:
+        print("Usage: python your_script_name.py <bag_folder> <pointcloud_topic_name> <lio_edge_timestamps_path>")
         sys.exit(1)
 
     bag_folder = os.path.normpath(os.path.join(os.getcwd(), sys.argv[1]))
     topic_name = sys.argv[2]
+    lio_edge_timestamps_path = sys.argv[3]
 
     mcap_files = glob.glob(os.path.join(bag_folder, '*.mcap'))
     db_file = find_db_file(bag_folder)
 
     if mcap_files:
         print(f"Found MCAP files: {mcap_files}")
-        extract_and_save_pointcloud_mcap(mcap_files[0], topic_name)
+        extract_and_save_pointcloud_mcap(mcap_files[0], topic_name, lio_edge_timestamps_path)
     elif db_file:
         print(f"Found DB file: {db_file}")
-        extract_and_save_pointcloud_db(db_file, topic_name)
+        extract_and_save_pointcloud_db(db_file, topic_name, lio_edge_timestamps_path)
     else:
         print(f"Error: No .mcap or .db3 files found in '{bag_folder}'.")
         sys.exit(1)
