@@ -23,7 +23,7 @@ fi
 # export ROS_IP=`hostname -I | cut -d' ' -f1`
 cd ${ROS2_WS}
 
-gnome-terminal --tab -- bash -c "cd ../ && cd github && python3 hokuyo_navigation2_gui/server.py ; bash" &
+gnome-terminal --tab -- bash -c "source install/setup.bash && source ~/.bashrc && cd ../ && cd github && python3 hokuyo_navigation2_gui/server.py ; bash" &
 sleep 1
 gnome-terminal --tab -- bash -c "ros2 launch vizanti_server vizanti_server.launch.py ; bash" &
 sleep 3
