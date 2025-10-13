@@ -11,7 +11,7 @@ cd $2
 sleep 3
 echo "Recording for $3 seconds"
 sleep 3
-ros2 bag record -o $1 $4 $5 $6 &
+ros2 bag record -o $1 $4 $5 $6 /hokuyo_lio/lidar_odom /tf /gga &
 BAG_PID=$!
 echo "ROS Bag Record PID: $BAG_PID"
 

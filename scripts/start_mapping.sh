@@ -65,8 +65,13 @@ case "${MAPPING_OPTION}" in
     "lio_raw")
         echo "--> [3] LIO-RAW マッピングを開始します。"
         # ここに LIO-RAW マッピングのための ROS 2 起動コマンドを記述
+        inbagname="$2"
+        liomapname="$3"
+        pcd_output_dir="$4"
+        flag_file_name="$5"
+        gnome-terminal -- bash -c "cd ${HOKUYO_NAV2_PKG_PATH}; scripts/lio_raw.bash ${inbagname} ${liomapname} ${pcd_output_dir} ${flag_file_name} ; bash"; exit
         # 例: ros2 launch hokuyo_navigation2 lio_raw_mapping_launch.py
-        
+
         ;;
     
     "pcd2pgm")

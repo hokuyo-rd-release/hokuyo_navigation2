@@ -1,0 +1,83 @@
+#!/bin/bash
+# --------------------------------------------------------------------------
+# ROS 2 環境設定
+# --------------------------------------------------------------------------
+
+# Docker環境かどうかを判定する
+# コンテナの起動時に -e DOCKER_ENV=1 を指定することで、Docker環境とみなすことができます。
+if [ -n "$DOCKER_ENV" ]; then
+    source /opt/ros/humble/setup.bash
+    cd "${HOME}/colcon_ws"
+    source install/setup.bash
+    source ~/.bashrc
+    ROS2_WS="${HOME}/colcon_ws"
+    HOKUYO_NAV2_PKG_PATH="${HOME}/colcon_ws/src/hokuyo_navigation2"
+else
+    source /opt/ros/humble/setup.bash
+    # ワークスペースのパスもホストOSのものに合わせる
+    cd "${HOME}/colcon_ws"
+    source install/setup.bash
+    source ~/.bashrc
+    ROS2_WS="${HOME}/colcon_ws"
+    HOKUYO_NAV2_PKG_PATH="${HOME}/colcon_ws/src/hokuyo_navigation2"
+fi
+
+# コマンドライン引数を取得 (すべてダブルクォーテーションで受け取ることを推奨)
+# $1: rosbagファイル名 (例: my_synced_bag)
+# $2: 出力マップ名 (例: final_map)
+# $3: PCDの出力先ディレクトリ (例: /path/to/map)
+# $4: 完了フラグファイルの絶対パス (例: /path/to/map/final_map.LIO_RAW_DONE)
+inbagname="$1"
+liomapname="$2"
+pcd_output_dir="$3"
+flag_file_name="$4" # 🌟 完了フラグの絶対パス 🌟
+
+# 1. マップディレクトリを作成し、初期ポーズファイルを生成
+# mkdir -p の引数も引用符で囲み、堅牢性を高めます。
+mkdir -p "${HOKUYO_NAV2_PKG_PATH}/data/${liomapname}"
+# 初期ポーズファイルは必須ではないが、以前のロジックを踏襲
+echo "0.0,0.0,0.0,0.0,0.0,0.0,1.0" > "${HOKUYO_NAV2_PKG_PATH}/data/${liomapname}/init_pose.txt"
+
+# 2. pcd_tf_extractor.py を実行してLIO-RAW処理とPCDファイル抽出を同時に行う
+echo "LIO-RAW処理とPCDファイル抽出を開始します... (入力Bag: ${inbagname}, 出力PCD: ${liomapname}.pcd)"
+
+# 実行ディレクトリに移動
+cd "${HOKUYO_NAV2_PKG_PATH}"
+
+python3 src/pcd_tf_extractor.py \
+    "rosbag/${inbagname}" \
+    /hokuyo3d/hokuyo_cloud2 \
+    /hokuyo_lio/lidar_odom \
+    dummy_pub_topic \
+    base_link \
+    lio_odom \
+    "${pcd_output_dir}" \
+    "${liomapname}.pcd" \
+    1.0 \
+    /tf
+
+# 正常終了チェック
+if [ $? -ne 0 ]; then
+    echo "ERROR: pcd_tf_extractor.py がエラーコード $? で終了しました。完了フラグは出力されません。"
+    # 処理失敗時は非ゼロで終了
+    exit 1
+fi
+
+echo "LIO-RAW処理とPCDファイル抽出が完了しました。"
+
+# 3. 処理完了フラグファイルを生成
+# 🌟 修正: $3 (PCD出力ディレクトリ) と $4 (フラグファイル名) を結合する 🌟
+# $3: /home/hokuyo/colcon_ws/src/hokuyo_navigation2/map
+# $4: _processed_2.LIO_RAW_DONE
+COMPLETION_FLAG_PATH="${pcd_output_dir}/${flag_file_name}" # 🌟 絶対パスを構築 🌟
+echo "Creating completion flag file at: ${COMPLETION_FLAG_PATH}"
+
+# ファイルをタッチし、全ユーザーが読み書きできるようにパーミッションを設定
+touch "${COMPLETION_FLAG_PATH}"
+chmod 666 "${COMPLETION_FLAG_PATH}"
+
+echo "Waiting 5 seconds for file system sync..."
+sleep 5 
+
+# 正常終了
+exit 0
