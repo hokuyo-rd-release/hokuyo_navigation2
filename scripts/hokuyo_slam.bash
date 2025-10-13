@@ -160,6 +160,15 @@ elif [ ${fix_rate} -eq 1 ] ; then
     bash -c "python3 src/pcd_to_Rcord.py data/$2/${2}_Acord.pcd data/$2/${2}_Rcord.pcd data/$2/output.p2o_out.txt data/$2/init_pose.txt data/$2/init_lat_lon_alt.txt"
     bash -c "mv data/$2/${2}_Rcord.pcd map"
     bash -c "mv map/${2}_Rcord.pcd map/${2}.pcd"
+    
+    # 🌟 完了フラグ作成の追記 🌟
+    # server.py の check_p2o_status が確認する場所にフラグを作成
+    # ROSBAG_ROOT_DIR にフラグファイルを作成する必要があるため、cd ../.. の後の $HOKUYO_NAV2_PKG_PATH/rosbag/ に作成します。
+    # $HOKUYO_NAV2_PKG_PATH は $CURRENT と同じです。
+    FLAG_PATH="${CURRENT}/rosbag/${2}.P2O_DONE"
+    touch "$FLAG_PATH"
+    echo "P2O SLAM completion flag created: $FLAG_PATH"
+    # ---------------------------
   elif [ ${result} -eq 1 ] ; then
     echo 'rosbag play でfixメッセージがあるかの確認と、gnss_logで共分散の値を確認してください。'
   fi
