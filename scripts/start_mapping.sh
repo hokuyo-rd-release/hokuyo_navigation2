@@ -33,8 +33,11 @@ echo "Mapping Option: ${MAPPING_OPTION}"
 case "${MAPPING_OPTION}" in
     "sync")
         echo "--> [1] トピック同期処理を開始します。"
+        echo "./start_mapping.sh $1 $2 $3"
+        inbagname="${HOKUYO_NAV2_PKG_PATH}/rosbag/$2"
+        p2obagname="$3"
         # ここに sync のための ROS 2 起動コマンドを記述
-        # 例: ros2 launch hokuyo_navigation2 sync_launcher.py
+        gnome-terminal -- bash -c "cd ${HOKUYO_NAV2_PKG_PATH}; scripts/get_rosbag.bash ${inbagname} ${p2obagname} ; bash"; exit
         # run_subprocessで別スレッド実行されているため、ここではノード起動を記述
         
         # 処理が終わるまで待つ場合は 'wait' を使うか、フォアグラウンド実行する
