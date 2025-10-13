@@ -44,12 +44,21 @@ case "${MAPPING_OPTION}" in
 
     "p2o")
         echo "--> [2] p2o でマッピングを開始します。"
-        # $2: 入力ROS Bag名 (ディレクトリ名), $3: 出力マップ名 (pcd名)
-        inbagname="$2" # 実行時に $2 は Bagのベース名 (例: sync_bag)
-        p2omapname="$3"                               # 実行時に $3 は 出力マップ名 (例: final_map)
+        # server.pyから渡される新しい引数:
+        # $2: 入力ROS Bag名 (ディレクトリ名)
+        # $3: 出力マップ名 (pcd名)
+        # $4: MAP_DIR (完了フラグとPCDの出力先ディレクトリ)
+        # $5: FLAG_FILE_NAME (完了フラグファイル名)
         
-        # scripts/hokuyo_slam.bash は $1(inbagpath) $2(p2omapname) を受け取る
-        gnome-terminal -- bash -c "cd ${HOKUYO_NAV2_PKG_PATH}; scripts/hokuyo_slam.bash ${inbagname} ${p2omapname}; bash"; exit
+        inbagname="$2"                                # 例: sync_bag
+        p2omapname="$3"                               # 例: final_map
+        pcd_output_dir="$4"                           # 例: /home/hokuyo/colcon_ws/src/hokuyo_navigation2/map
+        flag_file_name="$5"                           # 例: final_map.P2O_DONE
+        
+        # scripts/hokuyo_slam.bash に新しい引数 ($4, $5) を追加して渡す
+        # hokuyo_slam.bash が以下の引数を受け取るように変更が必要です:
+        # $1(inbagpath) $2(p2omapname) $3(pcd_output_dir) $4(flag_file_name)
+        gnome-terminal -- bash -c "cd ${HOKUYO_NAV2_PKG_PATH}; scripts/hokuyo_slam.bash ${inbagname} ${p2omapname} ${pcd_output_dir} ${flag_file_name}; bash"; exit
         
         ;;
 
