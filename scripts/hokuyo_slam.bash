@@ -22,11 +22,18 @@ else
     HOKUYO_NAV2_PKG_PATH=${ROS2_WS}/src/hokuyo_navigation2
 fi
 
-# 実行方法
-# ./hokuyo_slam.bash <rosbagファイル> <ディレクトリ名> <option>
-# 第三引数はconfig/config.csvが読み込まれるため、必要に応じてcsvを編集することで
-# ディレクトリは data/に作られる。
-# rosbag 下に配置したrosbag はスクリプト実行時にdata/データ名/に移動する。
+# 実行方法 (server.pyとstart_mapping.shの変更後):
+# ./hokuyo_slam.bash <rosbagベース名> <マップ名> <MAP_DIR> <FLAG_FILE_NAME> <option>
+# $1: rosbagのベース名 (例: sync_bag)
+# $2: マップ名 (例: final_map)
+# $3: MAP_DIR (例: /home/hokuyo/colcon_ws/src/hokuyo_navigation2/map)
+# $4: FLAG_FILE_NAME (例: final_map.P2O_DONE)
+# $5: option (configファイルパス)
+
+# 🌟 サーバー側から渡された新しい引数を変数に格納 🌟
+MAP_DIR="$3"         # server.py の MAP_DIR
+FLAG_FILE_NAME="$4"  # server.py の $OUTPUT_MAP_NAME.P2O_DONE
+# ----------------------------------------------------
 
 export CMAKE_PREFIX_PATH=/opt/vtk8
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/vtk8/lib
@@ -36,20 +43,32 @@ export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:/opt/pcl
 echo $HOKUYO_SLAM_WS
 
 if [ -z "$1" ]; then
-  echo "Error: 引数が不足しています <フォルダ名>"
+  echo "Error: 引数が不足しています <rosbagベース名>"
   exit 1
 fi
 
-# 第2引数
+# 第2引数: マップ名
 if [ -z "$2" ]; then
-  echo "Error: 引数が不足しています <arg2>"
+  echo "Error: 引数が不足しています <マップ名>"
+  exit 1
+fi
+
+# 第3引数: MAP_DIR (必須)
+if [ -z "$3" ]; then
+  echo "Error: 引数が不足しています <MAP_DIR>"
+  exit 1
+fi
+
+# 第4引数: FLAG_FILE_NAME (必須)
+if [ -z "$4" ]; then
+  echo "Error: 引数が不足しています <FLAG_FILE_NAME>"
   exit 1
 fi
 
 # チェックするパス
 PATH_TO_CHECK="${HOKUYO_NAV2_PKG_PATH}/rosbag/$1"
 
-# ファイルが存在するかチェック
+# ファイルが存在するかチェック (このスクリプトが呼ばれる時点で、ROS Bagはまだ移動されていない)
 if [ -f "$PATH_TO_CHECK" ]; then
   echo "rosbag file: $PATH_TO_CHECK exists."
 elif [ -d "$PATH_TO_CHECK" ]; then
@@ -64,18 +83,21 @@ fi
 CURRENT=$HOKUYO_NAV2_PKG_PATH
 echo current dir: $CURRENT
 rosbag_dir=$CURRENT/rosbag;
-map_dir=$CURRENT/map;
+map_dir=$CURRENT/map; # <-- MAP_DIRは $3 で上書きされるためここでは使わない
 echo rosbag dir: $rosbag_dir
-echo 'ouput directory_name: '"$2"
+echo 'ouput directory_name (Map Name): '"$2"
 echo 'rosbag file: ' "$1"
+echo "PCD Output Directory: $MAP_DIR"
+echo "Flag File Name: $FLAG_FILE_NAME"
 echo "All args are checked."
 
 #------- config.csv 読み込み -------
-if [ "$3" = "" ]; then
+# 第5引数 (オプション)がconfigファイルパスとして使用される
+if [ "$5" = "" ]; then
   options=(`cat ${CURRENT}/config/config.csv`)
   echo option: $options
 else
-  options=(`cat $3`)
+  options=(`cat $5`)
   echo option: $options
 fi
 
@@ -158,8 +180,16 @@ elif [ ${fix_rate} -eq 1 ] ; then
     # 絶対座標を相対座標に変換
     cd ../..
     bash -c "python3 src/pcd_to_Rcord.py data/$2/${2}_Acord.pcd data/$2/${2}_Rcord.pcd data/$2/output.p2o_out.txt data/$2/init_pose.txt data/$2/init_lat_lon_alt.txt"
-    bash -c "mv data/$2/${2}_Rcord.pcd map"
-    bash -c "mv map/${2}_Rcord.pcd map/${2}.pcd"
+    
+    # 🌟 PCDファイルの移動先を $MAP_DIR に変更 🌟
+    bash -c "mv data/$2/${2}_Rcord.pcd $MAP_DIR"
+    bash -c "mv $MAP_DIR/${2}_Rcord.pcd $MAP_DIR/${2}.pcd"
+    
+    # 🌟 完了フラグ作成の追記とパスの修正 🌟
+    FLAG_PATH="${MAP_DIR}/${FLAG_FILE_NAME}" # $MAP_DIR と $FLAG_FILE_NAME を結合
+    touch "$FLAG_PATH"
+    echo "P2O SLAM completion flag created: $FLAG_PATH"
+    # ---------------------------
   elif [ ${result} -eq 1 ] ; then
     echo 'rosbag play でfixメッセージがあるかの確認と、gnss_logで共分散の値を確認してください。'
   fi

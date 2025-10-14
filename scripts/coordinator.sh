@@ -179,13 +179,54 @@ if [ "x${multi_map}" = "xtrue" ]; then
  for i in ${!Rmapfile[@]}; do
   IFS_BACKUP=$IFS
   IFS=$'\n'
-  for Rinit_pose in `cat ${HOKUYO_NAV2_PKG_PATH}/data/${Rmapfile[$i]}/init_pose.txt`
-  do
+  
+  # --- 1. init_pose.txt の読み込み ---
+  Rinit_pose=""
+  init_pose_file="${HOKUYO_NAV2_PKG_PATH}/data/${Rmapfile[$i]}/init_pose.txt"
+  
+  if [ -f "$init_pose_file" ]; then
+    for Rinit_pose_line in `cat "$init_pose_file"`
+    do
+      Rinit_pose="${Rinit_pose_line}" # 最終行を保持
+    done
+  fi
+
+  # 🎯 修正: init_pose が空の場合、デフォルト値を設定
+  if [ -z "$Rinit_pose" ]; then
+    Rinit_pose="0.0,0.0,0.0,0.0,0.0,0.0,1.0"
+    echo "Warning: ${Rmapfile[$i]}/init_pose.txt not found or empty. Using default Rinit_pose: ${Rinit_pose}"
+  fi
+  
   i=`expr $i + 1`
-  #   echo ${Rinit_pose}
-  done
+  
+  # --- 2. latlon_pose の読み込みを試行 ---
+  latlon1="35.0"
+  latlon2="135.0"
+  latlon3="40.0"
+  Rinit_latlon=""
+
+  latlon_file="${HOKUYO_NAV2_PKG_PATH}/data/${Rmapfile[$i-1]}/init_lat_lon_alt.txt"
+  if [ -f "$latlon_file" ]; then
+      for Rinit_latlon_line in `cat "$latlon_file"`
+      do
+        # 最終行を保持
+        Rinit_latlon="${Rinit_latlon_line}"
+      done
+  fi
+  
+  if [ -z "$Rinit_latlon" ]; then
+    echo "Warning: ${Rmapfile[$i-1]}/init_lat_lon_alt.txt not found or empty. Using default latlon_pose: ${latlon1},${latlon2},${latlon3}"
+  else
+    Rlatlon_arr=( `echo ${Rinit_latlon} | tr -s ',' ' '`)
+    latlon1=${Rlatlon_arr[0]}
+    latlon2=${Rlatlon_arr[1]}
+    latlon3=${Rlatlon_arr[2]}
+  fi
+  # --- latlon_pose の読み込み終了 ---
+  
   IFS=$IFS_BACKUP
 
+  # Rinit_pose の値を展開
   Rpose_arr=( `echo ${Rinit_pose} | tr -s ',' ' '`)
   Rpose1=${Rpose_arr[0]}
   Rpose2=${Rpose_arr[1]}
@@ -204,7 +245,7 @@ if [ "x${multi_map}" = "xtrue" ]; then
     echo "ros2 bag record"
     gnome-terminal -- bash -c "sleep 2; cd ${rosbag_dir}; ros2 bag record -a -o ${Rmapfile[$i-1]}; bash"
   fi
-  gnome-terminal -- bash -c "ros2 launch hokuyo_navigation2 hokuyo_nav2_bringup_launch.xml use_joy:=${use_joy} use_mapping:=${mapping} use_navigation:=${navigation} use_loader:=${loader} use_editor:=${editor} use_sensor:=${sensor} use_icart:=${icart} use_lio:=${use_lio} use_unity_sim:=${use_unity} use_gnss_switch:=${use_gnss_switch} stop_uam_manage:=${stop_uam_manage} map_file:=${Rmapfile[$i-1]} initial_pose:="${Rpose1},${Rpose2},${Rpose3},${Rpose4},${Rpose5},${Rpose6},${Rpose7}";bash"
+  gnome-terminal -- bash -c "ros2 launch hokuyo_navigation2 hokuyo_nav2_bringup_launch.xml use_joy:=${use_joy} use_mapping:=${mapping} use_navigation:=${navigation} use_loader:=${loader} use_editor:=${editor} use_sensor:=${sensor} use_icart:=${icart} use_lio:=${use_lio} use_unity_sim:=${use_unity} use_gnss_switch:=${use_gnss_switch} stop_uam_manage:=${stop_uam_manage} map_file:=${Rmapfile[$i-1]} initial_pose:="${Rpose1},${Rpose2},${Rpose3},${Rpose4},${Rpose5},${Rpose6},${Rpose7}" latlon_pose:="${latlon1},${latlon2},${latlon3}"; bash"
   sleep 2s
   echo "sleep 2"
   echo "start wizurg_navigation ${Rwayfile[$i-1]}"
@@ -217,22 +258,67 @@ if [ "x${multi_map}" = "xtrue" ]; then
 else
   IFS_BACKUP=$IFS
   IFS=$'\n'
+  
+  # --- 1. init_pose.txt の読み込み ---
+  init_pose=""
+  init_pose_file="${HOKUYO_NAV2_PKG_PATH}/data/${mapfile}/init_pose.txt"
+
+  if [ -f "$init_pose_file" ]; then
+    for init_pose_line in `cat "$init_pose_file"`
+    do
+      init_pose="${init_pose_line}" # 最終行を保持
+    done
+  fi
+  
+  # 🎯 修正: init_pose が空の場合、デフォルト値を設定
+  if [ -z "$init_pose" ]; then
+    init_pose="0.0,0.0,0.0,0.0,0.0,0.0,1.0"
+    echo "Warning: init_pose.txt not found or empty. Using default init_pose: ${init_pose}"
+  fi
+  
   i=0
-  for init_pose in `cat ${HOKUYO_NAV2_PKG_PATH}/data/${mapfile}/init_pose.txt`
+  # init_pose が空でないことが保証されたので、ループは不要
+  # 互換性のため init_pose の行数をカウントする既存のロジックを保持 (init_pose変数は既に設定されているので、このループは本質的ではないが残す)
+  for pose_line_count in `echo "$init_pose" | tr ',' '\n'` # カンマ区切りで要素数をカウントするために一時的に改行区切りに
   do
     i=`expr $i + 1`
-  #   echo ${init_pose}
   done
-  j=0
-  for init_latlon in `cat ${HOKUYO_NAV2_PKG_PATH}/data/${mapfile}/init_lat_lon_alt.txt`
-  do
-    j=`expr $j + 1`
-  done
+  
+  # --- 2. latlon_pose の読み込みを試行 ---
+  init_latlon="" 
+  latlon_file="${HOKUYO_NAV2_PKG_PATH}/data/${mapfile}/init_lat_lon_alt.txt"
+  
+  # init_lat_lon_alt.txt が存在するか確認してから読み込みを試みる
+  if [ -f "$latlon_file" ]; then
+      for init_latlon_line in `cat "$latlon_file"`
+      do
+        # 最終行を保持
+        init_latlon="${init_latlon_line}"
+      done
+  fi
+  
+  latlon1="35.0"
+  latlon2="135.0"
+  latlon3="40.0"
 
+  # init_latlon が空または読み込み失敗の場合にデフォルト値を設定
+  if [ -z "$init_latlon" ]; then
+    echo "Warning: init_lat_lon_alt.txt not found or empty. Using default latlon_pose: ${latlon1},${latlon2},${latlon3}"
+  else
+    latlon_arr=( `echo ${init_latlon} | tr -s ',' ' '`)
+    latlon1=${latlon_arr[0]}
+    latlon2=${latlon_arr[1]}
+    latlon3=${latlon_arr[2]}
+  fi
+  # --- latlon_pose の読み込み終了 ---
+
+  j=0 # latlon の行数カウントは削除し、代入ロジックのみを保持
+  
   IFS=$IFS_BACKUP
 
+  # init_pose の値を展開
   pose_arr=( `echo ${init_pose} | tr -s ',' ' '`)
-  latlon_arr=( `echo ${init_latlon} | tr -s ',' ' '`)
+  
   pose1=${pose_arr[0]}
   pose2=${pose_arr[1]}
   pose3=${pose_arr[2]}
@@ -240,9 +326,6 @@ else
   pose5=${pose_arr[4]}
   pose6=${pose_arr[5]}
   pose7=${pose_arr[6]}
-  latlon1=${latlon_arr[0]}
-  latlon2=${latlon_arr[1]}
-  latlon3=${latlon_arr[2]}
 
   echo ${pose1} ${pose2} ${pose3} ${pose4} ${pose5} ${pose6} ${pose7}
 
