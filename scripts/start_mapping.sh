@@ -1,5 +1,9 @@
 #!/bin/bash
 # --------------------------------------------------------------------------
+# start_mapping.sh: Webインターフェースからのマッピング/変換処理を起動する
+# --------------------------------------------------------------------------
+
+# --------------------------------------------------------------------------
 # ROS 2 環境設定
 # --------------------------------------------------------------------------
 
@@ -33,51 +37,72 @@ echo "Mapping Option: ${MAPPING_OPTION}"
 case "${MAPPING_OPTION}" in
     "sync")
         echo "--> [1] トピック同期処理を開始します。"
-        # $2: 入力ROS Bag名 (ディレクトリ名), $3: 出力ROS Bag名 (ディレクトリ名)
-        inbagname="${HOKUYO_NAV2_PKG_PATH}/rosbag/$2" # 実行時に $2 は Bagのベース名 (例: raw_bag)
-        outbagname="$3"                               # 実行時に $3 は 出力ディレクトリ名 (例: sync_bag)
+        # $2: 入力ROS Bag名 (ディレクトリ名/ファイル名)
+        # $3: 出力ROS Bag名 (ディレクトリ名)
         
-        # scripts/get_rosbag.bash は $1(inbagpath) $2(outbagname) を受け取る
+        # NOTE: get_rosbag.bash がフルパスを期待する場合があるため、/rosbag/ を付けて渡す
+        inbagname="${HOKUYO_NAV2_PKG_PATH}/rosbag/$2" 
+        outbagname="$3"                               
+
+        # scripts/get_rosbag.bash を gnome-terminal で実行
         gnome-terminal -- bash -c "cd ${HOKUYO_NAV2_PKG_PATH}; scripts/get_rosbag.bash ${inbagname} ${outbagname} ; bash"; exit
         
         ;;
 
     "p2o")
         echo "--> [2] p2o でマッピングを開始します。"
-        # server.pyから渡される新しい引数:
         # $2: 入力ROS Bag名 (ディレクトリ名)
         # $3: 出力マップ名 (pcd名)
         # $4: MAP_DIR (完了フラグとPCDの出力先ディレクトリ)
         # $5: FLAG_FILE_NAME (完了フラグファイル名)
         
-        inbagname="$2"                                # 例: sync_bag
-        p2omapname="$3"                               # 例: final_map
-        pcd_output_dir="$4"                           # 例: /home/hokuyo/colcon_ws/src/hokuyo_navigation2/map
-        flag_file_name="$5"                           # 例: final_map.P2O_DONE
+        inbagname="$2"
+        p2omapname="$3"
+        pcd_output_dir="$4"
+        flag_file_name="$5"
         
-        # scripts/hokuyo_slam.bash に新しい引数 ($4, $5) を追加して渡す
-        # hokuyo_slam.bash が以下の引数を受け取るように変更が必要です:
-        # $1(inbagpath) $2(p2omapname) $3(pcd_output_dir) $4(flag_file_name)
+        # scripts/hokuyo_slam.bash に引数を渡して実行
         gnome-terminal -- bash -c "cd ${HOKUYO_NAV2_PKG_PATH}; scripts/hokuyo_slam.bash ${inbagname} ${p2omapname} ${pcd_output_dir} ${flag_file_name}; bash"; exit
         
         ;;
 
     "lio_raw")
         echo "--> [3] LIO-RAW マッピングを開始します。"
-        # ここに LIO-RAW マッピングのための ROS 2 起動コマンドを記述
+        # $2: 入力ROS Bag名 (ディレクトリ名)
+        # $3: 出力マップ名 (pcd名)
+        # $4: MAP_DIR (完了フラグとPCDの出力先ディレクトリ)
+        # $5: FLAG_FILE_NAME (完了フラグファイル名)
+        
         inbagname="$2"
         liomapname="$3"
         pcd_output_dir="$4"
         flag_file_name="$5"
+        
+        # scripts/lio_raw.bash に引数を渡して実行
         gnome-terminal -- bash -c "cd ${HOKUYO_NAV2_PKG_PATH}; scripts/lio_raw.bash ${inbagname} ${liomapname} ${pcd_output_dir} ${flag_file_name} ; bash"; exit
-        # 例: ros2 launch hokuyo_navigation2 lio_raw_mapping_launch.py
-
+        
         ;;
     
     "pcd2pgm")
         echo "--> [4] PCDファイルからPGMマップへの変換を開始します。"
-        # ここに PCD to PGM 変換のための処理を記述
-        # 例: ros2 run map_server map_saver_cli -f map_name --pcd map.pcd
+        
+        # $2: 入力PCDファイル名 (例: my_map.pcd)
+        # $3: 出力PGMベース名 (例: my_map_pgm)
+        # $4: MAP_DIR (PCD, PGM, YAMLの出力先ディレクトリ)
+        # $5: FLAG_FILE_NAME (完了フラグファイル名)
+        
+        input_pcd_filename="$2"
+        output_pgm_name="$3"
+        pgm_output_dir="$4"
+        flag_file_name="$5"
+        
+        # scripts/pcd2pgm.bash に引数を渡して実行
+        # 引数にスペースが含まれる可能性を考慮し、ダブルクォーテーションで囲むのが安全
+        gnome-terminal -- bash -c "cd ${HOKUYO_NAV2_PKG_PATH}; scripts/pcd2pgm.bash \
+            \"${input_pcd_filename}\" \
+            \"${output_pgm_name}\" \
+            \"${pgm_output_dir}\" \
+            \"${flag_file_name}\" ; bash"; exit
         
         ;;
 
