@@ -1,6 +1,6 @@
 #!/bin/bash
 
-IMAGE_NAME=ghcr.io/hokuyo-rd/hokuyo_navigation2/hokuyo_navigation2_docker:1.0
+IMAGE_NAME=hokuyo_navigation2:spel_demo
 CONTAINER_NAME=hokuyo_navigation2
 SHARE_FOLDER_PATH=""
 SHARE_FOLDER_CMD=""
