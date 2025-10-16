@@ -31,8 +31,19 @@ fi
 # $5: option (configファイルパス)
 
 # 🌟 サーバー側から渡された新しい引数を変数に格納 🌟
-MAP_DIR="$3"         # server.py の MAP_DIR
-FLAG_FILE_NAME="$4"  # server.py の $OUTPUT_MAP_NAME.P2O_DONE
+
+if [ "$3" = "" ]; then
+  MAP_DIR="$HOKUYO_NAV2_PKG_PATH/map"         # server.py の MAP_DIR
+
+else
+  MAP_DIR="$3"         # server.py の MAP_DIR
+fi
+
+if [ "$4" = "" ]; then
+  FLAG_FILE_NAME="$2.P2O_DONE"  # server.py の $OUTPUT_MAP_NAME.P2O_DONE
+else
+  FLAG_FILE_NAME="$4"  # server.py の $OUTPUT_MAP_NAME.P2O_DONE
+fi
 # ----------------------------------------------------
 
 export CMAKE_PREFIX_PATH=/opt/vtk8
@@ -54,13 +65,13 @@ if [ -z "$2" ]; then
 fi
 
 # 第3引数: MAP_DIR (必須)
-if [ -z "$3" ]; then
+if [ -z "$MAP_DIR" ]; then
   echo "Error: 引数が不足しています <MAP_DIR>"
   exit 1
 fi
 
 # 第4引数: FLAG_FILE_NAME (必須)
-if [ -z "$4" ]; then
+if [ -z "$FLAG_FILE_NAME" ]; then
   echo "Error: 引数が不足しています <FLAG_FILE_NAME>"
   exit 1
 fi
