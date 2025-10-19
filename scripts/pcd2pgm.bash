@@ -84,6 +84,9 @@ if [ $CONVERT_STATUS -ne 0 ]; then
     exit 1
 fi
 
+cd "${ROS2_WS}"
+colcon build --symlink-install --packages-select hokuyo_navigation2
+
 echo "PCD to PGM 変換が正常に完了しました。"
 
 # 4. 処理完了フラグファイルを生成
@@ -91,7 +94,6 @@ echo "Creating completion flag file at: ${COMPLETION_FLAG_PATH}"
 
 # ファイルをタッチし、全ユーザーが読み書きできるようにパーミッションを設定
 touch "${COMPLETION_FLAG_PATH}"
-chmod 666 "${COMPLETION_FLAG_PATH}"
 
 echo "Waiting 5 seconds for file system sync..."
 sleep 5 

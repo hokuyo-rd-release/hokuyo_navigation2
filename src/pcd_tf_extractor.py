@@ -7,7 +7,7 @@ import numpy as np
 import glob
 import math
 import open3d as o3d 
-
+import json 
 from rosidl_runtime_py.utilities import get_message
 from rclpy.serialization import deserialize_message
 from sensor_msgs_py import point_cloud2
@@ -38,9 +38,16 @@ TOPICS = {
 }
 ORIG_FRAME = "Odometry"  # C++: orig_frame
 TARGET_FRAME = "odom"    # C++: target_frame
+
+# 地図関連の設定
 MAP_DIR = "/home/hokuyo/colcon_ws/src/hokuyo_navigation2/map"    # C++: map_dir
 MAP_NAME = "map.pcd"     # C++: map_name
 PC_SAVE_DISTANCE = 1.0   # C++: pc_save_distance (メートル)
+
+# Waypoint関連の設定
+WP_DIR = "/home/hokuyo/colcon_ws/src/hokuyo_navigation2/waypoints" # Waypoint出力ディレクトリ
+WP_SAVE_DISTANCE = 4.0   # Waypointを保存する移動距離 (メートル)
+WP_FILE_NAME = "map.json"
 
 # --- ヘルパー関数 ---
 
@@ -175,93 +182,117 @@ def transform_point_cloud(points_xyz, matrix):
     
     return transformed_points_xyz
 
+def save_waypoints_to_json(waypoints, wp_dir, file_name):
+    """抽出されたウェイポイントデータをJSONファイルに保存する"""
+    save_path = os.path.join(wp_dir, file_name)
+    os.makedirs(wp_dir, exist_ok=True)
+    
+    try:
+        with open(save_path, 'w', encoding='utf-8') as f:
+            json.dump(waypoints, f, indent=4)
+        print(f"\n✅ Waypoints saved successfully to {save_path}")
+        print(f"   Total waypoints: {len(waypoints)}")
+    except Exception as e:
+        print(f"\n❌ Error saving waypoints to JSON: {e}")
+
+
 # --- メイン処理 ---
 
 def process_bag_data(all_data):
-    """bagから抽出したデータを使ってC++ノードのロジックを再現する"""
+    """bagから抽出したデータを使ってC++ノードのロジックを再現し、ウェイポイントを生成する"""
     
     pcd_list = all_data.get(TOPICS["PCD"], [])
     odom_list = all_data.get(TOPICS["ODOM"], [])
-    tf_list = all_data.get(TOPICS["TF"], [])
     
-    last_position = {'x': 1e6, 'y': 1e6, 'z': 1e6}
+    # ウェイポイント抽出のための変数
+    waypoints_data = []
+    last_wp_position = {'x': 1e6, 'y': 1e6, 'z': 1e6} 
+    
+    # 点群累積のための変数 
+    last_pcd_position = {'x': 1e6, 'y': 1e6, 'z': 1e6}
     current_position = {'x': 0.0, 'y': 0.0, 'z': 0.0}
     combined_pcd = []
     
-    if not pcd_list:
-        print("Error: PointCloud2 data not found.")
+    if not odom_list:
+        print("Error: Odometry data not found. Cannot generate waypoints.")
         return
 
-    print(f"\nStarting PointCloud processing with distance filter (Threshold: {PC_SAVE_DISTANCE} m)...")
+    print(f"\nStarting data processing...")
+    print(f"  PointCloud Distance Filter: {PC_SAVE_DISTANCE} m")
+    print(f"  Waypoint Distance Filter: {WP_SAVE_DISTANCE} m")
 
-    for count, (pcd_time_ns, pcd_msg) in enumerate(pcd_list):
+    for count, (odom_time_ns, odom_msg) in enumerate(odom_list):
         
-        # 1. オドメトリの位置を取得
-        odom_msg = find_closest_data(pcd_time_ns, odom_list)
-        if odom_msg:
-            current_position['x'] = odom_msg.pose.pose.position.x
-            current_position['y'] = odom_msg.pose.pose.position.y
-            current_position['z'] = odom_msg.pose.pose.position.z
-        else:
-            continue
+        # 1. オドメトリの位置を取得 (TARGET_FRAMEでの位置)
+        current_position['x'] = odom_msg.pose.pose.position.x
+        current_position['y'] = odom_msg.pose.pose.position.y
+        current_position['z'] = odom_msg.pose.pose.position.z
+        
+        q = odom_msg.pose.pose.orientation # 姿勢 (クォータニオン)
 
-        # 2. 距離フィルタリング
-        dx = current_position['x'] - last_position['x']
-        dy = current_position['y'] - last_position['y']
-        dz = current_position['z'] - last_position['z']
-        distance = math.sqrt(dx*dx + dy*dy + dz*dz)
+        # 2. ウェイポイントの距離フィルタリング
+        dx_wp = current_position['x'] - last_wp_position['x']
+        dy_wp = current_position['y'] - last_wp_position['y']
+        dz_wp = current_position['z'] - last_wp_position['z']
+        distance_wp = math.sqrt(dx_wp*dx_wp + dy_wp*dy_wp + dz_wp*dz_wp)
 
-        if distance >= PC_SAVE_DISTANCE:
-            # フィルタリング通過 -> 処理と累積を行う
-            last_position = current_position.copy()
+        if distance_wp >= WP_SAVE_DISTANCE:
+            # フィルタリング通過 -> ウェイポイントとして保存
+            last_wp_position = current_position.copy()
             
-            # 3. TF変換を取得
-            source_frame = pcd_msg.header.frame_id
-            target_frame = TARGET_FRAME
+            # ウェイポイントのJSON形式を生成
+            waypoint = [
+                # [x, y, z] - zは0.0を強制
+                [
+                    current_position['x'],
+                    current_position['y'],
+                    0.0
+                ],
+                # [0.0, 0.0, z, w] - クォータニオンの姿勢 (yawのみ)
+                [
+                    0.0,
+                    0.0,
+                    q.z, 
+                    q.w
+                ],
+                # 付帯情報
+                {
+                    "type": "normal",
+                    "value": 0,
+                    "xy_tolerance": 1.0,
+                    "yaw_tolerance": 3.14
+                }
+            ]
+            waypoints_data.append(waypoint)
+            print(f"  [Index {count:05}] Waypoint added at ({current_position['x']:.2f}, {current_position['y']:.2f}). Total: {len(waypoints_data)}")
+
             
-            transform_matrix = None
-            tf_msg_found = False
+        # 3. 点群の距離フィルタリング (既存ロジックの再現)
+        dx_pcd = current_position['x'] - last_pcd_position['x']
+        dy_pcd = current_position['y'] - last_pcd_position['y']
+        dz_pcd = current_position['z'] - last_pcd_position['z']
+        distance_pcd = math.sqrt(dx_pcd*dx_pcd + dy_pcd*dy_pcd + dz_pcd*dz_pcd)
+
+        if distance_pcd >= PC_SAVE_DISTANCE:
+            # フィルタリング通過 -> PCL処理を行う
+            last_pcd_position = current_position.copy()
             
-            # --- 3-A. TFトピックからのルックアップを試みる ---
-            for _, msg in tf_list:
-                if hasattr(msg, 'transforms'):
-                    for tf_t in msg.transforms:
-                        if tf_t.header.frame_id == target_frame and tf_t.child_frame_id == source_frame:
-                            transform_matrix = get_transform_matrix(tf_t)
-                            tf_msg_found = True
-                            break
-                    if tf_msg_found:
-                        break
-                elif msg.header.frame_id == target_frame and msg.child_frame_id == source_frame:
-                    transform_matrix = get_transform_matrix(msg)
-                    tf_msg_found = True
-                    break
+            # 4. 点群メッセージを取得 (オドメトリ時刻に最も近いもの)
+            pcd_msg = find_closest_data(odom_time_ns, pcd_list)
+            if not pcd_msg:
+                continue
+
+            # 5. TF変換を取得 (OdometryをTF代替として使用)
             
-            # --- 3-B. TF変換が見つからなかった場合の Odometry フォールバック ---
-            if not tf_msg_found and odom_msg:
-                odom_header_frame = odom_msg.header.frame_id
-                odom_child_frame = odom_msg.child_frame_id
+            # Odometryは TARGET_FRAME -> ORIG_FRAME の変換を保持していると仮定
+            if odom_msg.header.frame_id == TARGET_FRAME and ORIG_FRAME == odom_msg.child_frame_id:
+                p = odom_msg.pose.pose.position
+                q_odom = odom_msg.pose.pose.orientation
                 
-                if odom_header_frame == target_frame:
-                    if ORIG_FRAME == odom_child_frame:
-                        p = odom_msg.pose.pose.position
-                        q = odom_msg.pose.pose.orientation
-                        
-                        R = quat2mat([q.w, q.x, q.y, q.z])
-                        transform_matrix = compose([p.x, p.y, p.z], R, [1, 1, 1])
-                        
-                        print(f"  [Index {count:05}] INFO: Using Odometry as TF substitute ({odom_header_frame} -> {odom_child_frame}).")
-                    else:
-                        print(f"  [Index {count:05}] WARNING: Odometry child frame mismatch (Expected '{odom_child_frame}' != provided orig_frame '{ORIG_FRAME}'). Skipping transformation.")
-
-                else:
-                    print(f"  [Index {count:05}] WARNING: Odometry header frame '{odom_header_frame}' does not match target frame '{target_frame}'. Skipping transformation.")
-                    
-
-            # --- 4. 点群データ変換と累積 ---
-            if transform_matrix is not None:
+                R = quat2mat([q_odom.w, q_odom.x, q_odom.y, q_odom.z])
+                transform_matrix = compose([p.x, p.y, p.z], R, [1, 1, 1])
                 
-                # 📌 修正箇所: 構造化配列として読み込み、列を抽出して結合する
+                # 6. 点群データ変換と累積
                 try:
                     points_structured = np.array(list(point_cloud2.read_points(
                         pcd_msg, 
@@ -275,8 +306,6 @@ def process_bag_data(all_data):
                 if points_structured.size == 0:
                     points_xyz = np.array([])
                 else:
-                    # 構造化配列から 'x', 'y', 'z' のデータを抽出し、列方向に結合して (N, 3) の浮動小数点配列を作成
-                    # NumPyの構造化配列では、points_structured['x']は1次元配列となるため、column_stackで結合する
                     points_xyz = np.column_stack([
                         points_structured['x'],
                         points_structured['y'],
@@ -284,23 +313,14 @@ def process_bag_data(all_data):
                     ]).astype(np.float32)
 
                 if points_xyz.size == 0:
-                    print(f"Warning: Empty or invalid PointCloud at index {count}. Skipping.")
+                    print(f"  [Index {count:05}] Warning: Empty or invalid PointCloud. Skipping.")
                     continue
 
-                # 5. TF変換の適用
                 transformed_points = transform_point_cloud(points_xyz, transform_matrix)
-                
-                # 6. 地図の累積
                 combined_pcd.append(transformed_points)
-                print(f"  [Index {count:05}] Points added: {transformed_points.shape[0]}. Current Map size: {sum(p.shape[0] for p in combined_pcd)} points.")
             
             else:
-                # TFもOdometry代替も見つからない
-                print(f"  [Index {count:05}] ERROR: Cannot find valid transform for point cloud. Skipping frame.")
-        
-        else:
-            # 距離が足りないためスキップ
-            pass
+                 pass
 
     # 7. 地図の保存
     if combined_pcd:
@@ -319,12 +339,16 @@ def process_bag_data(all_data):
         print("\n--- Processing Finished ---")
         print("No point clouds were saved due to filtering or empty data.")
 
+    # 8. Waypointの保存
+    if waypoints_data:
+        save_waypoints_to_json(waypoints_data, WP_DIR, WP_FILE_NAME)
+
 
 if __name__ == "__main__":
     
-    if len(sys.argv) < 10:
-        print("Usage: python pcd_tf_extractor.py <bag_folder> <sub_pcd_topic> <sub_odom_topic> <pub_topic(ignored)> <orig_frame> <target_frame> <map_dir> <map_name> <pc_save_distance> [<tf_topic(optional, default:/tf)>]")
-        print("\nExample: python pcd_tf_extractor.py /path/to/bag_folder /velodyne_points /lio_odom base_link odom ./output_map map.pcd 1.0")
+    if len(sys.argv) < 12: 
+        print("Usage: python pcd_tf_extractor.py <bag_folder> <sub_pcd_topic> <sub_odom_topic> <pub_topic(ignored)> <orig_frame> <target_frame> <map_dir> <map_name> <wp_dir> <pc_save_distance> <wp_save_distance> [<tf_topic(optional, default:/tf)>]")
+        print("\nExample: python pcd_tf_extractor.py /path/to/bag /velodyne_points /lio_odom base_link odom ./output_map map.pcd ./output_waypoints 1.0 2.0")
         sys.exit(1)
 
     # コマンドライン引数から設定を読み込み
@@ -334,32 +358,52 @@ if __name__ == "__main__":
     # sys.argv[4] は pub_topic で、オフライン処理では無視
     ORIG_FRAME = sys.argv[5]
     TARGET_FRAME = sys.argv[6]
-    MAP_DIR = sys.argv[7]
+    
+    # 7番目の引数: MAP_DIR (点群マップのディレクトリ)
+    MAP_DIR = sys.argv[7] 
+    
+    # 📌 8番目の引数: MAP_NAME (地図ファイル名)
     MAP_NAME = sys.argv[8]
+    
+    # 📌 9番目の引数: WP_DIR (ウェイポイントディレクトリ)
+    WP_DIR = sys.argv[9] 
+    WP_FILE_NAME = os.path.splitext(MAP_NAME)[0] + ".json" 
+    # 10番目の引数: PC_SAVE_DISTANCE
     try:
-        PC_SAVE_DISTANCE = float(sys.argv[9])
+        PC_SAVE_DISTANCE = float(sys.argv[10])
     except ValueError:
         print("Error: pc_save_distance must be a number.")
         sys.exit(1)
+        
+    # 11番目の引数: WP_SAVE_DISTANCE
+    try:
+        WP_SAVE_DISTANCE = float(sys.argv[11])
+    except ValueError:
+        print("Error: wp_save_distance must be a number.")
+        sys.exit(1)
     
-    if len(sys.argv) == 11:
-        TOPICS["TF"] = sys.argv[10]
+    if len(sys.argv) == 13: 
+        TOPICS["TF"] = sys.argv[12]
     
     print(f"Config: PCD={TOPICS['PCD']}, ODOM={TOPICS['ODOM']}, TF={TOPICS['TF']}")
-    print(f"Config: Frames={ORIG_FRAME} -> {TARGET_FRAME}, Distance={PC_SAVE_DISTANCE}m")
+    print(f"Config: Frames={ORIG_FRAME} -> {TARGET_FRAME}")
+    print(f"Config: MAP_DIR={MAP_DIR}, MAP_NAME={MAP_NAME}, WP_DIR={WP_DIR}")
+    print(f"Config: Filters: PCD={PC_SAVE_DISTANCE}m, WP={WP_SAVE_DISTANCE}m")
     print(f"NOTE: Assuming PointCloud frame (header.frame_id) is effectively equivalent to Odometry child frame ('{ORIG_FRAME}').") 
 
     mcap_files = glob.glob(os.path.join(bag_folder, '*.mcap'))
     db_file = find_db_file(bag_folder)
     
+    topics_to_read = list(TOPICS.values())
+    
     all_data = {}
 
     if mcap_files:
         print(f"\nFound MCAP file: {mcap_files[0]}")
-        all_data = read_all_messages_from_bag(mcap_files[0], 'mcap', list(TOPICS.values()))
+        all_data = read_all_messages_from_bag(mcap_files[0], 'mcap', topics_to_read)
     elif db_file:
         print(f"\nFound DB file: {db_file}")
-        all_data = get_db_messages(db_file, list(TOPICS.values()))
+        all_data = get_db_messages(db_file, topics_to_read)
     else:
         print(f"Error: No .mcap or .db3 files found in '{bag_folder}'.")
         sys.exit(1)

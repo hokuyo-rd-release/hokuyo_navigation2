@@ -30,7 +30,10 @@ fi
 inbagname="$1"
 liomapname="$2"
 pcd_output_dir="$3"
-flag_file_name="$4" # 🌟 完了フラグの絶対パス 🌟
+wp_output_dir="$4"
+flag_file_name="$5" # 🌟 完了フラグの絶対パス 🌟
+
+echo "lio_raw.bash $0 $1 $2 $3 $4 $5"
 
 # 1. マップディレクトリを作成し、初期ポーズファイルを生成
 # mkdir -p の引数も引用符で囲み、堅牢性を高めます。
@@ -53,7 +56,9 @@ python3 src/pcd_tf_extractor.py \
     lio_odom \
     "${pcd_output_dir}" \
     "${liomapname}.pcd" \
+    "${wp_output_dir}"\
     1.0 \
+    4.0 \
     /tf
 
 # 正常終了チェック
@@ -72,9 +77,7 @@ echo "LIO-RAW処理とPCDファイル抽出が完了しました。"
 COMPLETION_FLAG_PATH="${pcd_output_dir}/${flag_file_name}" # 🌟 絶対パスを構築 🌟
 echo "Creating completion flag file at: ${COMPLETION_FLAG_PATH}"
 
-# ファイルをタッチし、全ユーザーが読み書きできるようにパーミッションを設定
 touch "${COMPLETION_FLAG_PATH}"
-chmod 666 "${COMPLETION_FLAG_PATH}"
 
 echo "Waiting 5 seconds for file system sync..."
 sleep 5 

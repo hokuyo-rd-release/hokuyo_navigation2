@@ -59,10 +59,11 @@ case "${MAPPING_OPTION}" in
         inbagname="$2"
         p2omapname="$3"
         pcd_output_dir="$4"
-        flag_file_name="$5"
+        wp_output_dir="$5"
+        flag_file_name="$6"
         
         # scripts/hokuyo_slam.bash に引数を渡して実行
-        gnome-terminal -- bash -c "cd ${HOKUYO_NAV2_PKG_PATH}; scripts/hokuyo_slam.bash ${inbagname} ${p2omapname} ${pcd_output_dir} ${flag_file_name}; bash"; exit
+        gnome-terminal -- bash -c "cd ${HOKUYO_NAV2_PKG_PATH}; scripts/hokuyo_slam.bash ${inbagname} ${p2omapname} ${pcd_output_dir} ${flag_file_name} ${wp_output_dir}; bash"; exit
         
         ;;
 
@@ -76,10 +77,11 @@ case "${MAPPING_OPTION}" in
         inbagname="$2"
         liomapname="$3"
         pcd_output_dir="$4"
-        flag_file_name="$5"
+        wp_output_dir="$5"
+        flag_file_name="$6"
         
         # scripts/lio_raw.bash に引数を渡して実行
-        gnome-terminal -- bash -c "cd ${HOKUYO_NAV2_PKG_PATH}; scripts/lio_raw.bash ${inbagname} ${liomapname} ${pcd_output_dir} ${flag_file_name} ; bash"; exit
+        gnome-terminal -- bash -c "cd ${HOKUYO_NAV2_PKG_PATH}; scripts/lio_raw.bash ${inbagname} ${liomapname} ${pcd_output_dir} ${wp_output_dir} ${flag_file_name} ; bash"; exit
         
         ;;
     
