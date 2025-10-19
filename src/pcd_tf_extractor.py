@@ -331,17 +331,54 @@ def process_bag_data(all_data):
         pcd = o3d.geometry.PointCloud()
         pcd.points = o3d.utility.Vector3dVector(final_map_points)
         
-        o3d.io.write_point_cloud(save_path, pcd, write_ascii=True)
-        print(f"\n--- Processing Finished ---")
-        print(f"Total points saved: {final_map_points.shape[0]} points.")
-        print(f"Saved map to {save_path}")
+        try:
+            # Open3Dのバイナリ書き込み (安定性向上のため)
+            success = o3d.io.write_point_cloud(
+                save_path, 
+                pcd, 
+                write_ascii=True, # バイナリ形式を使用 (推奨)
+            )
+            
+            if success:
+                print(f"\n--- Processing Finished ---")
+                print(f"Total points saved: {final_map_points.shape[0]} points.")
+                print(f"✅ Saved map successfully to {save_path} (Binary/Compressed format)")
+            else:
+                print(f"\n--- Processing Finished ---")
+                print(f"❌ Critical Error: Open3D reported failure writing map to {save_path}. File is likely corrupt or access denied.")
+            
+        except Exception as e:
+            print(f"\n--- Processing Finished ---")
+            print(f"❌ Critical Error: Failed to write PCD file to {save_path} due to: {e}")
+            print(f"   Please check file permissions and disk space for directory: {MAP_DIR}")
     else:
         print("\n--- Processing Finished ---")
         print("No point clouds were saved due to filtering or empty data.")
 
-    # 8. Waypointの保存
+
+    # 8. Waypointの保存 (最初と最後の2つを削除する安定化ロジックを追加)
     if waypoints_data:
-        save_waypoints_to_json(waypoints_data, WP_DIR, WP_FILE_NAME)
+        
+        # ウェイポイントの安定化処理
+        if len(waypoints_data) > 4:
+            # ウェイポイントが5つ以上ある場合のみ、最初と最後の2つを削除
+            processed_waypoints = waypoints_data[2:-2]
+            print(f"\nNOTE: Removed first 2 and last 2 waypoints for stabilization.")
+            print(f"   Original total: {len(waypoints_data)}, Final total: {len(processed_waypoints)}")
+        elif len(waypoints_data) > 0:
+            # ウェイポイントが4つ以下の場合は、削除せずにそのまま使用
+            processed_waypoints = waypoints_data
+            print(f"\nNOTE: Waypoint count is too low ({len(waypoints_data)}), skipping stabilization removal.")
+        else:
+            # ウェイポイントがない場合は何もしない
+            processed_waypoints = []
+
+
+        if processed_waypoints:
+            save_waypoints_to_json(processed_waypoints, WP_DIR, WP_FILE_NAME)
+        else:
+             print("\n--- Waypoint Processing Finished ---")
+             print("Warning: All waypoints were filtered out or removed during stabilization.")
 
 
 if __name__ == "__main__":
@@ -362,10 +399,10 @@ if __name__ == "__main__":
     # 7番目の引数: MAP_DIR (点群マップのディレクトリ)
     MAP_DIR = sys.argv[7] 
     
-    # 📌 8番目の引数: MAP_NAME (地図ファイル名)
+    # 8番目の引数: MAP_NAME (地図ファイル名)
     MAP_NAME = sys.argv[8]
     
-    # 📌 9番目の引数: WP_DIR (ウェイポイントディレクトリ)
+    # 9番目の引数: WP_DIR (ウェイポイントディレクトリ)
     WP_DIR = sys.argv[9] 
     WP_FILE_NAME = os.path.splitext(MAP_NAME)[0] + ".json" 
     # 10番目の引数: PC_SAVE_DISTANCE
@@ -387,7 +424,8 @@ if __name__ == "__main__":
     
     print(f"Config: PCD={TOPICS['PCD']}, ODOM={TOPICS['ODOM']}, TF={TOPICS['TF']}")
     print(f"Config: Frames={ORIG_FRAME} -> {TARGET_FRAME}")
-    print(f"Config: MAP_DIR={MAP_DIR}, MAP_NAME={MAP_NAME}, WP_DIR={WP_DIR}")
+    # WP_FILE_NAME も表示に追加
+    print(f"Config: MAP_DIR={MAP_DIR}, MAP_NAME={MAP_NAME}, WP_DIR={WP_DIR}, WP_FILE_NAME={WP_FILE_NAME}")
     print(f"Config: Filters: PCD={PC_SAVE_DISTANCE}m, WP={WP_SAVE_DISTANCE}m")
     print(f"NOTE: Assuming PointCloud frame (header.frame_id) is effectively equivalent to Odometry child frame ('{ORIG_FRAME}').") 
 
