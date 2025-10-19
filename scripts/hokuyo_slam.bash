@@ -28,7 +28,8 @@ fi
 # $2: マップ名 (例: final_map)
 # $3: MAP_DIR (例: /home/hokuyo/colcon_ws/src/hokuyo_navigation2/map)
 # $4: FLAG_FILE_NAME (例: final_map.P2O_DONE)
-# $5: option (configファイルパス)
+# $5: WP_DIR (waypoint出力先ディレクトリ)
+# $6: option (configファイルパス)
 
 # 🌟 サーバー側から渡された新しい引数を変数に格納 🌟
 
@@ -104,11 +105,11 @@ echo "All args are checked."
 
 #------- config.csv 読み込み -------
 # 第5引数 (オプション)がconfigファイルパスとして使用される
-if [ "$5" = "" ]; then
+if [ "$6" = "" ]; then
   options=(`cat ${CURRENT}/config/config.csv`)
   echo option: $options
 else
-  options=(`cat $5`)
+  options=(`cat $6`)
   echo option: $options
 fi
 
@@ -186,7 +187,7 @@ elif [ ${fix_rate} -eq 1 ] ; then
     find . | grep pcd > clouds.txt
     sort clouds.txt > sorted_clouds.txt
     paste sorted_clouds.txt poses.txt > concat.txt
-    bash -c "${HOKUYO_SLAM_WS}/build/rearrange_pointcloud concat.txt $2"
+    bash -c "${HOKUYO_SLAM_WS}/build/rearrange_pointcloud concat.txt $2 $5/${2}.json"
 
     # 絶対座標を相対座標に変換
     cd ../..
