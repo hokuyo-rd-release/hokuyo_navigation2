@@ -161,7 +161,7 @@ class PcdToPgmConverter:
         pgm_data = np.full((height, width), 205, dtype=np.uint8) # 205: Unknown
         pgm_data[ros_grid_data == 0] = 254  # Free: 254 (White)
         
-        # 🎯 修正: 占有セルを PGM値 0 (完全な黒) に設定
+        # 占有セルを PGM値 0 (完全な黒) に設定
         pgm_data[ros_grid_data == 100] = 0  # Occupied: 0 (Black)
         
         # ROS Map Server/PGM は左上を原点とし、Y軸を反転させる必要がある
@@ -170,7 +170,7 @@ class PcdToPgmConverter:
         self.occupancy_grid_data = pgm_data_final
         print(f"Generated PGM map: {width}x{height} pixels")
 
-        # 🎯 修正点: 座標を小数点以下2桁に丸めて、リスト形式で設定
+        # 座標を小数点以下2桁に丸めて、リスト形式で設定
         x_min_rounded = float(np.round(x_min, 2))
         y_min_rounded = float(np.round(y_min, 2))
 
@@ -200,7 +200,7 @@ class PcdToPgmConverter:
 
         # YAMLファイル保存
         with open(yaml_path, 'w') as f:
-            # 🎯 修正: default_flow_style=True で [x, y, z] のコンパクトなリスト形式で出力
+            # default_flow_style=True で [x, y, z] のコンパクトなリスト形式で出力
             yaml.dump(self.map_info, f, default_flow_style=True)
         
         # 最終確認メッセージ
@@ -237,7 +237,7 @@ def main():
 
     # オプション引数 (C++ノードのパラメータに対応)
     parser.add_argument("--thre_z_min", type=float, default=0.5, help="Minimum Z threshold for PassThrough filter.")
-    parser.add_argument("--thre_z_max", type=float, default=2.0, help="Maximum Z threshold for PassThrough filter.")
+    parser.add_argument("--thre_z_max", type=float, default=10.0, help="Maximum Z threshold for PassThrough filter.") # 🎯 修正済み: 10.0
     parser.add_argument("--flag_pass_through", type=bool, default=False, help="Not used for Z-filter ON/OFF in this Python impl, but kept for parameter consistency.")
     parser.add_argument("--thre_radius", type=float, default=0.5, help="Radius for RadiusOutlier filter search.")
     parser.add_argument("--map_resolution", type=float, default=0.05, help="Resolution of the output map (meters/pixel).")
