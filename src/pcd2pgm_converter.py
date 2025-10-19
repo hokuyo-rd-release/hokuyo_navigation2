@@ -237,11 +237,11 @@ def main():
 
     # オプション引数 (C++ノードのパラメータに対応)
     parser.add_argument("--thre_z_min", type=float, default=0.5, help="Minimum Z threshold for PassThrough filter.")
-    parser.add_argument("--thre_z_max", type=float, default=10.0, help="Maximum Z threshold for PassThrough filter.") # 🎯 修正済み: 10.0
+    parser.add_argument("--thre_z_max", type=float, default=7.0, help="Maximum Z threshold for PassThrough filter.") # 🎯 修正済み: 10.0
     parser.add_argument("--flag_pass_through", type=bool, default=False, help="Not used for Z-filter ON/OFF in this Python impl, but kept for parameter consistency.")
-    parser.add_argument("--thre_radius", type=float, default=0.5, help="Radius for RadiusOutlier filter search.")
+    parser.add_argument("--thre_radius", type=float, default=0.1, help="Radius for RadiusOutlier filter search.")
     parser.add_argument("--map_resolution", type=float, default=0.05, help="Resolution of the output map (meters/pixel).")
-    parser.add_argument("--thres_point_count", type=int, default=10, help="Minimum number of neighbors in radius for RadiusOutlier filter.")
+    parser.add_argument("--thres_point_count", type=int, default=1, help="Minimum number of neighbors in radius for RadiusOutlier filter.")
     
     # 変換行列 (6DOF: x, y, z, roll, pitch, yaw)
     parser.add_argument(

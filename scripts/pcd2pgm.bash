@@ -69,11 +69,11 @@ python3 "${PYTHON_SCRIPT}" \
     "${PCD_FILE_PATH}" \
     "${OUTPUT_BASE_PATH}" \
     --thre_z_min 0.5 \
-    --thre_z_max 10.0 \
+    --thre_z_max 7.0 \
     --flag_pass_through False \
-    --thre_radius 0.5 \
+    --thre_radius 0.1 \
     --map_resolution 0.05 \
-    --thres_point_count 10 \
+    --thres_point_count 1 \
     --odom_to_lidar_odom 0.0 0.0 0.0 0.0 0.0 0.0
 
 # 3. 正常終了チェック
