@@ -6,11 +6,11 @@
 # コンテナの起動時に -e DOCKER_ENV=1 を指定することで、Docker環境とみなすことができます。
 if [ -n "$DOCKER_ENV" ]; then
     source /opt/ros/$ROS_DISTRO/setup.bash
-    cd ${HOME}/colcon_ws
+    cd /home/colcon_ws
     source install/setup.bash
     source ~/.bashrc
-    ROS2_WS="${HOME}/colcon_ws"
-    HOKUYO_NAV2_PKG_PATH="${HOME}/colcon_ws/src/hokuyo_navigation2"
+    ROS2_WS="/home/colcon_ws"
+    HOKUYO_NAV2_PKG_PATH="/home/colcon_ws/src/hokuyo_navigation2"
 else
     source /opt/ros/$ROS_DISTRO/setup.bash
     cd ${HOME}/colcon_ws
@@ -73,13 +73,16 @@ run_lio="${option_arr[3]}";
 sleep 3
 
 source /opt/ros/$ROS_DISTRO/setup.bash
-source $HOME/colcon_ws/install/setup.bash
+source ${ROS2_WS}/install/setup.bash
 
 #gnome-terminal --tab -t "Tab 0" -- bash -c "roscore; bash"
 #sleep 2
 if [ "x${run_lio}" = "xtrue" ]; then
  gnome-terminal --tab -t "hokuyo_lio" -- bash -c "ros2 launch hokuyo_navigation2 hokuyo_lio_node_with_yaml_ros2.xml sync_enable:=true; bash"
 fi
+
+sleep 2s
+
 gnome-terminal --tab -t "ros2 bag play" -- bash -c "cd ${CURRENT}; ros2 bag play \"$1\"; bash"
 
 # --- 修正箇所: ros2 bag info の duration を確実に整数に変換 ---

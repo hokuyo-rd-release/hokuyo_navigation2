@@ -42,7 +42,7 @@ case "${MAPPING_OPTION}" in
         
         # NOTE: get_rosbag.bash がフルパスを期待する場合があるため、/rosbag/ を付けて渡す
         inbagname="${HOKUYO_NAV2_PKG_PATH}/rosbag/$2" 
-        outbagname="$3"                               
+        outbagname="$3"                               
 
         # scripts/get_rosbag.bash を gnome-terminal で実行
         gnome-terminal -- bash -c "cd ${HOKUYO_NAV2_PKG_PATH}; scripts/get_rosbag.bash ${inbagname} ${outbagname} ; bash"; exit
@@ -54,7 +54,8 @@ case "${MAPPING_OPTION}" in
         # $2: 入力ROS Bag名 (ディレクトリ名)
         # $3: 出力マップ名 (pcd名)
         # $4: MAP_DIR (完了フラグとPCDの出力先ディレクトリ)
-        # $5: FLAG_FILE_NAME (完了フラグファイル名)
+        # $5: WP_DIR (ウェイポイントの出力先ディレクトリ)
+        # $6: FLAG_FILE_NAME (完了フラグファイル名)
         
         inbagname="$2"
         p2omapname="$3"
@@ -63,6 +64,7 @@ case "${MAPPING_OPTION}" in
         flag_file_name="$6"
         
         # scripts/hokuyo_slam.bash に引数を渡して実行
+        # NOTE: scripts/hokuyo_slam.bash の引数の順番も確認し、適切に渡すこと
         gnome-terminal -- bash -c "cd ${HOKUYO_NAV2_PKG_PATH}; scripts/hokuyo_slam.bash ${inbagname} ${p2omapname} ${pcd_output_dir} ${flag_file_name} ${wp_output_dir}; bash"; exit
         
         ;;
@@ -72,7 +74,8 @@ case "${MAPPING_OPTION}" in
         # $2: 入力ROS Bag名 (ディレクトリ名)
         # $3: 出力マップ名 (pcd名)
         # $4: MAP_DIR (完了フラグとPCDの出力先ディレクトリ)
-        # $5: FLAG_FILE_NAME (完了フラグファイル名)
+        # $5: WP_DIR (ウェイポイントの出力先ディレクトリ)
+        # $6: FLAG_FILE_NAME (完了フラグファイル名)
         
         inbagname="$2"
         liomapname="$3"
@@ -88,15 +91,19 @@ case "${MAPPING_OPTION}" in
     "pcd2pgm")
         echo "--> [4] PCDファイルからPGMマップへの変換を開始します。"
         
+        # server.pyの変更に対応し、引数の順番を更新
         # $2: 入力PCDファイル名 (例: my_map.pcd)
         # $3: 出力PGMベース名 (例: my_map_pgm)
         # $4: MAP_DIR (PCD, PGM, YAMLの出力先ディレクトリ)
-        # $5: FLAG_FILE_NAME (完了フラグファイル名)
+        # $5: WAYPOINT_FILENAME (ウェイポイントファイル名) <--- ここが変更
+        # $6: FLAG_FILE_NAME (完了フラグファイル名) <--- ここが変更
         
         input_pcd_filename="$2"
         output_pgm_name="$3"
         pgm_output_dir="$4"
-        flag_file_name="$5"
+        waypoint_filename="$5" # 👈 新しく取得
+        flag_file_name="$6"    # 👈 インデックスが変更
+
         
         # scripts/pcd2pgm.bash に引数を渡して実行
         # 引数にスペースが含まれる可能性を考慮し、ダブルクォーテーションで囲むのが安全
@@ -104,6 +111,7 @@ case "${MAPPING_OPTION}" in
             \"${input_pcd_filename}\" \
             \"${output_pgm_name}\" \
             \"${pgm_output_dir}\" \
+            \"${waypoint_filename}\" \
             \"${flag_file_name}\" ; bash"; exit
         
         ;;
@@ -111,7 +119,7 @@ case "${MAPPING_OPTION}" in
     *)
         # 引数が指定されない、または上記以外の場合のデフォルト処理
         echo "--> [X] 無効なマッピングオプションです: ${MAPPING_OPTION}"
-        echo "    使用可能なオプション: sync, p2o, lio_raw, pcd2pgm"
+        echo "    使用可能なオプション: sync, p2o, lio_raw, pcd2pgm"
         exit 1
         ;;
 esac

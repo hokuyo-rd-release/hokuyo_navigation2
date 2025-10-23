@@ -19,6 +19,7 @@ class PcdToPgmConverter:
     """
     ROS2のpcd2pgmノードの機能をオフラインで実装するクラス。
     PCDファイルの読み込み、変換、フィルタリング、OccupancyGrid生成、PGM/YAML保存を行う。
+    Waypointデータに基づいて通行可能領域を上書きする機能を含む。
     """
     def __init__(self, pcd_file, output_base_path, params):
         self.pcd_file = pcd_file
@@ -28,6 +29,8 @@ class PcdToPgmConverter:
         self.cloud_filtered = None
         self.occupancy_grid_data = None
         self.map_info = None
+        # ウェイポイントデータを保持する新しいメンバー
+        self.waypoints = None 
 
     def load_pcd(self):
         """PCDファイルを読み込む"""
@@ -44,18 +47,48 @@ class PcdToPgmConverter:
         print(f"Initial point cloud size: {len(self.cloud.points)}")
         return True
 
+    def load_waypoints(self):
+        """ウェイポイントファイル (JSON/YAML) を読み込む"""
+        wp_file = self.params.get('waypoints_file')
+        if not wp_file:
+            print("Waypoint file not provided. Skipping waypoint processing.")
+            return True
+
+        if not os.path.exists(wp_file):
+            print(f"Warning: Waypoint file not found: {wp_file}. Skipping waypoint processing.")
+            return True
+
+        try:
+            with open(wp_file, 'r') as f:
+                # PyYAMLはJSON形式のウェイポイントも処理できる (yaml.safe_loadを使用)
+                self.waypoints = yaml.safe_load(f) 
+            
+            if not isinstance(self.waypoints, list) or not self.waypoints:
+                 print("Warning: Waypoint file is empty or invalid format. Skipping waypoint processing.")
+                 self.waypoints = None
+                 return True
+
+            print(f"Loaded {len(self.waypoints)} waypoints.")
+            return True
+        except Exception as e:
+            print(f"Error loading waypoint file {wp_file}: {e}. Skipping waypoint processing.")
+            self.waypoints = None
+            return True
+
+
     def apply_transform(self):
         """odom_to_lidar_odomパラメータに基づき、逆変換を適用する"""
         if self.cloud is None:
             return
 
+        # パラメータ (x, y, z, roll, pitch, yaw)
         x, y, z, roll, pitch, yaw = self.params['odom_to_lidar_odom']
         
         # 変換行列を作成 (roll, pitch, yaw -> XYZ)
         R = self.cloud.get_rotation_matrix_from_xyz((roll, pitch, yaw)) 
         T = np.array([[x], [y], [z]])
         
-        # Eigen::Affine3f::Identity()からの変換行列
+        # 変換行列
         transform_matrix = np.identity(4)
         transform_matrix[:3, :3] = R
         transform_matrix[:3, 3] = T.flatten()
@@ -97,6 +130,7 @@ class PcdToPgmConverter:
             print("Warning: Point cloud is empty, skipping RadiusOutlier filtering.")
             return
             
+        # KDTreeはx, y, zの3次元で構築
         tree = KDTree(points)
         
         thre_radius = self.params['thre_radius']
@@ -157,6 +191,43 @@ class PcdToPgmConverter:
         thres_point_count = self.params['thres_point_count']
         ros_grid_data[occupancy_count >= thres_point_count] = 100
         
+        print("Initial ROS grid data generated from PCD count.")
+
+        # =========================================================
+        # 🎯 ウェイポイントに基づいて Free 領域を上書き
+        # =========================================================
+        if self.waypoints:
+            print(f"Applying influence of {len(self.waypoints)} waypoints to mark Free space.")
+            x_origin = x_min # マップ原点のX座標 (左下)
+            y_origin = y_min # マップ原点のY座標 (左下)
+            
+            for wp in self.waypoints:
+                # ウェイポイントの構造チェック: [position], [orientation], {metadata}
+                if len(wp) < 3 or not isinstance(wp[0], list) or len(wp[0]) < 2 or not isinstance(wp[2], dict): 
+                    continue 
+                
+                x_wp, y_wp = wp[0][0], wp[0][1] # 位置 (X, Y) を取得
+                
+                # xy_tolerance を取得。存在しない場合はデフォルト値 1.0m を使用
+                tolerance = wp[2].get("xy_tolerance", 1.0) 
+                
+                # ウェイポイントのグリッド座標 (i: X, j: Y)
+                i_wp = int(np.floor((x_wp - x_origin) / map_resolution))
+                j_wp = int(np.floor((y_wp - y_origin) / map_resolution))
+                
+                # 許容誤差をピクセル単位に変換
+                radius_px = int(np.ceil(tolerance / map_resolution))
+                
+                # ウェイポイントの周囲を Free に上書きする処理 (矩形範囲で簡略化)
+                # Y軸方向 (height)
+                for j in range(max(0, j_wp - radius_px), min(height, j_wp + radius_px + 1)):
+                    # X軸方向 (width)
+                    for i in range(max(0, i_wp - radius_px), min(width, i_wp + radius_px + 1)):
+                        
+                        # ROS グリッドデータ (0: Free) に上書き
+                        ros_grid_data[j, i] = 0 
+
+
         # PGMデータへ変換 (PGM: 0(Occupied/Black), 254(Free/White), 205(Unknown/Gray))
         pgm_data = np.full((height, width), 205, dtype=np.uint8) # 205: Unknown
         pgm_data[ros_grid_data == 0] = 254  # Free: 254 (White)
@@ -208,7 +279,7 @@ class PcdToPgmConverter:
         print(f"\nSuccessfully converted and saved map files.")
         print(f"- PGM Map: {pgm_path}")
         print(f"- YAML Info: {yaml_path}")
-        print(f"  (YAML Origin Output: [{x_out}, {y_out}, 0.0])")
+        print(f"  (YAML Origin Output: [{x_out}, {y_out}, 0.0])")
         
         return True
 
@@ -216,6 +287,10 @@ class PcdToPgmConverter:
         """全処理を実行する"""
         if not self.load_pcd():
             return False
+        
+        # ウェイポイントの読み込み
+        # ウェイポイントファイルがない場合でも処理は続行するため、return False は使わない
+        self.load_waypoints()
 
         self.apply_transform()
         self.pass_through_filter() 
@@ -237,7 +312,7 @@ def main():
 
     # オプション引数 (C++ノードのパラメータに対応)
     parser.add_argument("--thre_z_min", type=float, default=0.5, help="Minimum Z threshold for PassThrough filter.")
-    parser.add_argument("--thre_z_max", type=float, default=7.0, help="Maximum Z threshold for PassThrough filter.") # 🎯 修正済み: 10.0
+    parser.add_argument("--thre_z_max", type=float, default=7.0, help="Maximum Z threshold for PassThrough filter.") 
     parser.add_argument("--flag_pass_through", type=bool, default=False, help="Not used for Z-filter ON/OFF in this Python impl, but kept for parameter consistency.")
     parser.add_argument("--thre_radius", type=float, default=0.1, help="Radius for RadiusOutlier filter search.")
     parser.add_argument("--map_resolution", type=float, default=0.05, help="Resolution of the output map (meters/pixel).")
@@ -251,6 +326,15 @@ def main():
         default=[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], 
         help="6DOF transform parameters (x y z roll pitch yaw) to apply the inverse transform."
     )
+    
+    # ウェイポイントファイル引数
+    parser.add_argument(
+        "--waypoints_file", 
+        type=str, 
+        default=None, 
+        help="Path to a YAML/JSON file containing waypoint list data to mark 'Free' areas."
+    )
+
 
     args = parser.parse_args()
 
@@ -263,6 +347,7 @@ def main():
         'map_resolution': args.map_resolution,
         'thres_point_count': args.thres_point_count,
         'odom_to_lidar_odom': args.odom_to_lidar_odom,
+        'waypoints_file': args.waypoints_file, 
     }
 
     # 変換処理を実行
@@ -273,4 +358,8 @@ def main():
         return 1
 
 if __name__ == "__main__":
-    exit(main())
+    try:
+        exit(main())
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        exit(1)
