@@ -230,12 +230,26 @@ class PcdToPgmConverter:
 
             # --- 2. Waypoint 同士の間隔を Free にする (線形補間) ---
             if len(wp_coords) >= 2:
-                print(f"Applying Free space along the paths between {len(wp_coords)} waypoints with tolerance {tolerance}m.")
+                num_waypoints = len(wp_coords)
+                
+                # 【修正点】ループフラグに基づいて処理回数を決定
+                if self.params['loop_waypoints']:
+                    # ループの場合: WP0 -> WP1 ... -> WPn-1 -> WP0 (計 N 回)
+                    end_idx = num_waypoints
+                    print(f"Path treated as a closed loop.")
+                else:
+                    # ループではない場合: WP0 -> WP1 ... -> WPn-1 (計 N-1 回)
+                    end_idx = num_waypoints - 1
+                
+                print(f"Applying Free space along the paths between waypoints ({'Loop' if self.params['loop_waypoints'] else 'Open'}) with tolerance {tolerance}m.")
                 
                 # 連続するウェイポイントのペアに対して処理
-                for idx in range(len(wp_coords) - 1):
+                for idx in range(end_idx):
+                    # 現在のウェイポイント
                     x1, y1 = wp_coords[idx]
-                    x2, y2 = wp_coords[idx+1]
+                    
+                    # 次のウェイポイント (ループ処理のための剰余演算)
+                    x2, y2 = wp_coords[(idx + 1) % num_waypoints]
 
                     # 距離を計算し、補間するステップ数を決定
                     distance = np.sqrt((x2 - x1)**2 + (y2 - y1)**2)
@@ -247,8 +261,10 @@ class PcdToPgmConverter:
                     y_interp = np.linspace(y1, y2, num_steps)
 
                     # パス上の各点をグリッド座標に変換
-                    i_interp = np.floor((x_interp - x_origin) / map_res).astype(int)
-                    j_interp = np.floor((y_interp - y_origin) / map_res).astype(int)
+                    x_floor = np.floor((x_interp - x_origin) / map_res)
+                    y_floor = np.floor((y_interp - y_origin) / map_res)
+                    i_interp = x_floor.astype(int)
+                    j_interp = y_floor.astype(int)
 
                     # グリッド範囲内の有効なインデックスを取得
                     valid_mask = (i_interp >= 0) & (i_interp < width) & \
@@ -382,6 +398,13 @@ def main():
         help="Path to a YAML/JSON file containing waypoint list data to mark 'Free' areas."
     )
 
+    # 【新規追加】ループ処理を有効にするフラグ
+    parser.add_argument(
+        "--loop_waypoints", 
+        action="store_true",  
+        help="Treat the waypoints as a closed loop, connecting the last waypoint back to the first one."
+    )
+
 
     args = parser.parse_args()
 
@@ -396,6 +419,8 @@ def main():
         'odom_to_lidar_odom': args.odom_to_lidar_odom,
         'waypoints_file': args.waypoints_file, 
         'waypoint_tolerance': args.waypoint_tolerance, 
+        # 新しいループフラグ
+        'loop_waypoints': args.loop_waypoints, 
     }
 
     # 変換処理を実行

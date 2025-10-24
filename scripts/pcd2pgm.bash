@@ -25,20 +25,22 @@ else
 fi
 
 # --------------------------------------------------------------------------
-# 引数の取得
+# 引数の取得 (引数順が変更されています)
 # --------------------------------------------------------------------------
-# start_mapping.sh から渡される引数順:
+# start_mapping.sh から渡される引数順 (変更後):
 # $1: input_pcd_filename (例: my_map.pcd)
 # $2: output_map_name (PGMファイルのベース名, 例: my_map_pgm)
 # $3: MAP_DIR (PCD, PGM, YAMLの出力先ディレクトリ)
 # $4: waypoint_filename (例: my_waypoints.json)
-# $5: FLAG_FILE_NAME (完了フラグファイル名, 例: my_map_pgm.PCD2PGM_DONE)
+# $5: loop_waypoints_flag (ウェイポイントをループとして扱うか: true/false) <-- 【新規/変更】
+# $6: FLAG_FILE_NAME (完了フラグファイル名, 例: my_map_pgm.PCD2PGM_DONE) <-- 【変更】
 
 input_pcd_filename="$1"
 output_map_name="$2"
 pgm_output_dir="$3"
 waypoint_filename="$4"
-flag_file_name="$5"
+loop_waypoints_flag="$5"  # 新しい5番目の引数
+flag_file_name="$6"       # 6番目にずらされた引数
 
 # --------------------------------------------------------------------------
 # パス設定
@@ -54,6 +56,7 @@ echo "--> [1] PCDファイルからPGMマップへのPython変換を開始しま
 echo "    入力PCD: ${PCD_FILE_PATH}"
 echo "    出力PGMベース名: ${OUTPUT_BASE_PATH}"
 echo "    ウェイポイントファイル名: ${waypoint_filename}"
+echo "    ループ処理フラグ: ${loop_waypoints_flag}"
 echo "    完了フラグ: ${COMPLETION_FLAG_PATH}"
 
 # 1. 入力ファイルとPythonスクリプトの存在確認
@@ -69,17 +72,11 @@ fi
 # ウェイポイントファイルパスの設定と存在チェック
 WP_FULL_PATH=""
 if [ -n "${waypoint_filename}" ]; then
-    # デバッグ出力（ファイルパスの空白混入チェック用）
-    echo "DEBUG: ウェイポイントファイル名 (raw): '${waypoint_filename}'"
-    echo "DEBUG: ウェイポイントディレクトリ: '${WP_DIR}'"
-    
     # ファイル名から前後の空白を削除
     CLEANED_WP_FILENAME=$(echo "${waypoint_filename}" | tr -d '\040\011\012\015')
     
     # パスを結合
     WP_FULL_PATH="${WP_DIR}/${CLEANED_WP_FILENAME}"
-    
-    echo "DEBUG: 結合されたフルパス: '${WP_FULL_PATH}'"
     
     # ファイルが存在しない場合は、Pythonに渡さない
     if [ ! -f "${WP_FULL_PATH}" ]; then
@@ -91,8 +88,15 @@ fi
 # ウェイポイントパスを条件付きで渡すための引数文字列
 CMD_WAYPOINTS=""
 if [ -n "${WP_FULL_PATH}" ]; then
-    # 【重要】Pythonにパスを正しく渡すため、CMD_WAYPOINTS内の引用符を削除（Python側で引用符を付けない引数として扱う）
     CMD_WAYPOINTS="--waypoints_file ${WP_FULL_PATH}"
+fi
+
+# 【新規】ループフラグの引数文字列
+CMD_LOOP_FLAG=""
+# 引数 $5 が "true" や "True" などの場合に --loop_waypoints フラグを設定する
+# Python側は action="store_true" なので、フラグが存在するだけで True になる
+if [[ "${loop_waypoints_flag}" =~ ^[Tt]rue$ ]]; then
+    CMD_LOOP_FLAG="--loop_waypoints"
 fi
 
 # 2. pcd2pgm_converter.py の実行
@@ -105,12 +109,13 @@ echo "Running: python3 ${PYTHON_SCRIPT} \
 --thres_point_count 1 \
 --odom_to_lidar_odom 0.0 0.0 0.0 0.0 0.0 0.0 \
 ${CMD_WAYPOINTS} \
+${CMD_LOOP_FLAG} \
 \"${PCD_FILE_PATH}\" \
 \"${OUTPUT_BASE_PATH}\""
 
 # 【重要】Pythonの引数規則に従い、位置引数（PCD/OUTPUTパス）を最後に配置する
 python3 "${PYTHON_SCRIPT}" \
-    --thre_z_min 0.5 \
+    --thre_z_min -1.0 \
     --thre_z_max 7.0 \
     --flag_pass_through False \
     --thre_radius 0.1 \
@@ -118,6 +123,7 @@ python3 "${PYTHON_SCRIPT}" \
     --thres_point_count 1 \
     --odom_to_lidar_odom 0.0 0.0 0.0 0.0 0.0 0.0 \
     ${CMD_WAYPOINTS} \
+    ${CMD_LOOP_FLAG} \
     "${PCD_FILE_PATH}" \
     "${OUTPUT_BASE_PATH}"
 
