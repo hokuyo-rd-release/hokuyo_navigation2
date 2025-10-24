@@ -200,32 +200,71 @@ class PcdToPgmConverter:
             print(f"Applying influence of {len(self.waypoints)} waypoints to mark Free space.")
             x_origin = x_min # マップ原点のX座標 (左下)
             y_origin = y_min # マップ原点のY座標 (左下)
+            map_res = map_resolution # 変数名を短縮
+
+            # コマンドライン引数から一律の許容誤差を取得
+            tolerance = self.params['waypoint_tolerance']
+            radius_px = int(np.ceil(tolerance / map_res))
             
+            # WaypointのX, Y座標リスト
+            wp_coords = []
+
+            # --- 1. Waypoint の中心とその周囲を Free にする ---
             for wp in self.waypoints:
                 # ウェイポイントの構造チェック: [position], [orientation], {metadata}
                 if len(wp) < 3 or not isinstance(wp[0], list) or len(wp[0]) < 2 or not isinstance(wp[2], dict): 
+                    print(f"Warning: Invalid waypoint format found: {wp}. Skipping.")
                     continue 
                 
                 x_wp, y_wp = wp[0][0], wp[0][1] # 位置 (X, Y) を取得
-                
-                # xy_tolerance を取得。存在しない場合はデフォルト値 1.0m を使用
-                tolerance = wp[2].get("xy_tolerance", 1.0) 
+                wp_coords.append((x_wp, y_wp))
                 
                 # ウェイポイントのグリッド座標 (i: X, j: Y)
-                i_wp = int(np.floor((x_wp - x_origin) / map_resolution))
-                j_wp = int(np.floor((y_wp - y_origin) / map_resolution))
+                i_wp = int(np.floor((x_wp - x_origin) / map_res))
+                j_wp = int(np.floor((y_wp - y_origin) / map_res))
                 
-                # 許容誤差をピクセル単位に変換
-                radius_px = int(np.ceil(tolerance / map_resolution))
-                
-                # ウェイポイントの周囲を Free に上書きする処理 (矩形範囲で簡略化)
-                # Y軸方向 (height)
+                # ウェイポイントの周囲を Free に上書き (既存ロジック)
                 for j in range(max(0, j_wp - radius_px), min(height, j_wp + radius_px + 1)):
-                    # X軸方向 (width)
                     for i in range(max(0, i_wp - radius_px), min(width, i_wp + radius_px + 1)):
-                        
-                        # ROS グリッドデータ (0: Free) に上書き
                         ros_grid_data[j, i] = 0 
+
+            # --- 2. Waypoint 同士の間隔を Free にする (線形補間) ---
+            if len(wp_coords) >= 2:
+                print(f"Applying Free space along the paths between {len(wp_coords)} waypoints with tolerance {tolerance}m.")
+                
+                # 連続するウェイポイントのペアに対して処理
+                for idx in range(len(wp_coords) - 1):
+                    x1, y1 = wp_coords[idx]
+                    x2, y2 = wp_coords[idx+1]
+
+                    # 距離を計算し、補間するステップ数を決定
+                    distance = np.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+                    # 1ピクセルあたり1ステップの精度で補間
+                    num_steps = max(2, int(distance / map_res)) 
+
+                    # 線形補間によりパス上の点を生成
+                    x_interp = np.linspace(x1, x2, num_steps)
+                    y_interp = np.linspace(y1, y2, num_steps)
+
+                    # パス上の各点をグリッド座標に変換
+                    i_interp = np.floor((x_interp - x_origin) / map_res).astype(int)
+                    j_interp = np.floor((y_interp - y_origin) / map_res).astype(int)
+
+                    # グリッド範囲内の有効なインデックスを取得
+                    valid_mask = (i_interp >= 0) & (i_interp < width) & \
+                                 (j_interp >= 0) & (j_interp < height)
+                    
+                    valid_i = i_interp[valid_mask]
+                    valid_j = j_interp[valid_mask]
+
+                    # パス上のセルとその周囲を Free に上書き
+                    for i_path, j_path in zip(valid_i, valid_j):
+                        # パス上の点とその周囲 (radius_px) を Free にする
+                        for j in range(max(0, j_path - radius_px), min(height, j_path + radius_px + 1)):
+                            for i in range(max(0, i_path - radius_px), min(width, i_path + radius_px + 1)):
+                                ros_grid_data[j, i] = 0
+            
+            # Waypointの周囲のFreeマーク処理とパスのFreeマーク処理が統合されます。
 
 
         # PGMデータへ変換 (PGM: 0(Occupied/Black), 254(Free/White), 205(Unknown/Gray))
@@ -327,6 +366,14 @@ def main():
         help="6DOF transform parameters (x y z roll pitch yaw) to apply the inverse transform."
     )
     
+    # Waypointに対する自由領域の半径
+    parser.add_argument(
+        "--waypoint_tolerance", 
+        type=float, 
+        default=1.0, 
+        help="Tolerance radius (meters) around waypoints and the path between them to mark as Free space. (Default: 1.0m)"
+    )
+    
     # ウェイポイントファイル引数
     parser.add_argument(
         "--waypoints_file", 
@@ -348,6 +395,7 @@ def main():
         'thres_point_count': args.thres_point_count,
         'odom_to_lidar_odom': args.odom_to_lidar_odom,
         'waypoints_file': args.waypoints_file, 
+        'waypoint_tolerance': args.waypoint_tolerance, 
     }
 
     # 変換処理を実行
