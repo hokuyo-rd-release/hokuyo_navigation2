@@ -45,7 +45,7 @@ case "${MAPPING_OPTION}" in
         outbagname="$3"                   
 
         # scripts/get_rosbag.bash を gnome-terminal で実行
-        gnome-terminal -- bash -c "cd ${HOKUYO_NAV2_PKG_PATH}; scripts/mapping/get_rosbag.bash ${inbagname} ${outbagname} ; bash"; exit
+        gnome-terminal -- bash -c "cd ${HOKUYO_NAV2_PKG_PATH}; scripts/mapping/sync_topic.bash ${inbagname} ${outbagname} ; bash"; exit
         
         ;;
 
