@@ -68,6 +68,17 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+# 4. ROS 2 パッケージの再ビルド (PGM/YAMLの更新をシステムに反映)
+cd "${ROS2_WS}"
+echo "Building package hokuyo_navigation2 to include new map files..."
+colcon build --symlink-install --packages-select hokuyo_navigation2
+
+BUILD_STATUS=$?
+if [ $BUILD_STATUS -ne 0 ]; then
+    echo "ERROR: colcon build がエラーコード $BUILD_STATUS で失敗しました。マップが正しく読み込めない可能性があります。"
+    exit 1
+fi
+
 echo "LIO-RAW処理とPCDファイル抽出が完了しました。"
 
 # 3. 処理完了フラグファイルを生成
