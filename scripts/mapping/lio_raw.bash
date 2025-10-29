@@ -40,6 +40,7 @@ echo "lio_raw.bash $0 $1 $2 $3 $4 $5"
 mkdir -p "${HOKUYO_NAV2_PKG_PATH}/data/${liomapname}"
 # 初期ポーズファイルは必須ではないが、以前のロジックを踏襲
 echo "0.0,0.0,0.0,0.0,0.0,0.0,1.0" > "${HOKUYO_NAV2_PKG_PATH}/data/${liomapname}/init_pose.txt"
+echo "35.0,135.0,40.0" > "${HOKUYO_NAV2_PKG_PATH}/data/${liomapname}/init_lat_lon_alt.txt"
 
 # 2. pcd_tf_extractor.py を実行してLIO-RAW処理とPCDファイル抽出を同時に行う
 echo "LIO-RAW処理とPCDファイル抽出を開始します... (入力Bag: ${inbagname}, 出力PCD: ${liomapname}.pcd)"

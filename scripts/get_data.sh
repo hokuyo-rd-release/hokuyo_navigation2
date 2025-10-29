@@ -69,9 +69,9 @@ operation_str=${WIZURG_OPTIONS}
 case $operation_str in
   1) wizurg_opt="control_opt";;              #-- -C で control_opt.csv が入る (岡本11/10追記)--
   2) wizurg_opt="sensor_rosbag";;            #-- -B で sensor_rosbag.csv が入る (高橋11/6追記)--
-  3) gnome-terminal -- bash -c "source /opt/ros/humble/setup.bash; source ~/.bashrc; cd /home/colcon_ws; source install/setup.bash; cd ${HOKUYO_NAV2_PKG_PATH}; python3 src/MainWindow.py bash"; exit;;
-  4) tree -L 1 -a ${HOKUYO_NAV2_PKG_PATH}/rosbag ; inbagname=$(basename "$(zenity --file-selection --directory --title='choose your rosbag directory' --filename='/home/colcon_ws/src/hokuyo_navigation2/rosbag')") || { echo "エラー: ディレクトリの選択がキャンセルされました。" >&2; exit 1; } ; p2obagname=$(zenity --entry --title="input_rosbag" --text="input p2o rosbagfile name:" --entry-text "new file" \ map1) && [ -n "$p2obagname" ] || { echo "エラー: 入力がキャンセルされたか、空白です。" >&2; exit 1; } ; cd ${HOKUYO_NAV2_PKG_PATH}; scripts/get_rosbag.bash ${inbagname} rosbag/${p2obagname}; exit;;
-  5) tree -L 1 -a ${HOKUYO_NAV2_PKG_PATH}/rosbag ; p2obagname=$(basename "$(zenity --file-selection --directory --title='choose your directory' --filename='/home/colcon_ws/src/hokuyo_navigation2/rosbag')") || { echo "エラー: ディレクトリの選択がキャンセルされました。" >&2; exit 1; } ; p2omapname=$(zenity --entry --title="input_rosbag" --text="input p2o rosbagfile name:" --entry-text "new file") && [ -n "$p2omapname" ] || { echo "エラー: 入力がキャンセルされたか、空白です。" >&2; exit 1; } ; cd ${HOKUYO_NAV2_PKG_PATH}; scripts/hokuyo_slam.bash ${p2obagname} ${p2omapname}; exit;;
+  3) gnome-terminal -- bash -c "source /opt/ros/${ROS_DISTRO}/setup.bash; source ~/.bashrc; cd ${ROS2_WS}; source install/setup.bash; cd ${HOKUYO_NAV2_PKG_PATH}; python3 src/MainWindow.py bash"; exit;;
+  4) tree -L 1 -a ${HOKUYO_NAV2_PKG_PATH}/rosbag ; inbagname=$(basename "$(zenity --file-selection --directory --title='choose your rosbag directory' --filename="${HOKUYO_NAV2_PKG_PATH}/rosbag/")") || { echo "エラー: ディレクトリの選択がキャンセルされました。" >&2; exit 1; } ; p2obagname=$(zenity --entry --title="input_rosbag" --text="input p2o rosbagfile name:" --entry-text "new file" \ map1) && [ -n "$p2obagname" ] || { echo "エラー: 入力がキャンセルされたか、空白です。" >&2; exit 1; } ; cd ${HOKUYO_NAV2_PKG_PATH}; scripts/get_rosbag.bash ${inbagname} rosbag/${p2obagname}; exit;;
+  5) tree -L 1 -a ${HOKUYO_NAV2_PKG_PATH}/rosbag ; p2obagname=$(basename "$(zenity --file-selection --directory --title='choose your directory' --filename="${HOKUYO_NAV2_PKG_PATH}/rosbag/")") || { echo "エラー: ディレクトリの選択がキャンセルされました。" >&2; exit 1; } ; p2omapname=$(zenity --entry --title="input_rosbag" --text="input p2o rosbagfile name:" --entry-text "new file") && [ -n "$p2omapname" ] || { echo "エラー: 入力がキャンセルされたか、空白です。" >&2; exit 1; } ; cd ${HOKUYO_NAV2_PKG_PATH}; scripts/mapping_util/hokuyo_slam.bash ${p2obagname} ${p2omapname}; exit;;
   6) wizurg_opt="map_opt";;                  #-- -M で map_opt.csv が入る --
   7) wizurg_opt="way_opt";;                  #-- -W で way_opt.csv が入る (岡本11/6追記) --
   8) wizurg_opt="edit_opt";;                 #-- -E で edit_opt.csv が入る (岡本11/6追記)--
@@ -159,7 +159,7 @@ echo "rosbag_dir:${rosbag_dir}";
 echo "loader:${loader}";
 echo "editor:${editor}";
 #-------kill_all_rosnode起動--------------
-gnome-terminal -- bash -c "${HOKUYO_NAV2_PKG_PATH}/scripts/kill_all_rosnode.sh"
+gnome-terminal -- bash -c "${HOKUYO_NAV2_PKG_PATH}/scripts/ctrl/kill_all_rosnode.sh"
 
 #-------ypspur-coordinator起動------------
 if [ "x${ypspur}" = "xtrue" ]; then

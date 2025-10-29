@@ -160,7 +160,7 @@ echo "rosbag_dir:${rosbag_dir}";
 echo "loader:${loader}";
 echo "editor:${editor}";
 #-------kill_all_rosnode起動--------------
-gnome-terminal -- bash -c "${HOKUYO_NAV2_PKG_PATH}/scripts/kill_all_rosnode.sh"
+gnome-terminal -- bash -c "${HOKUYO_NAV2_PKG_PATH}/scripts/ctrl/kill_all_rosnode.sh"
 
 #-------ypspur-coordinator起動------------
 if [ "x${ypspur}" = "xtrue" ]; then
