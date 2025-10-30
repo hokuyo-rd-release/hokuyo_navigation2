@@ -24,41 +24,24 @@ fi
 
 # ------------------------------------
 
-WIZURG_OPTIONS=9
 EXITCODE=$?
 echo "EXITCODE=$EXITCODE"
 
-if [ -z "$WIZURG_OPTIONS" ]; then
-  echo "終了します。>"
-  exit 1
-fi
-
 cd ${HOKUYO_NAV2_PKG_PATH}
 
-wizurg_opt="nav_opt";
+wizurg_opt="nav_opt_lio";
 inbagname="none";
 p2obagname="none";
 p2odir="none";
 p2omapname="none";
 liomapname="none";
 
-if [ "${use_lio}" = "true" ]; then
-    wizurg_opt="${wizurg_opt}_lio"
-else
-    wizurg_opt="${wizurg_opt}"
-fi
-
 echo "args: $1 $2 ";
-
-#============================
 echo "wizurg_opt=${wizurg_opt}";
 
-options=(`cat ./config/wizurg_opts/99_${wizurg_opt}.csv`)   #-- params/wizurg_opts/を新規作成（岡本11/12追記）--
-#--2024/10/30 追記ここまで--
+#============================
 
-map_names=(`cat ${HOKUYO_NAV2_PKG_PATH}/config/maps_and_waypoints.csv`) 
-Rmapfile=()
-Rwayfile=()
+options=(`cat ./config/wizurg_opts/${wizurg_opt}.csv`)   #-- params/wizurg_opts/を新規作成（岡本11/12追記）--
 
 #-------オプション入力情報を格納----------
 #-------options の配列のデータを読む。------#
@@ -69,15 +52,6 @@ for i in ${!options[@]}; do
   fi
 done
 
-#------複数マップ名、ウェイポイントファイル名の読み込み------
-#------map_and_waypoints のデータを読む。(True) データがなければ空読みする。(False) ------
-for i in ${!map_names[@]}; do
- if [ $i -gt 0 ]; then
-  j=$((${i}-1))
-  Rmapfile[$j]=`echo ${map_names[$i]} | cut -d ',' -f 1`
-  Rwayfile[$j]=`echo ${map_names[$i]} | cut -d ',' -f 2`
- fi
-done
 
 use_joy="${option_arr[0]}";
 mapping="${option_arr[1]}";
@@ -156,13 +130,10 @@ echo ${pose1} ${pose2} ${pose3} ${pose4} ${pose5} ${pose6} ${pose7}
 gnome-terminal -- bash -c "ros2 launch hokuyo_navigation2 hokuyo_nav2_bringup_launch.xml use_joy:=${use_joy} use_mapping:=${mapping} use_navigation:=${navigation} use_loader:=${loader} use_editor:=${editor} use_sensor:=${sensor} use_icart:=${icart}  use_lio:=${use_lio} use_unity_sim:=${use_unity} use_gnss_switch:=${use_gnss_switch} stop_uam_manage:=${stop_uam_manage} use_sensor:=${sensor} use_icart:=${icart} map_file:=${mapfile} initial_pose:="${pose1},${pose2},${pose3},${pose4},${pose5},${pose6},${pose7}" latlon_pose:="${latlon1},${latlon2},${latlon3}" ;bash"
 sleep 1
 
-if [ "x${navigation}" = "xtrue" ]; then
-  echo "navigation_true"
-  echo "wayfile = ${wayfile}.json"
-  sleep 7.0s
-  cd ${HOKUYO_NAV2_PKG_PATH}/waypoints; ros2 run waypoint_manager waypoint_manager -x ${HOKUYO_NAV2_PKG_PATH}/waypoints/${wayfile}.json once --ros-args -p use_gnss_switch:=${use_gnss_switch} -p cmd_vel_topic:=wizurg/cmd_vel
-  cd -
-fi
+echo "wayfile = ${wayfile}.json"
+sleep 7.0s
+
+gnome-terminal -- bash -c "ros2 run waypoint_manager waypoint_manager ${HOKUYO_NAV2_PKG_PATH}/waypoints/${wayfile}.json --ros-args -p use_gnss_switch:=${use_gnss_switch} -p cmd_vel_topic:=wizurg/cmd_vel"
 
 # 全ての gnome-terminal ウィンドウの ID を取得して最小化
 for id in $(xdotool search --class "gnome-terminal"); do
