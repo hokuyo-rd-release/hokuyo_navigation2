@@ -1,28 +1,15 @@
 #!/bin/bash
-# Docker環境かどうかを判定する
-# コンテナの起動時に -e DOCKER_ENV=1 を指定することで、Docker環境とみなすことができます。
-if [ -n "$DOCKER_ENV" ]; then
-    source /opt/ros/humble/setup.bash
-    cd /home/colcon_ws
-    source install/setup.bash
-    source ~/.bashrc
-    ROS2_WS="/home/colcon_ws"
-    HOKUYO_NAV2_PKG_PATH="${ROS2_WS}/src/hokuyo_navigation2"
-else
-    source /opt/ros/humble/setup.bash
-    # ワークスペースのパスもホストOSのものに合わせる
-    # 実際のホストOSのワークスペースパスに置き換えてください
-    cd ${HOME}/colcon_ws
-    source install/setup.bash
-    source ~/.bashrc
-    ROS2_WS="${HOME}/colcon_ws"
-    HOKUYO_NAV2_PKG_PATH="${ROS2_WS}/src/hokuyo_navigation2"
-fi
 
-# =====================（岡本→高橋）ここを引数にして使ってください==========================
-use_gnss_switch="true" #-- コア技術でナビゲーションする場合は "true" にする. マップ作成・ウェイポイント作成などの場合は"false" --
-stop_uam_manage="true"
-# ===========================================================================================
+# ROS 2 環境設定
+source "$(dirname "$0")/../setup_ros_env.sh"
+
+# --- 引数から設定を取得 ---
+csv_file_arg="$1"
+
+# 固定値
+use_gnss_switch="false" # multi_mapではGNSS切り替えは利用しない想定
+stop_uam_manage="false"
+# ------------------------
 
 WIZURG_OPTIONS=9
 # WIZURG_OPTIONS=$(zenity --list --title="WIZURGの起動コマンド" --text="1つ選択してください" \
@@ -70,9 +57,9 @@ operation_str=${WIZURG_OPTIONS}
 case $operation_str in
   1) wizurg_opt="control_opt";;              #-- -C で control_opt.csv が入る (岡本11/10追記)--
   2) wizurg_opt="sensor_rosbag";;            #-- -B で sensor_rosbag.csv が入る (高橋11/6追記)--
-  3) gnome-terminal -- bash -c "source /opt/ros/humble/setup.bash; source ~/.bashrc; cd /home/colcon_ws; source install/setup.bash; cd ${HOKUYO_NAV2_PKG_PATH}; python3 src/MainWindow.py bash"; exit;;
-  4) tree -L 1 -a ${HOKUYO_NAV2_PKG_PATH}/rosbag ; inbagname=$(basename "$(zenity --file-selection --directory --title='choose your rosbag directory' --filename='/home/colcon_ws/src/hokuyo_navigation2/rosbag')") || { echo "エラー: ディレクトリの選択がキャンセルされました。" >&2; exit 1; } ; p2obagname=$(zenity --entry --title="input_rosbag" --text="input p2o rosbagfile name:" --entry-text "new file" \ map1) && [ -n "$p2obagname" ] || { echo "エラー: 入力がキャンセルされたか、空白です。" >&2; exit 1; } ; cd ${HOKUYO_NAV2_PKG_PATH}; scripts/get_rosbag.bash ${inbagname} rosbag/${p2obagname}; exit;;
-  5) tree -L 1 -a ${HOKUYO_NAV2_PKG_PATH}/rosbag ; p2obagname=$(basename "$(zenity --file-selection --directory --title='choose your directory' --filename='/home/colcon_ws/src/hokuyo_navigation2/rosbag')") || { echo "エラー: ディレクトリの選択がキャンセルされました。" >&2; exit 1; } ; p2omapname=$(zenity --entry --title="input_rosbag" --text="input p2o rosbagfile name:" --entry-text "new file") && [ -n "$p2omapname" ] || { echo "エラー: 入力がキャンセルされたか、空白です。" >&2; exit 1; } ; cd ${HOKUYO_NAV2_PKG_PATH}; scripts/hokuyo_slam.bash ${p2obagname} ${p2omapname}; exit;;
+  3) gnome-terminal -- bash -c "source /opt/ros/${ROS_DISTRO}/setup.bash; source ~/.bashrc; cd ${ROS2_WS}; source install/setup.bash; cd ${HOKUYO_NAV2_PKG_PATH}; python3 src/MainWindow.py bash"; exit;;
+  4) tree -L 1 -a ${HOKUYO_NAV2_PKG_PATH}/rosbag ; inbagname=$(basename "$(zenity --file-selection --directory --title='choose your rosbag directory' --filename="${HOKUYO_NAV2_PKG_PATH}/rosbag/")") || { echo "エラー: ディレクトリの選択がキャンセルされました。" >&2; exit 1; } ; p2obagname=$(zenity --entry --title="input_rosbag" --text="input p2o rosbagfile name:" --entry-text "new file" \ map1) && [ -n "$p2obagname" ] || { echo "エラー: 入力がキャンセルされたか、空白です。" >&2; exit 1; } ; cd ${HOKUYO_NAV2_PKG_PATH}; scripts/get_rosbag.bash ${inbagname} rosbag/${p2obagname}; exit;;
+  5) tree -L 1 -a ${HOKUYO_NAV2_PKG_PATH}/rosbag ; p2obagname=$(basename "$(zenity --file-selection --directory --title='choose your directory' --filename="${HOKUYO_NAV2_PKG_PATH}/rosbag/")") || { echo "エラー: ディレクトリの選択がキャンセルされました。" >&2; exit 1; } ; p2omapname=$(zenity --entry --title="input_rosbag" --text="input p2o rosbagfile name:" --entry-text "new file") && [ -n "$p2omapname" ] || { echo "エラー: 入力がキャンセルされたか、空白です。" >&2; exit 1; } ; cd ${HOKUYO_NAV2_PKG_PATH}; scripts/mapping_util/hokuyo_slam.bash ${p2obagname} ${p2omapname}; exit;;
   6) wizurg_opt="map_opt";;                  #-- -M で map_opt.csv が入る --
   7) wizurg_opt="way_opt";;                  #-- -W で way_opt.csv が入る (岡本11/6追記) --
   8) wizurg_opt="edit_opt";;                 #-- -E で edit_opt.csv が入る (岡本11/6追記)--
@@ -91,7 +78,13 @@ common_options=(`cat ./config/wizurg_opts/99_common_opt.csv`)   #-- 新規作成
 
 #--2024/10/30 追記ここまで--
 
-map_names=(`cat ${HOKUYO_NAV2_PKG_PATH}/config/maps_and_waypoints.csv`) 
+# --- CSVファイルのパスを決定 ---
+if [ -n "$csv_file_arg" ]; then
+    csv_file_path="$csv_file_arg"
+else
+    csv_file_path="${HOKUYO_NAV2_PKG_PATH}/config/maps_and_waypoints.csv" # デフォルトパス
+fi
+map_names=(`cat ${csv_file_path}`) 
 Rmapfile=()
 Rwayfile=()
 
@@ -208,7 +201,7 @@ if [ "x${multi_map}" = "xtrue" ]; then
   sleep 2s
   echo "sleep 2"
   echo "start wizurg_navigation ${Rwayfile[$i-1]}"
-  cd ${HOKUYO_NAV2_PKG_PATH}/waypoints; ros2 run waypoint_manager waypoint_manager -x ${Rwayfile[$i-1]}.json once --ros-args -p use_gnss_switch:=${use_gnss_switch} -p cmd_vel_topic:=wizurg/cmd_vel
+  cd ${HOKUYO_NAV2_PKG_PATH}/waypoints; ros2 run hokuyo_navigation2 waypoint_manager -x ${Rwayfile[$i-1]}.json once --ros-args -p use_gnss_switch:=${use_gnss_switch}
   echo "finish map"
   cd -
  done
@@ -267,7 +260,7 @@ else
     echo "navigation_true"
     echo "wayfile = ${wayfile}.json"
     sleep 7.0s
-    cd ${HOKUYO_NAV2_PKG_PATH}/waypoints; ros2 run waypoint_manager waypoint_manager -x ${HOKUYO_NAV2_PKG_PATH}/waypoints/${wayfile}.json once --ros-args -p use_gnss_switch:=${use_gnss_switch} -p cmd_vel_topic:=wizurg/cmd_vel
+    cd ${HOKUYO_NAV2_PKG_PATH}/waypoints; ros2 run waypoint_manager waypoint_manager -x ${HOKUYO_NAV2_PKG_PATH}/waypoints/${wayfile}.json once --ros-args -p use_gnss_switch:=${use_gnss_switch}
     cd -
  fi
 

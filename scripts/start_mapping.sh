@@ -7,24 +7,7 @@
 # ROS 2 環境設定
 # --------------------------------------------------------------------------
 
-# Docker環境かどうかを判定する
-# コンテナの起動時に -e DOCKER_ENV=1 を指定することで、Docker環境とみなすことができます。
-if [ -n "$DOCKER_ENV" ]; then
-    source /opt/ros/humble/setup.bash
-    cd /home/colcon_ws
-    source install/setup.bash
-    source ~/.bashrc
-    ROS2_WS="/home/colcon_ws"
-    HOKUYO_NAV2_PKG_PATH="${ROS2_WS}/src/hokuyo_navigation2"
-else
-    source /opt/ros/humble/setup.bash
-    # ワークスペースのパスもホストOSのものに合わせる
-    cd ${HOME}/colcon_ws
-    source install/setup.bash
-    source ~/.bashrc
-    ROS2_WS="${HOME}/colcon_ws"
-    HOKUYO_NAV2_PKG_PATH="${ROS2_WS}/src/hokuyo_navigation2"
-fi
+source "$(dirname "$0")/setup_ros_env.sh"
 
 # コマンドライン引数を取得
 MAPPING_OPTION="$1"

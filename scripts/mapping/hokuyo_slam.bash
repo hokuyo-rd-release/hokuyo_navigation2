@@ -1,25 +1,13 @@
 #!/bin/bash
 
-# Docker環境かどうかを判定する
-# コンテナの起動時に -e DOCKER_ENV=1 を指定することで、Docker環境とみなすことができます。
+# ROS 2 環境設定
+source "$(dirname "$0")/../setup_ros_env.sh"
+
+# HOKUYO_SLAM_WS の設定
 if [ -n "$DOCKER_ENV" ]; then
-    source /opt/ros/humble/setup.bash
-    cd /home/colcon_ws
-    source install/setup.bash
-    source ~/.bashrc
-    ROS2_WS="/home/colcon_ws"
     HOKUYO_SLAM_WS="/home/github/hokuyo_slam_ros2"
-    HOKUYO_NAV2_PKG_PATH=${ROS2_WS}/src/hokuyo_navigation2
 else
-    source /opt/ros/humble/setup.bash
-    # ワークスペースのパスもホストOSのものに合わせる
-    # 実際のホストOSのワークスペースパスに置き換えてください
-    cd ${HOME}/colcon_ws
-    source install/setup.bash
-    source ~/.bashrc
-    ROS2_WS="${HOME}/colcon_ws"
     HOKUYO_SLAM_WS="${HOME}/github/hokuyo_slam_ros2"
-    HOKUYO_NAV2_PKG_PATH=${ROS2_WS}/src/hokuyo_navigation2
 fi
 
 # 実行方法 (server.pyとstart_mapping.shの変更後):

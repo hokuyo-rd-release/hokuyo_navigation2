@@ -1,2 +1,3 @@
-map_file,waypoint_file
-expo_ros2,expo_ros2
+map_file,waypoint_file, navigation_type
+expo_ros2,expo_ros2,gnss
+hokuyo_office,hokuyo_office,loc
