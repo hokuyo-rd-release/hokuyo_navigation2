@@ -54,8 +54,6 @@ echo "args: $1 $2 ";
 echo "wizurg_opt=${wizurg_opt}";
 
 options=(`cat ./config/wizurg_opts/99_${wizurg_opt}.csv`)   #-- params/wizurg_opts/を新規作成（岡本11/12追記）--
-common_options=(`cat ./config/wizurg_opts/99_common_opt.csv`)   #-- 新規作成（岡本2025/2/28追記）--
-
 #--2024/10/30 追記ここまで--
 
 map_names=(`cat ${HOKUYO_NAV2_PKG_PATH}/config/maps_and_waypoints.csv`) 
@@ -69,19 +67,6 @@ for i in ${!options[@]}; do
   j=$((${i}-1))
   option_arr[$j]=`echo ${options[$i]} | cut -d ',' -f 2`
   fi
-done
-
-#-------共通オプションを格納(岡本 2025/2/28)----------
-#-------common_options のデータを読む。-----------
-#-------入力値"x"以外を上書きする。------#
-for i in ${!common_options[@]}; do
- if [ $i -gt 0 ]; then
-  j=$((${i}-1))
-  option_tmp=`echo ${common_options[$i]} | cut -d ',' -f 2`
-  if [ "x${option_tmp}" != "xx" ]; then
-   option_arr[$j]=${option_tmp}
-  fi
-fi
 done
 
 #------複数マップ名、ウェイポイントファイル名の読み込み------
