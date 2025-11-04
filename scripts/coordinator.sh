@@ -147,10 +147,27 @@ gnome-terminal -- bash -c "${HOKUYO_NAV2_PKG_PATH}/scripts/ctrl/kill_all_rosnode
 
 #-------ypspur-coordinator起動------------
 if [ "x${ypspur}" = "xtrue" ]; then
-gnome-terminal -- bash -c "ros2 launch hokuyo_navigation2 icart_mini_drive_launch.xml ; bash"
-# gnome-terminal -- bash -c "/usr/local/bin/ypspur-coordinator -d /dev/ttyUSB0 --blvr -p ~/colcon_ws/src/hokuyo_navigation2/config/icart/iCart3_100W.param ; bash"
- #---------spur待機---------------
- sleep 1
+    echo "ypspur-coordinatorを起動します..."
+    gnome-terminal -- bash -c "ros2 launch hokuyo_navigation2 icart_mini_drive_launch.xml; bash"
+
+    echo "ypspur関連ノードの起動を待っています..."
+    local timeout=15
+    local start_time=$(date +%s)
+    local ypspur_node_found=false
+
+    while [ $(($(date +%s) - start_time)) -lt ${timeout} ]; do
+        if ros2 node list | grep -q -e 'icart_mini' -e 'ypspur'; then
+            ypspur_node_found=true
+            break
+        fi
+        sleep 1
+    done
+
+    if [ "${ypspur_node_found}" = "false" ]; then
+        echo "エラー: ypspur関連ノードの起動に失敗しました。(${timeout}秒タイムアウト)" >&2
+        exit 1
+    fi
+    echo "ypspur関連ノードの起動を確認しました。"
 fi
 
 #============= wizurg_satrt.launch起動 =============
