@@ -48,7 +48,12 @@ case "${MAPPING_OPTION}" in
         
         # scripts/hokuyo_slam.bash に引数を渡して実行
         # NOTE: scripts/hokuyo_slam.bash の引数の順番も確認し、適切に渡すこと
-        gnome-terminal -- bash -c "cd ${HOKUYO_NAV2_PKG_PATH}; scripts/mapping/hokuyo_slam.bash ${inbagname} ${p2omapname} ${pcd_output_dir} ${flag_file_name} ${wp_output_dir}; bash"; exit
+        gnome-terminal -- bash -c "cd ${HOKUYO_NAV2_PKG_PATH}; scripts/mapping/hokuyo_slam.bash \
+            \"${inbagname}\" \
+            \"${p2omapname}\" \
+            \"${pcd_output_dir}\" \
+            \"${flag_file_name}\" \
+            \"${wp_output_dir}\" ; bash"; exit
         
         ;;
 
@@ -67,7 +72,12 @@ case "${MAPPING_OPTION}" in
         flag_file_name="$6"
         
         # scripts/lio_raw.bash に引数を渡して実行
-        gnome-terminal -- bash -c "cd ${HOKUYO_NAV2_PKG_PATH}; scripts/mapping/lio_raw.bash ${inbagname} ${liomapname} ${pcd_output_dir} ${wp_output_dir} ${flag_file_name} ; bash"; exit
+        gnome-terminal -- bash -c "cd ${HOKUYO_NAV2_PKG_PATH}; scripts/mapping/lio_raw.bash \
+            \"${inbagname}\" \
+            \"${liomapname}\" \
+            \"${pcd_output_dir}\" \
+            \"${wp_output_dir}\" \
+            \"${flag_file_name}\" ; bash"; exit
         
         ;;
     

@@ -68,8 +68,8 @@ wizurg_opt="${wizurg_opt}_lio"
 #============================
 echo "wizurg_opt=${wizurg_opt}";
 
-options=(`cat ./config/wizurg_opts/99_${wizurg_opt}.csv`)   #-- params/wizurg_opts/を新規作成（岡本11/12追記）--
-common_options=(`cat ./config/wizurg_opts/99_common_opt.csv`)   #-- 新規作成（岡本2025/2/28追記）--
+options=(`cat ./config/wizurg_opts/${wizurg_opt}.csv`)   #-- params/wizurg_opts/を新規作成（岡本11/12追記）--
+common_options=(`cat ./config/wizurg_opts/common_opt.csv`)   #-- 新規作成（岡本2025/2/28追記）--
 
 #--2024/10/30 追記ここまで--
 

@@ -1,5 +1,5 @@
-map_file,waypoint_file, nav_type
-2025-08-22-16-25-toyonaka_ros2_test_out,okamoto_test,gnss
+map_file,waypoint_file,nav_type
+map1,map1,gnss
 map2,map2,gnss
 map3,map3,loc
 map4,map4,gnss
