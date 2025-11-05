@@ -1,22 +1,31 @@
 #!/bin/bash
 
-echo "OKが選択されました。rosbag record を停止します..."
-echo "Closing rosbag terminal!"
-pkill -f bag
+# このスクリプトは、Web UIなどから呼び出され、
+# ナビゲーション関連のすべてのプロセスを緊急停止することを目的としています。
+
+echo "--- Emergency Stop initiated by Web Interface ---"
+
+echo "Stopping multi-map navigation script..."
+pkill -f "nav_multi_map.sh"
 sleep 1s
-echo "Closing launch terminal!"
-pkill -f bringup
+
+echo "Stopping rosbag play or record..."
+pkill -f "bag"
 sleep 1s
-echo "Closing motor_drive terminal!"
-pkill -f icart_mini
+
+echo "Closing bringup launch process!"
+pkill -f "hokuyo_nav2_bringup_launch.xml"
 sleep 1s
-echo "Closing Navigation terminal!"
-pkill -f waypoint
+
+echo "Closing motor_drive process!"
+pkill -f "icart_mini_drive_launch.xml"
 sleep 1s
-echo "Closing Waypoint terminal!"
-pkill -f waypoint
+
+echo "Closing Navigation & Waypoint process!"
+pkill -f "waypoint_manager"
 sleep 1s
 echo "kill all ros2 nodes!"
-pkill -f kill_all_rosnode.sh
-#ps aux | grep ros2 | grep -v grep | grep -v vizanti | grep -v rosapi | grep -v rosbridge_websocket | grep -v server | awk '{ print "kill -9", $2 }' | sh
+pkill -f "kill_all_rosnode.sh"
+sleep 1s
+echo "--- All navigation processes have been requested to terminate. ---"
 exit 0

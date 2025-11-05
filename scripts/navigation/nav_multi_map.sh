@@ -42,39 +42,45 @@ gnome-terminal -- bash -c "${HOKUYO_NAV2_PKG_PATH}/scripts/ctrl/kill_all_rosnode
 
 start_ypspur_if_needed
 
-# CSVファイルを1行ずつ読み込んでループ
-tail -n +2 "${csv_file_path}" | while IFS=',' read -r map_name waypoint_name nav_type || [ -n "$map_name" ]; do
-    echo "----------------------------------------------------"
-    echo "次のマップの処理を開始します: ${map_name}"
+# CSVファイルの処理を無限に繰り返す
+while true; do
+    echo "=== CSVファイルの先頭からナビゲーションを開始します ==="
+    # CSVファイルを1行ずつ読み込んでループ
+    tail -n +2 "${csv_file_path}" | while IFS=',' read -r map_name waypoint_name nav_type || [ -n "$map_name" ]; do
+        echo "----------------------------------------------------"
+        echo "次のマップの処理を開始します: ${map_name}"
 
-    # ナビゲーションタイプに応じて use_gnss_switch を設定
-    current_use_gnss_switch="false"
-    if [ "${nav_type}" = "gnss" ]; then
-        echo "ナビゲーションタイプ: GNSS"
-        current_use_gnss_switch="true"
-    elif [ "${nav_type}" = "loc" ]; then
-        echo "ナビゲーションタイプ: LIO (Localization)"
-    else
-        echo "警告: 不明なナビゲーションタイプです: '${nav_type}'。デフォルト(loc)を使用します。"
-    fi
+        # ナビゲーションタイプに応じて use_gnss_switch を設定
+        current_use_gnss_switch="false"
+        if [ "${nav_type}" = "gnss" ]; then
+            echo "ナビゲーションタイプ: GNSS"
+            current_use_gnss_switch="true"
+        elif [ "${nav_type}" = "loc" ]; then
+            echo "ナビゲーションタイプ: LIO (Localization)"
+        else
+            echo "警告: 不明なナビゲーションタイプです: '${nav_type}'。デフォルト(loc)を使用します。"
+        fi
 
-    load_initial_poses "${map_name}"
+        load_initial_poses "${map_name}"
 
-    launch_navigation_system "${map_name}" "${current_use_gnss_switch}"
+        launch_navigation_system "${map_name}" "${current_use_gnss_switch}"
 
-    echo "ウェイポイント追従を開始します: ${waypoint_name}.json"
-    sleep 7.0s
+        echo "ウェイポイント追従を開始します: ${waypoint_name}.json"
+        sleep 7.0s
 
-    cd "${HOKUYO_NAV2_PKG_PATH}/waypoints"
-    ros2 run waypoint_manager waypoint_manager "${waypoint_name}.json" --once --ros-args -p use_gnss_switch:="${current_use_gnss_switch}" -p cmd_vel_topic:=wizurg/cmd_vel
-    cd -
+        cd "${HOKUYO_NAV2_PKG_PATH}/waypoints"
+        ros2 run waypoint_manager waypoint_manager "${waypoint_name}.json" --once --ros-args -p use_gnss_switch:="${current_use_gnss_switch}" -p cmd_vel_topic:=wizurg/cmd_vel
+        cd -
 
-    echo "マップ ${map_name} の処理が完了しました。"
-    echo "次のマップの準備のため、ROSノードを終了します..."
-    # gnome-terminalを使わずに直接実行し、終了を待つ
-    "${HOKUYO_NAV2_PKG_PATH}/scripts/ctrl/multi_map_kill.sh"
-    echo "ノードの終了を待っています..."
-    sleep 5 # ノードが完全に終了するのを待つ
+        echo "マップ ${map_name} の処理が完了しました。"
+        echo "次のマップの準備のため、ROSノードを終了します..."
+        # gnome-terminalを使わずに直接実行し、終了を待つ
+        "${HOKUYO_NAV2_PKG_PATH}/scripts/ctrl/multi_map_kill.sh"
+        echo "ノードの終了を待っています..."
+        sleep 5 # ノードが完全に終了するのを待つ
+    done
+    echo "=== CSVファイルの最後まで処理しました。ループを再開します。 ==="
+    sleep 3 # 次のループを開始する前に少し待機
 done
 
 # 全ての gnome-terminal ウィンドウの ID を取得して最小化
