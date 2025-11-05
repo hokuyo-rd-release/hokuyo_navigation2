@@ -41,7 +41,7 @@ load_options() {
     rosbag_dir="${option_arr[12]}"
     loader="${option_arr[13]}"
     editor="${option_arr[14]}"
-    enable_uam="true"
+    enable_uam="true" # デバッグ時はfalse.
 }
 
 # 初期位置情報をファイルから読み込む関数

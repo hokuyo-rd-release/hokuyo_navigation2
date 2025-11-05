@@ -40,7 +40,7 @@ case "${NAV_OPTION}" in
         echo "--> [3] multi_map でNavigationを開始します。"
         # $2: csv_file
         csv_file="$2"
-        gnome-terminal -- bash -c "cd ${HOKUYO_NAV2_PKG_PATH}; scripts/navigation/nav_multi_map.sh ${csv_file}; bash"; exit
+        gnome-terminal -- bash -c "cd ${HOKUYO_NAV2_PKG_PATH}; scripts/navigation/nav_multi_map.sh config/${csv_file}; bash"; exit
         ;;
 
     *)
