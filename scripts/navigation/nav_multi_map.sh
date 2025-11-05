@@ -71,7 +71,9 @@ tail -n +2 "${csv_file_path}" | while IFS=',' read -r map_name waypoint_name nav
 
     echo "マップ ${map_name} の処理が完了しました。"
     echo "次のマップの準備のため、ROSノードを終了します..."
-    ros2 node list | grep -v 'gnome-terminal' | xargs ros2 node kill
+    # gnome-terminalを使わずに直接実行し、終了を待つ
+    "${HOKUYO_NAV2_PKG_PATH}/scripts/ctrl/multi_map_kill.sh"
+    echo "ノードの終了を待っています..."
     sleep 5 # ノードが完全に終了するのを待つ
 done
 
