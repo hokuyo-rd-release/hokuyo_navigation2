@@ -47,6 +47,7 @@ while true; do
     tail -n +2 "${csv_file_path}" | while IFS=',' read -r map_name waypoint_name nav_type || [ -n "$map_name" ]; do
         echo "----------------------------------------------------"
         echo "次のマップの処理を開始します: ${map_name}"
+        echo "----------------------------------------------------"
 
         # ナビゲーションタイプに応じて use_gnss_switch を設定
         current_use_gnss_switch="false"
@@ -58,6 +59,13 @@ while true; do
         else
             echo "警告: 不明なナビゲーションタイプです: '${nav_type}'。デフォルト(loc)を使用します。"
         fi
+
+        echo "--- 実行パラメータ ---"
+        echo "mapfile: ${map_name}"
+        echo "wayfile: ${waypoint_name}"
+        echo "navigation: ${nav_type}"
+        echo "----------------------"
+
         # 初期位置情報を読み込む
         load_initial_poses "${map_name}"
 
@@ -80,7 +88,7 @@ while true; do
         sleep 10 # ノードが完全に終了するのを待つ
     done
     echo "=== CSVファイルの最後まで処理しました。ループを再開します。 ==="
-    sleep 3 # 次のループを開始する前に少し待機
+    # sleep 3 # 次のループを開始する前に少し待機
 done
 
 # 全ての gnome-terminal ウィンドウの ID を取得して最小化

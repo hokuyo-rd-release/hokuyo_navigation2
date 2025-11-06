@@ -53,17 +53,17 @@ echo "----------------------"
 echo "既存のROSノードを終了します..."
 gnome-terminal -- bash -c "${HOKUYO_NAV2_PKG_PATH}/scripts/ctrl/kill_all_rosnode.sh"
 
-start_ypspur_if_needed
 
 # 初期位置情報を読み込み
 load_initial_poses "${mapfile}"
+
+# 必要に応じて YP-Spur ノードを起動
+start_ypspur_if_needed
 
 # ナビゲーションシステムを起動
 launch_navigation_system "${mapfile}" "${use_gnss_switch}"
 
 echo "ウェイポイント追従を開始します: ${wayfile}.json"
-sleep 7.0s
-
 gnome-terminal -- bash -c "ros2 run waypoint_manager waypoint_manager ${HOKUYO_NAV2_PKG_PATH}/waypoints/${wayfile}.json --ros-args -p use_gnss_switch:=${use_gnss_switch} -p cmd_vel_topic:=wizurg/cmd_vel"
 
 # 起動したターミナルを最小化
