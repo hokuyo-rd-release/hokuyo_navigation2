@@ -250,7 +250,7 @@ else
      gnome-terminal -- bash -c "sleep 2; cd ${rosbag_dir}; ros2 bag record -a -o ${mapfile}; bash"
   fi
 #-------------------------------------
- gnome-terminal -- bash -c "ros2 launch hokuyo_navigation2 hokuyo_nav2_bringup_launch.xml use_joy:=${use_joy} use_mapping:=${mapping} use_navigation:=${navigation} use_loader:=${loader} use_editor:=${editor} use_sensor:=${sensor} use_icart:=${icart}  use_lio:=${use_lio} use_unity_sim:=${use_unity} use_gnss_switch:=${use_gnss_switch} stop_uam_manage:=${stop_uam_manage} use_sensor:=${sensor} use_icart:=${icart} map_file:=${mapfile} initial_pose:="${pose1},${pose2},${pose3},${pose4},${pose5},${pose6},${pose7}" latlon_pose:="${latlon1},${latlon2},${latlon3}" ;bash"
+ gnome-terminal -- bash -c "ros2 launch hokuyo_navigation2 hokuyo_nav2_bringup_launch.xml use_localization:=false use_joy:=${use_joy} use_mapping:=${mapping} use_navigation:=${navigation} use_loader:=${loader} use_editor:=${editor} use_sensor:=${sensor} use_icart:=${icart}  use_lio:=${use_lio} use_unity_sim:=${use_unity} use_gnss_switch:=${use_gnss_switch} stop_uam_manage:=${stop_uam_manage} use_sensor:=${sensor} use_icart:=${icart} map_file:=${mapfile} initial_pose:="${pose1},${pose2},${pose3},${pose4},${pose5},${pose6},${pose7}" latlon_pose:="${latlon1},${latlon2},${latlon3}" ;bash"
  sleep 1
  if [ "x${loader}" = "xtrue" ]; then
     gnome-terminal -- bash -c "cd ${rosbag_dir}; ros2 bag play ${mapfile}" # rosbag play → ./remap.sh

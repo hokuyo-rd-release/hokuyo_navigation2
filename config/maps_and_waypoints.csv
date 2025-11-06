@@ -1,5 +1,6 @@
 map_file,waypoint_file,nav_type
-map1,map1,gnss
-map2,map2,gnss
-map3,map3,loc
-map4,map4,gnss
+2025-11-06-11-20-toyonaka1_gnss,2025-11-06-11-20-toyonaka1_gnss,gnss
+2025-11-06-11-23-toyonaka2_loc,2025-11-06-11-23-toyonaka2_loc,loc
+2025-11-06-11-26-toyonaka3_gnss,2025-11-06-11-26-toyonaka3_gnss,gnss
+2025-11-06-11-27-toyonaka4_loc,2025-11-06-11-27-toyonaka4_loc,loc
+2025-11-06-11-29-toyonaka5_gnss,2025-11-06-11-29-toyonaka5_gnss,gnss

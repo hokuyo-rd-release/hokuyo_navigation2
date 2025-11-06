@@ -38,9 +38,9 @@
   <arg name="initial_pose" default="0.0 0.0 0.0 0.0 0.0 0.0 0.0"/>
   <arg name="latlon_pose" default="35.0 135.0 40.0"/>
  
-  <!-- <group if="$(var use_sensor)">
+  <group if="$(var use_sensor)">
     <include file="$(var hokuyo_navigation_pkg_path)/launch/sensors_launch.xml" />
-  </group> -->
+  </group>
 
   <!-- 関連ソフト緯度経度 <-> 平面直角座標-->
   <node pkg="fix2xyz" exec="fix2xyz_node" name="fix2xyz_out" output="log">
