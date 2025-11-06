@@ -123,6 +123,7 @@ fi
 cd "${ROS2_WS}"
 echo "Building package hokuyo_navigation2 to include new map files..."
 colcon build --symlink-install --packages-select hokuyo_navigation2
+source install/setup.bash
 
 BUILD_STATUS=$?
 if [ $BUILD_STATUS -ne 0 ]; then

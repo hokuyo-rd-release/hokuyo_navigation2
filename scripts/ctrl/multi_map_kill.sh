@@ -1,8 +1,8 @@
 #!/bin/bash
 
-echo "Stopping rosbag record..."
+echo "Stopping rosbag play or record..."
 echo "Closing rosbag process!"
-pkill -f "ros2 bag record"
+pkill -f "bag"
 sleep 1s
 echo "Closing bringup launch process!"
 pkill -f "hokuyo_nav2_bringup_launch.xml"

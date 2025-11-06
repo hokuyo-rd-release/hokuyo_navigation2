@@ -40,8 +40,6 @@ fi
 echo "既存のROSノードを終了します..."
 gnome-terminal -- bash -c "${HOKUYO_NAV2_PKG_PATH}/scripts/ctrl/kill_all_rosnode.sh"
 
-start_ypspur_if_needed
-
 # CSVファイルの処理を無限に繰り返す
 while true; do
     echo "=== CSVファイルの先頭からナビゲーションを開始します ==="
@@ -60,14 +58,16 @@ while true; do
         else
             echo "警告: 不明なナビゲーションタイプです: '${nav_type}'。デフォルト(loc)を使用します。"
         fi
-
+        # 初期位置情報を読み込む
         load_initial_poses "${map_name}"
 
+        # 必要に応じて YP-Spur を起動
+        start_ypspur_if_needed
+
+        # ナビゲーションシステムを起動
         launch_navigation_system "${map_name}" "${current_use_gnss_switch}"
 
         echo "ウェイポイント追従を開始します: ${waypoint_name}.json"
-        sleep 7.0s
-
         cd "${HOKUYO_NAV2_PKG_PATH}/waypoints"
         ros2 run waypoint_manager waypoint_manager "${waypoint_name}.json" --once --ros-args -p use_gnss_switch:="${current_use_gnss_switch}" -p cmd_vel_topic:=wizurg/cmd_vel
         cd -
@@ -77,7 +77,7 @@ while true; do
         # gnome-terminalを使わずに直接実行し、終了を待つ
         "${HOKUYO_NAV2_PKG_PATH}/scripts/ctrl/multi_map_kill.sh"
         echo "ノードの終了を待っています..."
-        sleep 5 # ノードが完全に終了するのを待つ
+        sleep 10 # ノードが完全に終了するのを待つ
     done
     echo "=== CSVファイルの最後まで処理しました。ループを再開します。 ==="
     sleep 3 # 次のループを開始する前に少し待機
