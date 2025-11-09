@@ -3,12 +3,16 @@
 # ROS 2 環境設定
 source "$(dirname "$0")/../setup_ros_env.sh"
 
-# HOKUYO_SLAM_WS の設定
-if [ -n "$DOCKER_ENV" ]; then
-    HOKUYO_SLAM_WS="/home/github/hokuyo_slam_ros2"
-else
-    HOKUYO_SLAM_WS="${HOME}/github/hokuyo_slam_ros2"
+# HOKUYO_SLAM のバイナリディレクトリを動的に検索
+echo "hokuyo_slam (run_p2o) のバイナリを検索しています..."
+HOKUYO_SLAM_BIN_DIR=$(find "${HOME}" -type f -name "run_p2o" -executable -print -quit 2>/dev/null | xargs -I {} dirname {})
+
+if [ -z "$HOKUYO_SLAM_BIN_DIR" ]; then
+    echo "エラー: 'run_p2o' 実行ファイルが見つかりませんでした。" >&2
+    echo "hokuyo_slam_ros2 プロジェクトが正しくビルドされているか確認してください。" >&2
+    exit 1
 fi
+echo "hokuyo_slam のバイナリディレクトリが見つかりました: ${HOKUYO_SLAM_BIN_DIR}"
 
 # 実行方法 (server.pyとstart_mapping.shの変更後):
 # ./hokuyo_slam.bash <rosbagベース名> <マップ名> <MAP_DIR> <FLAG_FILE_NAME> <option>
@@ -38,9 +42,6 @@ fi
 export CMAKE_PREFIX_PATH=/opt/vtk8
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/vtk8/lib
 export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:/opt/pcl
-
-# HOKUYO_SLAM_WS="/home/github/hokuyo_slam_ros2"
-echo $HOKUYO_SLAM_WS
 
 if [ -z "$1" ]; then
   echo "Error: 引数が不足しています <rosbagベース名>"
@@ -160,7 +161,7 @@ elif [ ${fix_rate} -eq 1 ] ; then
   echo 'error status:' ${result}
 
   if [ ${result} -eq 0 ] ; then
-    bash -c "${HOKUYO_SLAM_WS}/build/run_p2o data/$2/center_utm.txt data/$2/output.p2o"
+    bash -c "${HOKUYO_SLAM_BIN_DIR}/run_p2o data/$2/center_utm.txt data/$2/output.p2o"
     #bash -c "gnuplot atc_odom_gnss.plt"
 
     # p2o_fastlio_util
@@ -174,7 +175,7 @@ elif [ ${fix_rate} -eq 1 ] ; then
     find . | grep pcd > clouds.txt
     sort clouds.txt > sorted_clouds.txt
     paste sorted_clouds.txt poses.txt > concat.txt
-    bash -c "${HOKUYO_SLAM_WS}/build/rearrange_pointcloud concat.txt $2 $5/${2}.json"
+    bash -c "${HOKUYO_SLAM_BIN_DIR}/rearrange_pointcloud concat.txt $2 $5/${2}.json"
 
     # 絶対座標を相対座標に変換
     cd ../..
