@@ -85,7 +85,7 @@ while true; do
         # gnome-terminalを使わずに直接実行し、終了を待つ
         "${HOKUYO_NAV2_PKG_PATH}/scripts/ctrl/multi_map_kill.sh"
         echo "ノードの終了を待っています..."
-        sleep 10 # ノードが完全に終了するのを待つ
+        sleep 15 # ノードが完全に終了するのを待つ
     done
     echo "=== CSVファイルの最後まで処理しました。ループを再開します。 ==="
     # sleep 3 # 次のループを開始する前に少し待機
