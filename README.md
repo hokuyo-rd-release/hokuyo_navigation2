@@ -1,11 +1,11 @@
 # hokuyo_navigation2
 
-万博でのSPELデモンストレーションを目的としたナビゲーションソフトウェアのROS2版です。
-3D自己位置推定の結果をNavigation Stack に渡して、2DのPath Planningにより
-2Dの自律移動を実現します。[expo_wizurg](https://github.com/Hokuyo-RD/expo_wizurg)からのアップデート、システム構成の発案、パッケージの選定とインテグレーションを北陽電機 髙橋が作成/実施しました。
+SPELデモンストレーション向けのROS 2ナビゲーションソフトウェアです。3D自己位置推定の結果をROS 2 Navigation Stack (Nav2) と連携させ、2Dでの自律移動を実現します。
+
+このパッケージは [expo_wizurg](https://github.com/Hokuyo-RD/expo_wizurg) をベースに、ROS 2向けにアップデートしたものです。
 
 ## 全体構成
-```
+```text
 .
 └── hokuyo_navigation2/
     ├── src/
