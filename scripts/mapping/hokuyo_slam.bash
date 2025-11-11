@@ -5,7 +5,7 @@ source "$(dirname "$0")/../setup_ros_env.sh"
 
 # HOKUYO_SLAM のバイナリディレクトリを動的に検索
 echo "hokuyo_slam (run_p2o) のバイナリを検索しています..."
-HOKUYO_SLAM_BIN_DIR=$(find "${HOME}" -type f -name "run_p2o" -executable -print -quit 2>/dev/null | xargs -I {} dirname {})
+HOKUYO_SLAM_BIN_DIR=$(find "/" -type f -name "run_p2o" -executable -print -quit 2>/dev/null | xargs -I {} dirname {})
 
 if [ -z "$HOKUYO_SLAM_BIN_DIR" ]; then
     echo "エラー: 'run_p2o' 実行ファイルが見つかりませんでした。" >&2
