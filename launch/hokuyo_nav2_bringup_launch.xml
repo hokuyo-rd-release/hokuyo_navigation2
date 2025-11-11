@@ -1,6 +1,6 @@
 <?xml version='1.0' ?>
 <launch>
-  <arg name="hokuyo_navigation_pkg_path" default="$(find-pkg-share hokuyo_navigation2)"/>
+  <arg name="hokuyo_navigation_pkg_path" default="$(command 'python3 -c &quot;from ament_index_python.packages import get_package_prefix; import os; print(os.path.abspath(os.path.join(get_package_prefix(\'hokuyo_navigation2\'), \'../../src/hokuyo_navigation2\')), end=\'\')&quot;')"/>
   <arg name="coordinate_transform_pkg_path" default="$(find-pkg-share coordinate_transform)"/>
   <arg name="urdf_path" default="$(var hokuyo_navigation_pkg_path)/urdf/arno.xacro"/>
   <arg name="robot_description" default="$(command 'xacro $(var urdf_path)')"/>
