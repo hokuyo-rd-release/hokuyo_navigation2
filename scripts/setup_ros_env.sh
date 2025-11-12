@@ -17,7 +17,7 @@ SCRIPT_DIR=$(cd "$(dirname "$SCRIPT_PATH")" && pwd)
 HOKUYO_NAV2_PKG_PATH=$(cd "${SCRIPT_DIR}/.." && pwd)
 
 # hokuyo_navigation2 パッケージのパスから ROS 2 ワークスペースのルートを特定
-ROS2_WS=$(cd "${HOKUYO_NAV2_PKG_PATH}/../.." && pwd)
+ROS2_WS=$(cd "${HOKUYO_NAV2_PKG_PATH}/../../.." && pwd)
 
 # ROS 2 環境をセットアップ
 source /opt/ros/humble/setup.bash
