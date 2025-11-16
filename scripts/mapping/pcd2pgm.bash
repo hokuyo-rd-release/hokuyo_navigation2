@@ -85,8 +85,8 @@ fi
 
 # 2. pcd2pgm_converter.py の実行
 echo "Running: python3 ${PYTHON_SCRIPT} \
---thre_z_min 0.5 \
---thre_z_max 7.0 \
+--thre_z_min -1.0 \
+--thre_z_max 20.0 \
 --flag_pass_through False \
 --thre_radius 0.1 \
 --map_resolution 0.05 \
@@ -100,7 +100,7 @@ ${CMD_LOOP_FLAG} \
 # 【重要】Pythonの引数規則に従い、位置引数（PCD/OUTPUTパス）を最後に配置する
 python3 "${PYTHON_SCRIPT}" \
     --thre_z_min -1.0 \
-    --thre_z_max 7.0 \
+    --thre_z_max 20.0 \
     --flag_pass_through False \
     --thre_radius 0.1 \
     --map_resolution 0.05 \
