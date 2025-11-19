@@ -33,6 +33,7 @@
   <arg name="gnss_tf_param" default="$(var hokuyo_navigation_pkg_path)/config/gnss_tf.yaml"/>
   <arg name="switch_tf_param" default="$(var hokuyo_navigation_pkg_path)/config/switch_tf.yaml"/>
   <arg name="switch_only_tf_param" default="$(var hokuyo_navigation_pkg_path)/config/switch_only_tf.yaml"/>
+  <arg name="lio_tf_param" default="$(var hokuyo_navigation_pkg_path)/config/lio_tf.yaml"/>
   <arg name="gnss_lio_switch_param" default="$(var hokuyo_navigation_pkg_path)/config/gnss_lio_switch.yaml" />
   <arg name="gnss_lio_switch_only_param" default="$(var hokuyo_navigation_pkg_path)/config/gnss_lio_switch_only.yaml" />
   <arg name="initial_pose" default="0.0 0.0 0.0 0.0 0.0 0.0 0.0"/>
@@ -106,7 +107,7 @@
           <param name="fix_with_orient_topic" value="/fix_with_orient/switch" />
         </node>
         <node pkg="hokuyo_navigation2" exec="odom_frame_changer" name="switch_odom_tf">
-          <!--param from="$(var switch_only_tf_param)" /-->
+          <param from="$(var switch_only_tf_param)" />
         </node>
 
         <include file="$(find-pkg-share lio_nav2_bringup)/launch/navigation_launch.py">
@@ -117,6 +118,10 @@
       </group>
 
       <group unless="$(var use_gnss_switch)">
+        <node pkg="hokuyo_navigation2" exec="odom_frame_changer" name="hokuyo_lio_tf">
+          <param from="$(var lio_tf_param)" />
+        </node>
+
         <group if="$(var use_localization)">
           <node pkg="simple_fastlio_localization" exec="localization_node" name="localization_node" output="screen" launch-prefix="bash -c 'sleep 1.0; $0 $@'">
             <param name="map_file" value="$(var map_dir)/$(var map_file).pcd"/>
