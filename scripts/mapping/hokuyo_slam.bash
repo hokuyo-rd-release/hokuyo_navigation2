@@ -92,10 +92,10 @@ echo "PCD Output Directory: $MAP_DIR"
 echo "Flag File Name: $FLAG_FILE_NAME"
 echo "All args are checked."
 
-#------- config.csv 読み込み -------
+#------- hokuyo_slam_topics_cfg.csv 読み込み -------
 # 第5引数 (オプション)がconfigファイルパスとして使用される
 if [ "$6" = "" ]; then
-  options=(`cat ${CURRENT}/config/config.csv`)
+  options=(`cat ${CURRENT}/config/hokuyo_slam_topics_cfg.csv`)
   echo option: $options
 else
   options=(`cat $6`)

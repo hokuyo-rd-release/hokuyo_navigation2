@@ -45,10 +45,10 @@ else
   echo "Input rosbag directory: $INPUT_BAG_DIR exists."
 fi
 
-#------- config.csv 読み込み -------
+#------- hokuyo_slam_topics_cfg.csv 読み込み -------
 CONFIG_FILE="$3"
 if [ -z "$CONFIG_FILE" ]; then
-  CONFIG_FILE="${HOKUYO_NAV2_PKG_PATH}/config/config.csv"
+  CONFIG_FILE="${HOKUYO_NAV2_PKG_PATH}/config/hokuyo_slam_topics_cfg.csv"
   echo "Using default config file: $CONFIG_FILE"
 else
   echo "Using specified config file: $CONFIG_FILE"

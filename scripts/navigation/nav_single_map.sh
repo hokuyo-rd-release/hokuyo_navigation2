@@ -60,6 +60,10 @@ load_initial_poses "${mapfile}"
 # 必要に応じて YP-Spur ノードを起動
 start_ypspur_if_needed
 
+# SPELシステムを起動
+start_spel_system
+sleep 5
+
 # ナビゲーションシステムを起動
 launch_navigation_system "${mapfile}" "${use_gnss_switch}"
 

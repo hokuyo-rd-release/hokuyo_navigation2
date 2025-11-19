@@ -12,7 +12,7 @@ source "$(dirname "$0")/../setup_ros_env.sh"
 set -u
 
 # 共通関数を読み込む
-source "$(dirname "$0")/nav_common.sh"
+source "$(dirname "$0")/nav_common.sh" # start_spel_system, stop_spel_system, load_options など
 
 # --- 引数から設定を取得 ---
 csv_file_arg="${1:-}"
@@ -72,6 +72,10 @@ while true; do
         # 必要に応じて YP-Spur を起動
         start_ypspur_if_needed
 
+        # SPELシステムを起動
+        start_spel_system
+        sleep 5
+
         # ナビゲーションシステムを起動
         launch_navigation_system "${map_name}" "${current_use_gnss_switch}"
 
@@ -83,6 +87,11 @@ while true; do
         echo "マップ ${map_name} の処理が完了しました。"
         echo "次のマップの準備のため、ROSノードを終了します..."
         # gnome-terminalを使わずに直接実行し、終了を待つ
+        
+        # SPELシステムを停止
+        stop_spel_system
+        sleep 5
+
         "${HOKUYO_NAV2_PKG_PATH}/scripts/ctrl/multi_map_kill.sh"
         echo "ノードの終了を待っています..."
         sleep 15 # ノードが完全に終了するのを待つ
