@@ -74,7 +74,7 @@ while true; do
 
         # SPELシステムを起動
         start_spel_system
-        sleep 5
+        sleep 1
 
         # ナビゲーションシステムを起動
         launch_navigation_system "${map_name}" "${current_use_gnss_switch}"
@@ -90,7 +90,7 @@ while true; do
         
         # SPELシステムを停止
         stop_spel_system
-        sleep 5
+        sleep 1
 
         "${HOKUYO_NAV2_PKG_PATH}/scripts/ctrl/multi_map_kill.sh"
         echo "ノードの終了を待っています..."

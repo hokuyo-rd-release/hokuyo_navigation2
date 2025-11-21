@@ -7,7 +7,7 @@
   <!-- <arg name="camera_com" default="/dev/video0" /> -->
   <!-- <arg name="gnss_com" default="/dev/ttyACM1" /> -->
 
-  <arg name="gnss_com" default="/dev/GNSS_SERIAL" />
+  <!-- <arg name="gnss_com" default="/dev/GNSS_SERIAL" /> -->
   <!-- GNSSポート設定方法(wizurg2号機の場合)
     $ lsusb
     GNSS電源USB：Bus 001 Device 011: ID 1915:520f Nordic Semiconductor ASA nRF52 USB CDC Demo
@@ -17,37 +17,37 @@
     /etc/udev/rules.d/99-seeed-serial.rulesを以下のように編集
   -->
 
-  <arg name="gnss_baud" default="38400" />
+  <!-- <arg name="gnss_baud" default="38400" /> -->
   <!-- <arg name="ust_ip" default="192.168.0.11" />
   <arg name="ust2_ip" default="192.168.0.13" />   -->
-  <arg name="yvt_ip" default="192.168.0.12" />
+  <!-- <arg name="yvt_ip" default="192.168.0.12" /> -->
   <!-- <arg name="ylm_ip" default="192.168.0.10" />
   <arg name="ylm_sensor_port" default="10940" description="Lumotive sensor UDP port number"/>
   <arg name="ylm_config_path" default="$(find-pkg-share ylm_ros2)/config/m20_configs.yaml"/> -->
 
   <!-- set frame name -->
-  <arg name="frame_gnss" default="gnss" />
-  <arg name="frame_yvt" default="yvt" />
+  <!-- <arg name="frame_gnss" default="gnss" />
+  <arg name="frame_yvt" default="yvt" /> -->
 
   <!--uam module-->
     <include file="$(find-pkg-share hokuyo_navigation2)/launch/safety_urg_node2_2sensor.launch.py" />
 
   <!-- gnss module -->
   <!---->
-  <node pkg="nmea_navsat_driver" exec="nmea_serial_driver" name="nmea_serial_driver" >
+  <!-- <node pkg="nmea_navsat_driver" exec="nmea_serial_driver" name="nmea_serial_driver" >
     <param name="port" value="$(var gnss_com)" />
     <param name="baud" value="$(var gnss_baud)" />
     <param name="frame_id" value="$(var frame_gnss)" />
-  </node>
+  </node> -->
   <!---->
 
   <!-- yvt module -->
   <!---->
-	<node pkg="hokuyo3d_ros2" exec="hokuyo3d_node" name="hokuyo3d">
+	<!-- <node pkg="hokuyo3d_ros2" exec="hokuyo3d_node" name="hokuyo3d">
 		<param name="ip_address" value="$(var yvt_ip)" />
 		<param name="frame_id" value="$(var frame_yvt)" />
 		<param name="horizontal_interlace" value ="4" />
     <param name="vertical_interlace" value ="2" />
-	</node>
+	</node> -->
   <!---->
 </launch>

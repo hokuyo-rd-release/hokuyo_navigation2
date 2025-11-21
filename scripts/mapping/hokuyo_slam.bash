@@ -155,12 +155,14 @@ elif [ ${fix_rate} -eq 1 ] ; then
 
   sleep 1
   # p2o　正常終了の場合のみ処理を実行したい。
+  echo 'p2o_from_rosbag'
   bash -c "python3 src/p2o_from_rosbag_ros2.py rosbag/$1 $lio_topic $gnss_topic $gnss_cov_thre data/$2/center_lat_lon_alt.txt data/$2/center_utm.txt data/$2/lio_edge_timestamps.txt > data/$2/output.p2o" # 引数2 input.bag
   result=$?
 
   echo 'error status:' ${result}
 
   if [ ${result} -eq 0 ] ; then
+    echo 'run_p2o'
     bash -c "${HOKUYO_SLAM_BIN_DIR}/run_p2o data/$2/center_utm.txt data/$2/output.p2o"
     #bash -c "gnuplot atc_odom_gnss.plt"
 

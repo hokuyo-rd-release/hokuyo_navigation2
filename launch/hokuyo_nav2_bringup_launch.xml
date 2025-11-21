@@ -1,7 +1,7 @@
 <?xml version='1.0' ?>
 <launch>
   <arg name="hokuyo_navigation_pkg_path" default="$(command 'python3 -c &quot;from ament_index_python.packages import get_package_prefix; import os; pkg_name = \'hokuyo_navigation2\'; install_prefix = get_package_prefix(pkg_name); ws_root = os.path.dirname(os.path.dirname(install_prefix)); src_path = os.path.join(ws_root, \'src\', pkg_name, pkg_name); print(src_path if os.path.isdir(src_path) else install_prefix, end=\'\')&quot;')"/>
-  <arg name="coordinate_transform_pkg_path" default="$(find-pkg-share coordinate_transform)"/>
+  <!-- <arg name="coordinate_transform_pkg_path" default="$(find-pkg-share coordinate_transform)"/> -->
   <arg name="urdf_path" default="$(var hokuyo_navigation_pkg_path)/urdf/arno.xacro"/>
   <arg name="robot_description" default="$(command 'xacro $(var urdf_path)')"/>
 
@@ -62,45 +62,45 @@
   <node name="gnss_lio_debug" pkg="hokuyo_navigation2" exec="gnss_lio_debug" output="log"/>
 
   <!-- コア技術 hokuyo_lio -->
-  <group if="$(var use_lio)">
+  <!-- <group if="$(var use_lio)">
     <group if="$(var use_gnss_switch)">
       <include file="$(var hokuyo_navigation_pkg_path)/launch/hokuyo_lio_node_with_yaml_ros2.xml">
         <arg name="sync_enable" value="false"/>
         <arg name="lio_frame" value="lio_base_link"/>
       </include>
-    </group>
-  <!-- コア技術 hokuyo_lio -->
-    <group unless="$(var use_gnss_switch)">
-    <!-- Navigation 時 -->
-      <group if="$(var use_localization)">
+    </group> -->
+    <!-- コア技術 hokuyo_lio -->
+    <!-- <group unless="$(var use_gnss_switch)"> -->
+      <!-- Navigation 時 -->
+      <!-- <group if="$(var use_localization)">
           <include file="$(var hokuyo_navigation_pkg_path)/launch/hokuyo_lio_node_with_yaml_ros2.xml">
             <arg name="sync_enable" value="false"/>
             <arg name="lio_frame" value="base_link"/>
           </include>
-      </group>
-    <!-- waypoint write mode -->
-      <group unless="$(var use_localization)">
+      </group> -->
+        <!-- waypoint write mode -->
+      <!-- <group unless="$(var use_localization)">
           <include file="$(var hokuyo_navigation_pkg_path)/launch/hokuyo_lio_node_with_yaml_ros2.xml">
             <arg name="sync_enable" value="true"/>
             <arg name="lio_frame" value="base_link"/>
           </include>
       </group>
     </group>
-  </group>
+  </group> -->
 
   
   <group if="$(var use_navigation)">
     <group if="$(var use_lio)">
       <!-- <node pkg="rviz2" exec="rviz2" name="navigation_rviz" args="-d $(var hokuyo_navigation_pkg_path)/rviz/wizurg_navigation.rviz"/> -->
       <group if="$(var use_gnss_switch)">
-        <node pkg="test_tools" exec="imu_coordinate_changer" name="imu_coordinate_changer">
+        <!-- <node pkg="test_tools" exec="imu_coordinate_changer" name="imu_coordinate_changer">
           <param name="sub_topic_name" value="hokuyo3d/imu" />
           <param name="pub_topic_name" value="hokuyo3d/imu_transed" />
           <param name="averaging_num" value="7" />
-        </node>
-        <include file="$(var coordinate_transform_pkg_path)/launch/gnss_lio_switch_launch.xml">
+        </node> -->
+        <!-- <include file="$(var coordinate_transform_pkg_path)/launch/gnss_lio_switch_launch.xml">
           <arg name="param_file" value="$(var gnss_lio_switch_only_param)" />
-        </include>
+        </include> -->
         <node pkg="fix2xyz" exec="fix_odom_to_fix_orient" name="fix_odom_to_fix_orient">
           <param name="utm_odom_topic" value="odometry/utm" />
           <param name="fix_topic" value="fix/switch" />
