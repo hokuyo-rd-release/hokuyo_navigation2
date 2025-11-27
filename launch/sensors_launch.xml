@@ -39,6 +39,8 @@
     <param name="baud" value="$(var gnss_baud)" />
     <param name="frame_id" value="$(var frame_gnss)" />
   </node>
+  <!--f9p_ichimill-->
+  <!-- <include file="$(find-pkg-share f9p_ichimill)/launch/gps_ichimill.launch.py"/> -->
   <!---->
 
   <!-- yvt module -->

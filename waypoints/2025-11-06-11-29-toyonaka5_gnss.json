@@ -394,8 +394,8 @@
         {
             "type": "normal",
             "value": 0,
-            "xy_tolerance": 0.2,
-            "yaw_tolerance": 0.2
+            "xy_tolerance": 1,
+            "yaw_tolerance": 3.14
         }
     ]
 ]

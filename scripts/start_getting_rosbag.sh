@@ -14,23 +14,6 @@ gnome-terminal -- bash -c "${HOKUYO_NAV2_PKG_PATH}/scripts/ctrl/kill_all_rosnode
 echo "ypspur-coordinatorを起動します..."
 gnome-terminal -- bash -c "ros2 launch hokuyo_navigation2 icart_mini_drive_launch.xml; bash"
 
-echo "ypspur関連ノードの起動を待っています..."
-local timeout=15
-local start_time=$(date +%s)
-local ypspur_node_found=false
-
-while [ $(($(date +%s) - start_time)) -lt ${timeout} ]; do
-    if ros2 node list | grep -q -e 'icart_mini' -e 'ypspur'; then
-        ypspur_node_found=true
-        break
-    fi
-    sleep 1
-done
-
-if [ "${ypspur_node_found}" = "false" ]; then
-    echo "エラー: ypspur関連ノードの起動に失敗しました。(${timeout}秒タイムアウト)" >&2
-    exit 1
-fi
 echo "ypspur関連ノードの起動を確認しました。"
 sleep 1
 #============= wizurg_satrt.launch起動 =============
