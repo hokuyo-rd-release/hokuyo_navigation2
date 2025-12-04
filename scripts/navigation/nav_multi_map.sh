@@ -44,7 +44,10 @@ gnome-terminal -- bash -c "${HOKUYO_NAV2_PKG_PATH}/scripts/ctrl/kill_all_rosnode
 while true; do
     echo "=== CSVファイルの先頭からナビゲーションを開始します ==="
     # CSVファイルを1行ずつ読み込んでループ
-    tail -n +2 "${csv_file_path}" | while IFS=',' read -r map_name waypoint_name nav_type || [ -n "$map_name" ]; do
+    tail -n +2 "${csv_file_path}" | while IFS=',' read -r map_name waypoint_name nav_type interval || [ -n "$map_name" ]; do
+        # Windowsの改行コード(CRLF)に対応するため、行末の\rを削除
+        interval=$(echo "${interval}" | tr -d '\r')
+
         echo "----------------------------------------------------"
         echo "次のマップの処理を開始します: ${map_name}"
         echo "----------------------------------------------------"
@@ -64,6 +67,7 @@ while true; do
         echo "mapfile: ${map_name}"
         echo "wayfile: ${waypoint_name}"
         echo "navigation: ${nav_type}"
+        echo "interval: ${interval:-1} sec" # intervalが空ならデフォルト1秒
         echo "----------------------"
 
         # 初期位置情報を読み込む
@@ -79,6 +83,11 @@ while true; do
         cd "${HOKUYO_NAV2_PKG_PATH}/waypoints"
         ros2 run waypoint_manager waypoint_manager "${waypoint_name}.json" --once --ros-args -p use_gnss_switch:="${current_use_gnss_switch}" -p cmd_vel_topic:=wizurg/cmd_vel
         cd -
+
+        # 指定された秒数だけ待機
+        wait_time=${interval:-1} # intervalが空または未設定の場合はデフォルト1秒
+        echo "${wait_time}秒間待機します..."
+        sleep "${wait_time}"
 
         echo "マップ ${map_name} の処理が完了しました。"
         echo "次のマップの準備のため、ROSノードを終了します..."

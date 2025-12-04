@@ -1,2 +1,3 @@
-map_file,waypoint_file,nav_type
-2025-11-29-11-57-ATC2025_10,2025-11-29-11-57-ATC2025_10,loc
+map_file,waypoint_file,nav_type,interval
+2025-11-29-11-50-ATC2025_8,2025-11-29-11-50-ATC2025_8,loc,300
+2025-11-29-11-57-ATC2025_10,2025-11-29-11-57-ATC2025_10,loc,1

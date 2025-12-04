@@ -123,7 +123,7 @@
             <param name="initial_pose" value="$(var initial_pose)"/>
             <param name="frames_accumulate" value="4"/>
             <param name="min_registration_interval" value="0.0"/>
-            <param name="asynchronous_registration" value="true"/>
+            <param name="asynchronous_registration" value="false"/>
             <param name="publish_2d_pose" value="true"/>
             <param name="visualize_registration_result" value="true"/>
             <param name="enable_sound" value="true"/>
