@@ -86,8 +86,13 @@ while true; do
 
         # 指定された秒数だけ待機
         wait_time=${interval:-1} # intervalが空または未設定の場合はデフォルト1秒
-        echo "${wait_time}秒間待機します..."
-        sleep "${wait_time}"
+        echo "${wait_time}秒間待機します..."        
+        # カウントダウン処理
+        for ((i=wait_time; i>0; i--)); do
+            echo -ne "次のマップまであと ${i} 秒...  \r"
+            sleep 1
+        done
+        echo "" # カウントダウン表示をクリアするための改行
 
         echo "マップ ${map_name} の処理が完了しました。"
         echo "次のマップの準備のため、ROSノードを終了します..."
