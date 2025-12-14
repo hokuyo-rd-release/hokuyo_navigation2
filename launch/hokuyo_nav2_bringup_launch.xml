@@ -18,17 +18,9 @@
   <arg name="enable_uam" default="false"/>
   <arg name="use_gnss_switch" default="false"/>
   <arg name="use_localization" default="true"/>
-  <arg name="params_file" default="$(var hokuyo_navigation_pkg_path)/config/nav2/nav2_gnss_switch_params.yaml"/>
-  <arg name="namespace" default=""/>
-  <arg name="log_level" default="info"/>
-  <arg name="autostart" default="true"/>
-  <arg name="use_composition" default="False"/>
-  <arg name="cmd_vel_topic" default="wizurg/cmd_vel"/>
-  <arg name="use_respawn" default="false"/>
 
   <arg name="map_dir" default="$(var hokuyo_navigation_pkg_path)/map"/>
   <arg name="map_file" default="test"/>
-  <arg name="map" default="$(var map_dir)/$(var map_file).yaml"/>
   <arg name="way_dir" default="$(var hokuyo_navigation_pkg_path)/waypoints"/>
   <arg name="way_file" default="_waypoint"/>
 
@@ -46,9 +38,9 @@
   <arg name="initial_pose" default="0.0 0.0 0.0 0.0 0.0 0.0 0.0"/>
   <arg name="latlon_pose" default="35.0 135.0 40.0"/>
  
-  <!-- <group if="$(var use_sensor)">
+  <group if="$(var use_sensor)">
     <include file="$(var hokuyo_navigation_pkg_path)/launch/sensors_launch.xml" />
-  </group> -->
+  </group>
 
   <!-- 関連ソフト緯度経度 <-> 平面直角座標-->
   <node pkg="fix2xyz" exec="fix2xyz_node" name="fix2xyz_out" output="log">
@@ -121,10 +113,6 @@
           <arg name="map" value="$(var map_dir)/$(var map_file).yaml"/>
           <arg name="cmd_vel_topic" value="wizurg/cmd_vel"/>
           <arg name="params_file" value="$(var hokuyo_navigation_pkg_path)/config/nav2/nav2_gnss_switch_params.yaml"/>
-          <arg name="namespace" value=""/>
-          <arg name="autostart" value="$(var autostart)"/>
-          <arg name="log_level" value="$(var log_level)"/>
-          <arg name="use_composition" value="$(var use_composition)"/>
         </include>
       </group>
 
@@ -151,13 +139,9 @@
             <arg name="map" value="$(var map_dir)/$(var map_file).yaml"/>
             <arg name="cmd_vel_topic" value="wizurg/cmd_vel"/>
             <arg name="params_file" value="$(var hokuyo_navigation_pkg_path)/config/nav2/nav2_params.yaml"/>
-            <arg name="namespace" value=""/>
-            <arg name="autostart" value="$(var autostart)"/>
-            <arg name="log_level" value="$(var log_level)"/>
-            <arg name="use_composition" value="$(var use_composition)"/>
           </include>
       </group>
-      <!-- <node pkg="rviz2" exec="rviz2" name="waypoint_rviz_editor" args="-d $(var hokuyo_navigation_pkg_path)/rviz/nav2.rviz"/> -->
+      <node pkg="rviz2" exec="rviz2" name="waypoint_rviz_editor" args="-d $(var hokuyo_navigation_pkg_path)/rviz/nav2.rviz"/>
     </group>
   </group>
 

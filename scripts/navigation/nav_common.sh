@@ -131,6 +131,5 @@ start_ypspur_if_needed() {
         #     exit 1
         # fi
         echo "ypspur関連ノードの起動を確認しました。"
-        sleep 2
     fi
 }
