@@ -35,4 +35,10 @@ echo "kill all ros2 nodes!"
 pkill -f "kill_all_rosnode.sh"
 sleep 1s
 echo "--- All navigation processes have been requested to terminate. ---"
+
+echo "Clearing cache memory..."
+# sudoersでパスワードなし実行が許可されたキャッシュ解放スクリプトを呼び出します
+sudo /usr/local/bin/clear_memory_cache.sh
+echo "Cache memory has been cleared."
+
 exit 0

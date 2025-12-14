@@ -20,7 +20,7 @@ HOKUYO_NAV2_PKG_PATH=$(cd "${SCRIPT_DIR}/.." && pwd)
 ROS2_WS=$(cd "${HOKUYO_NAV2_PKG_PATH}/../../.." && pwd)
 
 # ROS 2 環境をセットアップ
-source /opt/ros/humble/setup.bash
+source /opt/ros/jazzy/setup.bash
 source "${ROS2_WS}/install/setup.bash"
 source ~/.bashrc
 # source ~/.bash_spel_setting

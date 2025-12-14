@@ -75,3 +75,8 @@ if [ -n "$DOCKER_EV" ]; then
     echo "Stopping the container: $CONTAINER_NAME"
     docker stop "$CONTAINER_NAME"
 fi
+
+echo "Clearing cache memory..."
+# sudoersでパスワードなし実行が許可されたキャッシュ解放スクリプトを呼び出します
+sudo /usr/local/bin/clear_memory_cache.sh
+echo "Cache memory has been cleared."

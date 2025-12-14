@@ -52,7 +52,9 @@
 
   <!-- 関連ソフト UAM_controller -->
   <!-- <node name="cmdvel_manager" pkg="robot_safety_manage" exec="cmdvel_manager" output="log">
+  <!-- <node name="cmdvel_manager" pkg="robot_safety_manage" exec="cmdvel_manager" output="log">
     <param name="enable_manage" value="$(var enable_uam)" />
+  </node> -->
   </node> -->
   <!-- 関連ソフト waypoint_controller -->
   <node name="waypoint_controller" pkg="hokuyo_navigation2" exec="cmdvel_stopper" output="log"/>
