@@ -6,15 +6,15 @@
   <arg name="robot_description" default="$(command 'xacro $(var urdf_path)')"/>
 
   <arg name="use_sim_time" default="false"/>
-  <arg name="use_joy" default="false"/>
-  <arg name="use_mapping" default="false"/>
+  <!-- <arg name="use_joy" default="false"/> -->
+  <!-- <arg name="use_mapping" default="false"/> -->
   <arg name="use_navigation" default="false"/>
-  <arg name="use_loader" default="false"/>
-  <arg name="use_editor" default="false"/>
+  <!-- <arg name="use_loader" default="false"/>
+  <arg name="use_editor" default="false"/> -->
   <arg name="use_sensor" default="false"/>
-  <arg name="use_icart" default="false"/>
+  <!-- <arg name="use_icart" default="false"/> -->
   <arg name="use_lio" default="false"/>
-  <arg name="use_unity_sim" default="false"/>
+  <!-- <arg name="use_unity_sim" default="false"/> -->
   <arg name="enable_uam" default="false"/>
   <arg name="use_gnss_switch" default="false"/>
   <arg name="use_localization" default="true"/>

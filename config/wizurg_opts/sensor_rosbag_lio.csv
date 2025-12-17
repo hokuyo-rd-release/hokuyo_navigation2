@@ -1,0 +1,8 @@
+オプション,指定値,デフォルト値,自由欄,自由欄,自由欄,・・・
+use_motor_driver,true,true,,,,
+use_navigation,false,false,,,,
+use_sensor,true,true,,,,
+use_lio,true,false,,,,
+enable_uam,true,false,,,,
+use_gnss_switch,false,false,,,,
+use_localization,false,true,,,,

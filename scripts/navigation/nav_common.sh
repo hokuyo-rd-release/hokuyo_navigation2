@@ -33,7 +33,7 @@ load_options() {
     icart="${option_arr[4]}"
     use_lio="${option_arr[5]}"
     use_unity="${option_arr[6]}"
-    ypspur="${option_arr[7]}"
+    use_motor_driver="${option_arr[7]}"
     multi_map="${option_arr[8]}"
     default_mapfile="${option_arr[9]}"
     default_wayfile="${option_arr[10]}"
@@ -42,6 +42,37 @@ load_options() {
     loader="${option_arr[13]}"
     editor="${option_arr[14]}"
     enable_uam="false" # デバッグ時はfalse.
+}
+
+# rosbag取得用のオプションをCSVファイルから読み込む関数
+load_rosbag_options() {
+    local wizurg_opt="sensor_rosbag_lio" # rosbag取得用の設定ファイル名を指定
+    local options_csv_path="${HOKUYO_NAV2_PKG_PATH}/config/wizurg_opts/${wizurg_opt}.csv"
+
+    if [ ! -f "${options_csv_path}" ]; then
+        echo "エラー: オプションファイルが見つかりません: ${options_csv_path}" >&2
+        exit 1
+    fi
+
+    # ヘッダ行をスキップして読み込む
+    mapfile -t options < <(tail -n +2 "${options_csv_path}")
+
+    local option_arr=()
+    for i in "${!options[@]}"; do
+        # IFSを使ってカンマ区切りで読み込む
+        local line_arr=()
+        IFS=',' read -r -a line_arr <<< "${options[$i]}"
+        option_arr[$i]="${line_arr[1]}" # 2列目の値のみを取得
+    done
+
+    # グローバル変数に設定
+    use_motor_driver="${option_arr[0]}"
+    use_navigation="${option_arr[1]}"
+    use_sensor="${option_arr[2]}"
+    use_lio="${option_arr[3]}"
+    enable_uam="${option_arr[4]}"
+    use_gnss_switch="${option_arr[5]}"
+    use_localization="${option_arr[6]}"
 }
 
 # 初期位置情報をファイルから読み込む関数
@@ -107,13 +138,13 @@ launch_navigation_system() {
         bash"
 }
 
-# ypspur-coordinatorを起動する関数
-start_ypspur_if_needed() {
-    if [ "${ypspur}" = "true" ]; then
-        echo "ypspur-coordinatorを起動します..."
+# モータドライバを起動する関数
+launch_motor_driver() {
+    if [ "${use_motor_driver}" = "true" ]; then
+        echo "モータドライバを起動します..."
         gnome-terminal -- bash -c "ros2 launch hokuyo_navigation2 icart_mini_drive_launch.xml; bash"
 
-        echo "ypspur関連ノードの起動を待っています..."
+        echo "モータドライバ関連ノードの起動を待っています..."
         # local timeout=25
         # local start_time=$(date +%s)
         # local ypspur_node_found=false
@@ -130,7 +161,7 @@ start_ypspur_if_needed() {
         #     echo "エラー: ypspur関連ノードの起動に失敗しました。(${timeout}秒タイムアウト)" >&2
         #     exit 1
         # fi
-        echo "ypspur関連ノードの起動を確認しました。"
-        sleep 2s
+        echo "モータドライバ関連ノードの起動を確認しました。"
+        # sleep 2s
     fi
 }

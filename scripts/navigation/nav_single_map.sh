@@ -54,17 +54,42 @@ echo "既存のROSノードを終了します..."
 gnome-terminal -- bash -c "${HOKUYO_NAV2_PKG_PATH}/scripts/ctrl/kill_all_rosnode.sh"
 
 
-# 初期位置情報を読み込み
-load_initial_poses "${mapfile}"
+# 特定のマップの処理を成功するまで繰り返すループ
+while true; do
+    echo "----------------------------------------------------"
+    echo "マップの処理を開始します: ${mapfile}"
+    echo "----------------------------------------------------"
 
-# 必要に応じて YP-Spur ノードを起動
-start_ypspur_if_needed
+    # 初期位置情報を読み込み
+    load_initial_poses "${mapfile}"
 
-# ナビゲーションシステムを起動
-launch_navigation_system "${mapfile}" "${use_gnss_switch}"
+    # モータドライバを起動
+    launch_motor_driver
 
-echo "ウェイポイント追従を開始します: ${wayfile}.json"
-gnome-terminal -- bash -c "ros2 run waypoint_manager waypoint_manager ${HOKUYO_NAV2_PKG_PATH}/waypoints/${wayfile}.json --ros-args -p use_gnss_switch:=${use_gnss_switch} -p cmd_vel_topic:=wizurg/cmd_vel"
+    # ナビゲーションシステムを起動
+    launch_navigation_system "${mapfile}" "${use_gnss_switch}"
+
+    echo "ウェイポイント追従を開始します: ${wayfile}.json"
+    cd "${HOKUYO_NAV2_PKG_PATH}/waypoints"
+    # waypoint_managerの実行とエラーハンドリング
+    if ros2 run waypoint_manager waypoint_manager "${wayfile}.json" --ros-args -p use_gnss_switch:="${use_gnss_switch}" -p cmd_vel_topic:=wizurg/cmd_vel; then
+        echo "waypoint_managerが正常に完了しました。"
+        cd -
+        break # 成功したのでリトライループを抜ける
+    else
+        echo "エラー: waypoint_managerが異常終了しました。15秒後に再試行します..."
+        cd -
+        # 関連ノードを全て終了
+        "${HOKUYO_NAV2_PKG_PATH}/scripts/ctrl/multi_map_kill.sh"
+        echo "ノードの終了を待っています..."
+        for ((j=15; j>0; j--)); do
+            echo -ne "ノード終了待機中: ${j} 秒...  \r"
+            sleep 1
+        done
+        echo "" # カウントダウン表示をクリアするための改行
+        # sleep 15 # ノードが完全に終了するのを待つ
+    fi
+done
 
 # 起動したターミナルを最小化
 echo "ターミナルウィンドウを最小化します..."

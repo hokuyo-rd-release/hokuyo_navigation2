@@ -9,6 +9,10 @@ echo "Stopping multi-map navigation script..."
 pkill -f "nav_multi_map.sh"
 sleep 1s
 
+echo "stopping single-map navigation script..."
+pkill -f "nav_single_map.sh"
+sleep 1s
+
 echo "Stopping rosbag play or record..."
 pkill -f "bag"
 sleep 1s
