@@ -72,8 +72,5 @@ echo "Creating completion flag file at: ${COMPLETION_FLAG_PATH}"
 
 touch "${COMPLETION_FLAG_PATH}"
 
-echo "Waiting 5 seconds for file system sync..."
-sleep 5 
-
 # 正常終了
 exit 0

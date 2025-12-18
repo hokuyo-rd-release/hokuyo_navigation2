@@ -138,10 +138,7 @@ echo "PCD to PGM 変換が正常に完了しました。"
 echo "Creating completion flag file at: ${COMPLETION_FLAG_PATH}"
 
 # ファイルをタッチし、全ユーザーが読み書きできるようにパーミッションを設定
-touch "${COMPLETION_FLAG_PATH}"
-
-echo "Waiting 5 seconds for file system sync..."
-sleep 5 
+touch "${COMPLETION_FLAG_PATH}" 
 
 # 正常終了
 exit 0

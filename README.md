@@ -1,133 +1,143 @@
 # hokuyo_navigation2
 
-SPELデモンストレーション向けのROS 2ナビゲーションソフトウェアです。3D自己位置推定の結果をROS 2 Navigation Stack (Nav2) と連携させ、2Dでの自律移動を実現します。
+`hokuyo_navigation2`は、北陽電機製の3D LiDAR（RSFセンサ）を使用したROS 2ベースのナビゲーションシステムです。
+3D-SLAMによる自己位置推定とROS 2 Navigation Stack (Nav2)を連携させ、高精度な2D自律移動を実現します。
 
-このパッケージは [expo_wizurg](https://github.com/Hokuyo-RD/expo_wizurg) をベースに、ROS 2向けにアップデートしたものです。
+また、直感的な操作を可能にするWebベースのGUI `hokuyo_navigation2_gui` を同梱しており、マッピングからナビゲーションまでの一連の操作をブラウザから簡単に行うことができます。
 
-## 全体構成
-```text
-.
-└── hokuyo_navigation2/
-    ├── src/
-    │   ├── controller_setup.cpp
-    │   ├── wizurg_navigation.py
-    │   ├── wizurg_waypoint_editor.py
-    │   └── wizurg_waypoint_maker.py
-    ├── launch/
-    │   ├── control_setup.launch
-    │   ├── start.launch
-    │   └── ...
-    ├── scripts
-    │   └── ...
-    ├── config
-    │   └── ...
-    ├── map
-    │   └── ...
-    ├── waypoints
-    │   └── ...
-    └── urdf
-         └── ...
+!画像
+
+## 主な機能
+
+- **3D SLAMと2Dウェイポイントファイル出力の同時実行**:
+  - `hokuyo_lio` を用いた高精度なLiDAR慣性オドメトリ（LIO）と3D点群マップ生成。
+  - ROS Bagから`lio_raw`（軌跡ベース）または`p2o`（点群ベース）の3Dマップ（`.pcd`）を作成。
+  - 3Dマップ生成と同時にウェイポイント作成
+  - 3DマップからNav2用の2Dグリッドマップ（`.pgm`, `.yaml`）へ変換。
+
+- **2Dナビゲーション**:
+  - 3D SLAMの出力（`simple_fastlio_localization`）を利用したリアルタイム自己位置推定。
+  - Nav2 (Navigation2) スタックと連携し、指定されたウェイポイントに沿った自律走行。
+  - 単一マップ走行および複数マップを連続して走行するマルチマップナビゲーションに対応。
+
+- **Webベースの統合GUI (`hokuyo_navigation2_gui`)**:
+  - **プロセス実行**: データ取得、マッピング、ナビゲーションの各プロセスをブラウザから起動。
+  - **ファイル管理**: マップ、ウェイポイント、設定ファイルなどをブラウザ上で管理（作成、名前変更、削除）。
+  - **高機能エディタ**:
+    - **Map Viewer**: 3D/2Dマップとウェイポイントを視覚化し、GUI上で直感的にウェイポイントを編集（追加、移動、回転、属性変更）。
+    - **CSV Editor**: マルチマップ走行シナリオをテーブル形式で簡単に編集。
+
+- **Docker対応**:
+  - 依存関係を含んだ開発・実行環境をDockerコンテナとして提供し、セットアップを簡素化。
+
+## 依存関係
+
+### システムツール
+以下のツールがシステムにインストールされている必要があります。
+```bash
+sudo apt-get update
+sudo apt-get install -y tree xdotool wmctrl zenity
+```
+
+### ROS 2 パッケージ
+本パッケージは以下のROS 2パッケージに依存しています。ワークスペースにクローンしてビルドしてください。
+- icart_mini_driver_ros2: iCart-miniのROS 2ドライバ（ロボットベースとして使用する場合）。
+- hokuyo_slam_ros2: `p2o`マッピングで使用。
+- その他、`simple_fastlio_localization`や`fix2xyz`など、プロジェクトで利用される各種パッケージ。
+
+### Python パッケージ
+Web GUI (`hokuyo_navigation2_gui`) を使用するために必要なPythonパッケージです。
+```bash
+pip3 install flask flask-sockets gevent gevent-websocket websockets pyyaml
 ```
 
 ## ビルド
 
-linuxターミナルコマンドのインストール
-```
-sudo apt-get install tree
-sudo apt-get install xdotool
-sudo apt-get install wmctrl
+1.  **ワークスペースのセットアップ**:
+    ROS 2ワークスペースを作成し、`src`ディレクトリに本パッケージと依存パッケージをクローンします。
 
-```
+2.  **実行権限の付与**:
+    スクリプトに実行権限を付与します。
+    ```bash
+    cd <your_colcon_ws>/src/hokuyo_navigation2/hokuyo_navigation2
+    chmod +x scripts/*.sh scripts/*/*.sh src/*.py
+    ```
 
-UAMノード       : https://github.com/f-wada/safety_urg_node2
-安全停止        : https://github.com/Hokuyo-RD/robot_safety_manage_ros2.git
-SPELコア技術    : https://github.com/Hokuyo-RD/fusion_tools_ros2  
-緯度経度-マップ座標変換: https://github.com/Hokuyo-RD/fix2xyz_packages_ros2  
+3.  **ビルド**:
+    ワークスペースのルートで`colcon build`を実行します。
+    ```bash
+    cd <your_colcon_ws>
+    colcon build
+    colcon build --symlink-install --packages-select simple_fastlio_localization lio_nav2_bringup hokuyo_navigation2
+    ```
 
-ypspurのインストール
-```
-cd ~/colcon_ws/src
-git clone https://github.com/BND-tc/yp-spur.git
-cd yp-spur
-mkdir build
-cd build
-cmake ..
-make
-sudo make install
-```
+## 実行方法
 
-icart3のインストール
-```
-cd ~/colcon_ws/src
-git clone https://github.com/Hokuyo-RD/icart_mini_driver_ros2
-```
-hokuyo パッケージ群 (urg_node, hokuyo3d, base_local_planner, ylm_ros, hokuyo_navigation2)
-```
-cd ~/colcon_ws/src
-git clone -b okamoto_devel --recursive https://github.com/Hokuyo-RD/hokuyo_navigation2.git
-```
-pointcloud_to_laserscan
-```
-git clone -b humble https://github.com/Hokuyo-RD/pointcloud_to_laserscan_ros2.git
-```
-nmea_navsat_driver のインストール
-```
-git clone -b ros2 https://github.com/Hokuyo-RD/nmea_navsat_driver_ros2.git
-```
-rosdep による WizURGの依存関係パッケージのインストール
-```
-sudo apt-get install python3-rosdep
+本システムは、Dockerを使用する方法と、ホストマシンで直接実行する方法があります。
+GUIからの操作が推奨されますが、CUIから`coordinator.sh`スクリプトを実行することも可能です。
 
-cd ~/colcon_ws/src
-rosdep install -i --from-paths hokuyo_navigation2
-rosdep update
-colcon build --symlink-install
-```
-.py .sh に実行権限を付与
-```
-cd ~/colcon_ws/src/hokuyo_navigation2/src
-chmod +x wizurg_navigation.py
-chmod +x wizurg_waypoint_editor.py
-chmod +x wizurg_waypoint_maker.py
+### 方法1: DockerとWeb GUIを使用する (推奨)
 
-cd ~/colcon_ws/src/hokuyo_navigation2/scripts
-chmod +x rosbag_mapping.sh
-chmod +x waypoint_editor.sh
-chmod +x waypoint_maker.sh
-chmod +x wizurg_start.sh
-```
+1.  **Dockerコンテナの起動**:
+    プロジェクトルートにある`docker/run.bash`スクリプトでコンテナをビルド・起動します。
+    ```bash
+    # 例: コンテナ名を "hokuyo_navigation2_dev" に設定
+    ./docker/run.bash -n hokuyo_navigation2_dev
+    ```
 
-## モータドライバインストールの確認
-```
-端末 1
-ypspur-coordinator -d /dev/ttyUSB0 --blvr -p ~/colcon_ws/src/hokuyo_navigation2/params/icart_ypspur_params/iCart3_100W.param
+2.  **サーバーの起動**:
+    コンテナ内で、`hokuyo_navigation2_docker_server.bash` を実行して、WebサーバーとVizantiサーバーを起動します。
+    ```bash
+    # コンテナに接続
+    docker exec -it hokuyo_navigation2_dev /bin/bash
+    
+    # サーバー起動スクリプトを実行
+    ./scripts/00_sample_util/hokuyo_navigation2_docker_server.bash
+    ```
 
-端末 2
-cd ~/colcon_ws/src/yp-spur/build/sample
-./run-test
-```
-### Docker の場合 
-colcon build --symlink-install --packages-select icart_mini_driver
-でビルドしないとシェルスクリプトに実行権限が付与されない。
+3.  **GUIへのアクセス**:
+    Webブラウザで `http://<DockerホストのIPアドレス>:5050` にアクセスします。
+    GUIの指示に従い、マッピングやナビゲーションを実行してください。
+    詳細は `hokuyo_navigation2_gui` のドキュメントを参照してください。
 
-```
-sudo chown -R root:root /home/ubuntu/colcon_ws
-```
-## プログラムの実行手順
+### 方法2: CUIから実行する
 
-### プログラムの実行の流れ
+`coordinator.sh`は、Zenityを利用したメニューを通じて、マッピングやナビゲーションなどの各機能を実行するための統合スクリプトです。
 
-## Docker
-### Optionの使用例 (GPU有り　コンテナ名=naviton　共有フォルダ=/home/$USER/share)
-```bash:bash
-./docker/run.bash -n hokuyo_navigation2 -s /home/$USER/share
-```
+1.  **環境設定**:
+    ROS 2環境をセットアップします。
+    ```bash
+    source /opt/ros/humble/setup.bash
+    cd <your_colcon_ws>
+    source install/setup.bash
+    ```
 
- ## コンテナ作成後
-exitしてコンテナの外に出るとhomeディレクトリにCONTAINER_NAME.bash (CONTAINER_NAMEは自分で作成したコンテナの名前)が生成されている
+2.  **コーディネータの実行**:
+    スクリプトを実行すると、実行したい機能を選択するダイアログが表示されます。
+    ```bash
+    ros2 run hokuyo_navigation2 coordinator.sh
+    ```
+     <!-- Zenityメニューのスクリーンショットを挿入 -->
 
-```bash:bash
-cd
-./CONTAINER_NAME.bash
-```
-次回からは上記のスクリプトを実行すると自動でコンテナをスタートしてコンテナ内に入れる
+    **選択可能なオプションの例**:
+    - `get_rosbag`: データ取得用のROS Bagを生成。
+    - `hokuyo_slam`: `p2o`アルゴリズムでマッピングを実行。
+    - `map_opt`: PCDマップをPGMに変換。
+    - `way_opt`: ウェイポイントを作成。
+    - `nav_opt`: 単一マップでナビゲーションを実行。
+    - `plural_opt`: 複数マップでナビゲーションを実行。
+    - `pcd_opt`: `lio_raw`でマッピングを実行。
+
+    選択後、ファイル選択ダイアログなどが表示されるので、指示に従って操作してください。
+
+## パッケージ構成
+
+- `/config`: Nav2、`hokuyo_lio`、`coordinator.sh`などの設定ファイル。
+- `/data`: `init_pose.txt`など、マップごとの初期位置情報を格納。
+- `/launch`: 各種機能（ナビゲーション、マッピング）を起動するためのROS 2 Launchファイル。
+- `/map`: 生成されたマップファイル（`.pcd`, `.pgm`, `.yaml`）のデフォルト保存場所。
+- `/scripts`: `coordinator.sh`やマッピング処理など、主要な処理を実行するシェルスクリプト群。
+- `/src`: C++やPythonで実装されたカスタムROS 2ノード（例: `pcd_tf_extractor.py`）。
+- `/urdf`: ロボットモデルのURDFファイル。
+- `/waypoints`: 作成されたウェイポイントファイル（`.json`）のデフォルト保存場所。
+- `/hokuyo_navigation2_gui`: Web GUIのソースコード。
