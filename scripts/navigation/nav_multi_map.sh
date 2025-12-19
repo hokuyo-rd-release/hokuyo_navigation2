@@ -117,10 +117,6 @@ while true; do
         echo "マップ ${map_name} の処理が完了しました。"
         echo "次のマップの準備のため、ROSノードを終了します..."
         # gnome-terminalを使わずに直接実行し、終了を待つ
-        
-        # SPELシステムを停止
-        stop_spel_system
-        sleep 1
 
         "${HOKUYO_NAV2_PKG_PATH}/scripts/ctrl/multi_map_kill.sh"
         echo "ノードの終了を待っています..."

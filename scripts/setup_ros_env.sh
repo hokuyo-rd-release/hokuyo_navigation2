@@ -23,7 +23,7 @@ ROS2_WS=$(cd "${HOKUYO_NAV2_PKG_PATH}/../../.." && pwd)
 source /opt/ros/humble/setup.bash
 source "${ROS2_WS}/install/setup.bash"
 source ~/.bashrc
-source ~/.bash_spel_setting
+# source ~/.bash_spel_setting
 
 # 変数をエクスポートしてサブシェルでも利用可能にする
 export ROS2_WS HOKUYO_NAV2_PKG_PATH

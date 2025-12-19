@@ -2,38 +2,6 @@
 
 # このスクリプトは nav_single_map.sh と nav_multi_map.sh から source されることを想定しています。
 
-# SPEL PCのIPアドレスを環境変数から取得。server.pyから渡されることを期待。
-SPEL_IP="${SPEL_IP:?SPEL_IP environment variable is not set. It should be passed from server.py.}"
-
-start_spel_system() {
-    local url="http://${SPEL_IP}/cgi-bin/call_start_spel.bash"
-    echo "SPELシステムを起動します (URL: ${url})..."
-    
-    # curlを使用してCGIスクリプトを呼び出す
-    # --fail: HTTPエラー時にエラーコードで終了
-    # --silent: プログレスメーターを非表示
-    # --show-error: エラーメッセージを表示
-    # --max-time: タイムアウトを5秒に設定
-    if curl --fail --silent --show-error --max-time 10 "${url}"; then
-        echo "SPELシステムの起動リクエストを送信しました。"
-    else
-        echo "エラー: SPELシステムの起動に失敗しました。" >&2
-        return 1
-    fi
-}
-
-stop_spel_system() {
-    local url="http://${SPEL_IP}/cgi-bin/call_stop_spel.bash"
-    echo "SPELシステムを停止します (URL: ${url})..."
-
-    if curl --fail --silent --show-error --max-time 10 "${url}"; then
-        echo "SPELシステムの停止リクエストを送信しました。"
-    else
-        echo "エラー: SPELシステムの停止に失敗しました。" >&2
-        return 1
-    fi
-}
-
 load_options() {
     local wizurg_opt="$1"
     local options_csv_path="${HOKUYO_NAV2_PKG_PATH}/config/wizurg_opts/${wizurg_opt}.csv"
