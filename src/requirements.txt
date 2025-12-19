@@ -1,0 +1,17 @@
+numpy==1.22.4
+numpy==1.21.5
+open3d==0.19.0
+Pillow==9.0.1
+Pillow==12.0.0
+pyproj==3.7.1
+PyQt5==5.15.11
+PyQt5_sip==12.9.1
+PyYAML==5.4.1
+PyYAML==6.0.3
+rclpy==3.3.19
+rosbag2_py==0.15.15
+rosidl_runtime_py==0.9.3
+scipy==1.8.0
+sensor_msgs==4.9.0
+sensor_msgs_py==4.9.0
+transforms3d==0.4.2

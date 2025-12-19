@@ -1,43 +1,45 @@
 #!/bin/bash
-# ROS 2 環境設定
-source "$(dirname "$0")/setup_ros_env.sh"
 
-# =====================（岡本→高橋）ここを引数にして使ってください==========================
-use_gnss_switch="false" #-- コア技術でナビゲーションする場合は "true" にする. マップ作成・ウェイポイント作成などの場合は"false" --
-stop_uam_manage="true" # ===========================================
+# スクリプトをより安全に実行するための設定
+set -euo pipefail
+
+# ROS 2 環境設定
+set +u # AMENT_TRACE_SETUP_FILES 未定義エラーを回避
+source "$(dirname "$0")/setup_ros_env.sh"
+set -u
+
+# 共通関数を読み込む
+source "$(dirname "$0")/navigation/nav_common.sh"
+
+# --- 固定値 ---
+use_gnss_switch="false"
 cd ${HOKUYO_NAV2_PKG_PATH}
 
-#-------kill_all_rosnode起動--------------
+# --- メイン処理 ---
+
+# rosbag取得用の設定を読み込み
+load_rosbag_options
+
+echo "--- 実行パラメータ ---"
+echo "use_motor_driver: ${use_motor_driver}"
+echo "use_navigation: ${use_navigation}"
+echo "use_sensor: ${use_sensor}"
+echo "use_lio: ${use_lio}"
+echo "enable_uam: ${enable_uam}"
+echo "use_gnss_switch: ${use_gnss_switch}"
+echo "use_localization: ${use_localization}"
+echo "----------------------"
+
+# 既存のROSノードをクリーンアップ
+echo "既存のROSノードを終了します..."
 gnome-terminal -- bash -c "${HOKUYO_NAV2_PKG_PATH}/scripts/ctrl/kill_all_rosnode.sh"
 
-#-------ypspur-coordinator起動------------
-echo "ypspur-coordinatorを起動します..."
-gnome-terminal -- bash -c "ros2 launch hokuyo_navigation2 icart_mini_drive_launch.xml; bash"
+# モータドライバを起動
+launch_motor_driver
 
-echo "ypspur関連ノードの起動を待っています..."
-local timeout=15
-local start_time=$(date +%s)
-local ypspur_node_found=false
-
-while [ $(($(date +%s) - start_time)) -lt ${timeout} ]; do
-    if ros2 node list | grep -q -e 'icart_mini' -e 'ypspur'; then
-        ypspur_node_found=true
-        break
-    fi
-    sleep 1
-done
-
-if [ "${ypspur_node_found}" = "false" ]; then
-    echo "エラー: ypspur関連ノードの起動に失敗しました。(${timeout}秒タイムアウト)" >&2
-    exit 1
-fi
-echo "ypspur関連ノードの起動を確認しました。"
-sleep 1
-#============= wizurg_satrt.launch起動 =============
-#gnome-terminal -- bash -c "roscore" # 25/1/16 岡本追記
-#sleep 1
-#-------------------------------------
-gnome-terminal -- bash -c "ros2 launch hokuyo_navigation2 hokuyo_nav2_bringup_launch.xml use_localization:="false" use_joy:=use_mapping:="false" use_navigation:="false" use_loader:="false" use_editor:="false" use_sensor:="true" use_icart:="true"  use_lio:="true" use_gnss_switch:=${use_gnss_switch} stop_uam_manage:=${stop_uam_manage} ;bash"
+# センサーとrosbag取得のためのシステムを起動
+# launch_navigation_system "" "${use_gnss_switch}"
+gnome-terminal -- bash -c "ros2 launch hokuyo_navigation2 hokuyo_nav2_bringup_launch.xml use_navigation:=${use_navigation} use_sensor:=${use_sensor} use_lio:=${use_lio} use_localization:=${use_localization} use_gnss_switch:=${use_gnss_switch};bash"
 sleep 1
 
 # 全ての gnome-terminal ウィンドウの ID を取得して最小化
