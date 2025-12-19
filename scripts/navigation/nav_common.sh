@@ -41,7 +41,6 @@ load_options() {
     rosbag_dir="${option_arr[12]}"
     loader="${option_arr[13]}"
     editor="${option_arr[14]}"
-    enable_uam="false" # デバッグ時はfalse.
 }
 
 # rosbag取得用のオプションをCSVファイルから読み込む関数
@@ -70,9 +69,8 @@ load_rosbag_options() {
     use_navigation="${option_arr[1]}"
     use_sensor="${option_arr[2]}"
     use_lio="${option_arr[3]}"
-    enable_uam="${option_arr[4]}"
-    use_gnss_switch="${option_arr[5]}"
-    use_localization="${option_arr[6]}"
+    use_gnss_switch="${option_arr[4]}"
+    use_localization="${option_arr[5]}"
 }
 
 # 初期位置情報をファイルから読み込む関数
@@ -131,7 +129,6 @@ launch_navigation_system() {
         use_lio:=${use_lio} \
         use_unity_sim:=${use_unity} \
         use_gnss_switch:=${current_use_gnss_switch} \
-        enable_uam:=${enable_uam} \
         map_file:=${map_name} \
         initial_pose:=\"${pose1},${pose2},${pose3},${pose4},${pose5},${pose6},${pose7}\" \
         latlon_pose:=\"${latlon1},${latlon2},${latlon3}\"; \

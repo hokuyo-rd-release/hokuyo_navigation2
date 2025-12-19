@@ -13,7 +13,6 @@ source "$(dirname "$0")/navigation/nav_common.sh"
 
 # --- 固定値 ---
 use_gnss_switch="false"
-enable_uam="true"
 cd ${HOKUYO_NAV2_PKG_PATH}
 
 # --- メイン処理 ---
@@ -40,7 +39,7 @@ launch_motor_driver
 
 # センサーとrosbag取得のためのシステムを起動
 # launch_navigation_system "" "${use_gnss_switch}"
-gnome-terminal -- bash -c "ros2 launch hokuyo_navigation2 hokuyo_nav2_bringup_launch.xml use_navigation:=${use_navigation} use_sensor:=${use_sensor} use_lio:=${use_lio} enable_uam:=${enable_uam} use_localization:=${use_localization} use_gnss_switch:=${use_gnss_switch};bash"
+gnome-terminal -- bash -c "ros2 launch hokuyo_navigation2 hokuyo_nav2_bringup_launch.xml use_navigation:=${use_navigation} use_sensor:=${use_sensor} use_lio:=${use_lio} use_localization:=${use_localization} use_gnss_switch:=${use_gnss_switch};bash"
 sleep 1
 
 # 全ての gnome-terminal ウィンドウの ID を取得して最小化

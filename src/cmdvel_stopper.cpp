@@ -25,7 +25,7 @@ public:
         twist_zero_.angular.y = 0.0;
         twist_zero_.angular.z = 0.0;
 
-        std::string cmd_in_topic = "/wizurg_tmp/cmd_vel";
+        std::string cmd_in_topic = "/wizurg/cmd_vel";
         std::string cmd_out_topic = "/cmd_vel";
         std::string cmd_stop_topic = "/wizurg/stop_cmd_vel";
         std::string cmd_start_topic = "/wizurg/start_cmd_vel";

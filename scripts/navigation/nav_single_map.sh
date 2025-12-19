@@ -83,7 +83,7 @@ while true; do
         "${HOKUYO_NAV2_PKG_PATH}/scripts/ctrl/multi_map_kill.sh"
         echo "ノードの終了を待っています..."
         for ((j=15; j>0; j--)); do
-            echo -ne "ノード終了待機中: ${j} 秒...  \r"
+            echo -ne "再起動待機中: ${j} 秒...  \r"
             sleep 1
         done
         echo "" # カウントダウン表示をクリアするための改行
