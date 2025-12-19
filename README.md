@@ -1,22 +1,49 @@
 # hokuyo_navigation2
 
-`hokuyo_navigation2`は、北陽電機製の3D LiDAR（RSFセンサ）専用のROS 2ベースのナビゲーションシステムです。
+`hokuyo_navigation2`は、北陽電機製の3D LiDAR（RSFセンサ）専用のROS 2ベースの屋内外対応ナビゲーションシステムです。
 3D-SLAMによる自己位置推定とROS 2 Navigation Stack (Nav2)を連携させ、高精度な2D自律移動を実現します。
 
 また、直感的な操作を可能にするWebベースのGUI `hokuyo_navigation2_gui` を用いることで、マッピングからナビゲーションまでの一連の操作をブラウザから簡単に行うことができます。
 
 ![hokuyo_navigation2](Image/hokuyo_navigation2.png)
 
+---
+
+## 目次
+
+- [hokuyo\_navigation2](#hokuyo_navigation2)
+  - [目次](#目次)
+  - [主な機能](#主な機能)
+  - [依存関係](#依存関係)
+    - [システムツール](#システムツール)
+    - [ROS 2 パッケージ](#ros-2-パッケージ)
+    - [Python パッケージ](#python-パッケージ)
+  - [ビルド](#ビルド)
+  - [実行方法](#実行方法)
+    - [方法1: Web GUIを使用する](#方法1-web-guiを使用する)
+    - [方法2: CUIから実行する](#方法2-cuiから実行する)
+  - [パッケージ構成](#パッケージ構成)
+  - [プログラムの説明](#プログラムの説明)
+    - [ROS 2 ノード \& ツール](#ros-2-ノード--ツール)
+    - [実行・補助スクリプト](#実行補助スクリプト)
+      - [ナビゲーション実行スクリプト](#ナビゲーション実行スクリプト)
+      - [scripts/00\_sample\_util/ (ユーティリティスクリプト)](#scripts00_sample_util-ユーティリティスクリプト)
+
+---
+
 ## 主な機能
+
+- **ロボットとセンサノードの起動**
+  - ``
 
 - **3D SLAMと2Dウェイポイントファイル出力の同時実行**:
   - `hokuyo_lio` を用いた高精度なLiDAR慣性オドメトリ（LIO）と3D点群マップ生成。
   - ROS Bagから`lio_raw`（軌跡ベース）または`p2o`（点群ベース）の3Dマップ（`.pcd`）を作成。
-  - 3Dマップ生成と同時にウェイポイント作成
-  - 3DマップからNav2用の2Dグリッドマップ（`.pgm`, `.yaml`）へ変換。
+  - 3D点群マップ生成と同時にウェイポイント作成
+  - 3D点群マップをNav2用の2Dグリッドマップ（`.pgm`, `.yaml`）へ変換。
 
 - **2Dナビゲーション**:
-  - Hokuyo RSF センサのGNSSとHokuyo LIO (LiDAR Inertial Odometry)出力によるリアルタイム自己位置推定を用いた自律走行
+  - `hokuyo_rsf`を利用したリアルタイム3D自己位置推定を用いた自律走行
   - 3D点群マップと`simple_fastlio_localization` を利用したリアルタイム自己位置推定を用いた自律走行
   - Nav2 (Navigation2) スタックと連携し、指定されたウェイポイントに沿った自律走行。
   - 単一マップ走行および複数マップを連続して走行するマルチマップナビゲーションに対応。
@@ -39,31 +66,33 @@ sudo apt-get install -y tree xdotool wmctrl zenity
 
 ### ROS 2 パッケージ
 本パッケージは以下のROS 2パッケージに依存しています。
-詳細は`hokuyo_navigation2` でまとめてクローン・ビルドする方法が記載されているので参考にしてください。
+詳細は`hokuyo_navigation2` を参照してください。
+(まとめてクローン・ビルドする方法が記載されています。)
 
-- **HOKUYO_RSF**
+- [**hokuyo_rsf**](https://github.com/Hokuyo-aut/hokuyo_rsf.git)
   - Hokuyo RSF センサの ROS2 パッケージです。GNSSとLiDAR Inertial Odometry (LIO) の相互変換による位置出力 (Odometry, fix) を提供します。
-- **vizanti**:
+- [**vizanti**](https://github.com/hokuyo-rd/vizanti.git)
   - Webブラウザ上でROSトピックを可視化するためのツール。
   - `hokuyo_navigation2_gui` の Map Viewer 機能のバックエンドとして使用されます。
-- **rosbridge_suite**
+- [**rosbridge_suite**](https://github.com/hokuyo-rd/rosbridge_suite.git)
   - websocket を使ってウェブで ROS Topic 通信を実現するパッケージ vizanti が依存
-- **jsk_visualization**
+- [**jsk_visualization**](https://github.com/hokuyo-rd/jsk_visualization.git)
   - RViz2 のカスタムヴィジュアルプラグイン
-- **icart_mini_driver_ros2**:
+- [**icart_mini_driver_ros2**](https://github.com/hokuyo-rd/icart_mini_driver_ros2.git)
   - T-frog project 製のロボットベース `iCart-mini` 用のROS 2ドライバ。ロボットを制御する場合に必要です。
-- [**hokuyo_slam_ros2**](https://github.com/hokuyo-rd/hokuyo_slam_ros2.git):
+- [**hokuyo_slam_ros2**](https://github.com/hokuyo-rd/hokuyo_slam_ros2.git)
   - 3D SLAM アルゴリズム `p2o` を提供するパッケージ。
   - 高精度な3D点群マップの生成に使用されます。
-- **simple_fastlio_localization**:
+- [**simple_fastlio_localization**](https://github.com/hokuyo-rd/simple_fastlio_localization.git)
   - LIOベースの自己位置推定パッケージ。
   - 事前に作成した3Dマップ上での現在のロボット位置を推定します。
-- **fix2xyz_packages**:
+- [**fix2xyz**](https://github.com/hokuyo-rd/fix2xyz.git)
   - GNSSデータ (NavSatFix) を直交座標系 (XYZ) に変換するツール。
   - GNSSを使用したナビゲーションやマッピングで使用されます。
-- **lio_nav2_bringup**:
+- [**lio_nav2_bringup**](https://github.com/hokuyo-rd/lio_nav2_bringup.git)
   - LIOとNav2を連携させて起動するためのLaunchファイル群を含むパッケージ。
-- **waypoint_manager**
+- [**waypoint_manager**](https://github.com/hokuyo-rd/waypoint_manager.git)
+  - Waypoint
   - Nav2 に ウェイポイントを送信するノード
 
 ### Python パッケージ
@@ -88,14 +117,23 @@ pipreqs src/ # requirements.txt を生成
     rosdep install -i --from-path src/ -y
     ```
 
-1.  **実行権限の付与**:
+2.  **ディレクトリ作成**:
+    ビルドに必要なディレクトリ map/ waypoints/ rosbag/ を作成します。
+  
+    ```bash
+    mkdir -p <your_colcon_ws>/src/hokuyo_navigation2/map
+    mkdir -p <your_colcon_ws>/src/hokuyo_navigation2/waypoints
+    mkdir -p <your_colcon_ws>/src/hokuyo_navigation2/rosbag
+    ```
+
+3.  **実行権限の付与**:
     スクリプトに実行権限を付与します。
     ```bash
     cd <your_colcon_ws>/src/hokuyo_navigation2/hokuyo_navigation2
     chmod +x scripts/*.sh scripts/*/*.sh src/*.py
     ```
 
-2.  **ビルド**:
+3.  **ビルド**:
     ワークスペースのルートで`colcon build`を実行します。
     ```bash
     cd <your_colcon_ws>
@@ -110,7 +148,7 @@ pipreqs src/ # requirements.txt を生成
 
 ### 方法1: Web GUIを使用する
 
-コンテナ内で、`hokuyo_navigation2_docker_server.bash` を実行して、WebサーバーとVizantiサーバーを起動します。
+Webサーバーとvizantiサーバーを起動します。
 ```bash
 # サーバー起動スクリプト
 ./scripts/00_sample_util/start_server.bash
@@ -119,6 +157,13 @@ pipreqs src/ # requirements.txt を生成
 # サーバー停止スクリプト
 ./scripts/00_sample_util/stop_server.bash
 ```
+```bash
+sudo ufw allow 5050 # hokuyo_navigation2_gui
+sudo ufw allow 5000 # vizanti
+sudo ufw allow 5001 # vizanti
+sudo ufw allow 9090 # vizanti
+```
+
 
 Webブラウザで `http://<ホストマシンのIPアドレス>:5050` にアクセスします。GUIの指示に従い、マッピングやナビゲーションを実行してください。詳細は `hokuyo_navigation2_gui` のドキュメントを参照してください。
 
@@ -133,9 +178,10 @@ ros2 run hokuyo_navigation2 coordinator.sh
 ```
 ![coordinator](Image/coordinator.png)
 
-**選択可能なオプションの例**:
+**選択可能なオプション**:
 - `start_get_rosbag`: ROS Bag を取得するためにセンサやロボットのノードを起動します。
 - `start_mapping`: 3D SLAMと2Dウェイポイントファイル出力の同時実行: ROS Bagファイルを使用して、以下のSLAMアルゴリズムを実行します。SLAM実行時にウェイポイントファイル.jsonが作成されます。
+ウェイポイントの編集はCUIからは実行できないため、GUIを使ってください。
     - p2o (hokuyo_slam を用いた3D点群マップ) 
     - lio_raw (LiDAR Inertial Odometry の軌跡に基づく3D点群マップ)
     - PCDからPGMへの変換: 3D点群マップ`.pcd`を2D占有格子マップ`.pgm`と`.yaml`に変換します。オプションとして、変換の際に.json 形式のウェイポイントファイルを指定すると、`.pgm`マップ状に、指定したウェイポイントに沿って通行可能領域を生成します。
@@ -155,3 +201,106 @@ ros2 run hokuyo_navigation2 coordinator.sh
 - `/src`: C++やPythonで実装されたカスタムROS 2ノードと ROS Bag デシリアライズツール。
 - `/urdf`: ロボットモデルのURDFファイル。
 - `/waypoints`: 作成されたウェイポイントファイル（`.json`）のデフォルト保存場所。
+
+## プログラムの説明
+
+### ROS 2 ノード & ツール
+
+- **`src/gnss_lio_debug.cpp`**: GNSSとLIOのデータを比較・検証するためのデバッグ用ノード。
+  - **処理の流れ**: GNSS (`NavSatFix`)、Odometry、ステータス文字列をサブスクライブし、GNSSの共分散（精度）やオドメトリの種類（LIO/GNSS）に基づいて、RViz上のオーバーレイテキスト (`OverlayText`) の色と内容を更新します。また、Lidarオドメトリの受信周波数を計測・表示します。
+- **`src/odom_frame_changer.cpp`**: オドメトリメッセージのフレームIDを書き換えるノード。
+  - **処理の流れ**: 入力オドメトリに対し、パラメータで指定された回転行列や初期姿勢オフセットを適用して座標変換を行います。変換後のオドメトリを再パブリッシュし、オプションでTF (`tf2_msgs`) もブロードキャストします。
+- **`src/cmdvel_stopper.cpp`**: 特定の条件下でロボットの速度指令(`cmd_vel`)を遮断し、停止させる安全機能ノード。
+  - **処理の流れ**: 上位からの `cmd_vel` を監視しつつ、停止/開始/減速の制御トピックをサブスクライブします。停止指令時はゼロ速度を出力し、減速指令時は速度を制限して、下位のモータドライバへ `cmd_vel` を中継します。
+- **`src/p2o_from_rosbag_ros2.py`**: ROS 2 Bagファイル (`.mcap` または `.db3`) からLIOとGNSSのトピックデータを抽出し、Pose Graph Optimization (P2O) 用の頂点とエッジデータを出力するPythonスクリプト。GNSSデータの共分散フィルタリングや座標変換 (LatLon -> UTM/XYZ) も実行します。
+  - **処理の流れ**: 指定されたBagファイルからLIOオドメトリとGNSSデータを読み込みます。LIOの移動量に基づいてグラフのノード（頂点）を作成し、隣接ノード間をエッジで結びます。同時にGNSSデータをUTM座標に変換し、信頼度（共分散）に基づいてLIOノードに対する位置拘束エッジを追加生成し、最適化用のテキスト形式で出力します。
+- **`src/p2o_gnsslog_from_rosbag_ros2.py`**: ROS Bag内のGNSSデータの品質（共分散）を解析するスクリプト。
+  - **仕様**: 指定されたGNSSトピックを読み込み、共分散が閾値以下のデータの割合などを計算してCSVファイルに出力します。マッピング処理の前にGNSSデータの品質をチェックするために使用されます。
+  - **引数**: `<bag_file> <output_csv> <gnss_topic> <cov_threshold>`
+  - **実行例**: `python3 src/p2o_gnsslog_from_rosbag_ros2.py my_data.mcap log.csv /fix 10.0`
+- **`src/extract_pcd_ros2.py`**: ROS Bagから点群データを抽出するスクリプト。
+  - **仕様**: 指定されたタイムスタンプリスト（`p2o`などで生成）に基づいて、ROS Bagから点群トピックを抽出し、個別のPCDファイルとして保存します。
+  - **引数**: `<bag_file> <pointcloud_topic> <timestamp_list_file>`
+  - **実行例**: `python3 src/extract_pcd_ros2.py my_data.mcap /hokuyo_cloud2 timestamps.txt`
+- **`src/pcd_to_Rcord.py`**: PCDマップの座標系を絶対座標から相対座標へ変換するスクリプト。
+  - **仕様**: 絶対座標系（UTMなど）で作成されたPCDマップを、初期位置を原点(0,0,0)とする相対座標系に変換します。同時に、初期位置情報（UTM座標、緯度経度）をテキストファイルとして出力します。
+  - **引数**: `<input_pcd> <output_pcd> <p2o_poses_file> <output_init_pose> <output_init_lla>`
+  - **実行例**: `python3 src/pcd_to_Rcord.py abs_map.pcd rel_map.pcd poses.txt init_pose.txt init_lla.txt`
+- **`src/pcd2pgm_converter.py`**: 3D点群マップを2Dマップへ変換するスクリプト。
+  - **仕様**: 3D点群データ（PCD）を読み込み、指定された高さ範囲の点群を2D平面に投影して、Nav2で使用可能な占有格子マップ（PGM画像とYAMLファイル）を生成します。
+  - **引数**: `<input_pcd> <output_pgm_base_name> <resolution> ...`
+  - **実行例①**: `python3 src/pcd2pgm_converter.py map.pcd map_2d 0.05`
+  - **実行例②**: フィルタリング条件を指定
+
+    ```bash
+    python pcd_to_pgm.py input_map.pcd my_map \
+    --thre_z_min 0.2 \ #使用する点群の最小高さ [m]
+    --thre_z_max 2.0 \ #使用する点群の最大高さ [m]
+    --map_resolution 0.05 # pixel
+    ```
+  - **実行例③**: 記録した走行ログ（ウェイポイント）を使って、地図上の障害物を消し、通行可能領域として上書きします。
+    ```bash
+    python pcd_to_pgm.py input_map.pcd cleaned_map \
+    --waypoints_file waypoints.json \ # ウェイポイント読み込み
+    --waypoint_tolerance 1.5 \ # 通過した点の周囲[m] を通行可能領域とする
+    --loop_waypoints # 最後の点と最初の点を結んで、ループ状の経路をFreeにします。
+    ```
+
+- **`src/pcd_tf_extractor.py`**: PCDファイルからTF情報を抽出するツール。
+  - **仕様**: PCDファイルに含まれるViewPoint情報などから、センサー位置や座標変換情報を抽出するために使用されます。
+  - **引数**: `<input_pcd> ...`
+  - **実行例**:
+
+      ```bash
+    python3 pcd_tf_extractor.py ./bag_data /points /odom ignored base_link odom ./map  map.pcd ./wp 0.5 10.0
+    ```
+
+    ```bash
+    python3 pcd_tf_extractor.py \
+    ./my_bag_folder \ # 1	bag_folder	Bagファイルが入っているディレクトリパス。内部の .mcap か .db3 を自動検索します。
+    /hokuyo3d/hokuyo_cloud2 \ # 2	sub_pcd_topic	読み込む点群トピック名（例: /sensor/points）。
+    /odom \ # 3	sub_odom_topic	読み込むオドメトリトピック名（例: /odom）。
+    ignored \ # 4	pub_topic	（無視されます） C++版との互換性のためのプレースホルダです。none 等でOK。
+    base_link \ # 5	orig_frame	センサー側の座標系（例: base_link または velodyne）。
+    odom \ # 6	target_frame	地図の基準となる固定座標系（例: odom または map）。 
+    ./output_map \ # 7	map_dir	生成されたPCDファイルを保存するディレクトリ。
+    map.pcd \ # 8	map_name	保存するファイル名（例: map.pcd）。
+    ./output_waypoints \ # 9	wp_dir	ウェイポイント（JSON）を保存するディレクトリ。
+    1.0 \ # 10	pc_save_distance  # 点群の追加間隔(m)。前回の保存地点からこの距離以上動くと、地図に点群を累積します。
+    4.0 \ # 11	wp_save_distance  # ウェイポイントの設置間隔(m)。この距離ごとに1つの経由点を生成します。
+    /tf # 12	tf_topic	（任意）TFトピック名。デフォルトは /tf。
+    ```
+  - 出力される waypoint のフォーマット
+    ```json
+    [
+      [ [x, y, 0.0], [0.0, 0.0, z, w], {"type": "normal", ...} ],
+      ...
+    ]
+    ```
+
+### 実行・補助スクリプト
+
+- **`scripts/coordinator.sh`**: Zenityを使用したGUIメニューを提供し、データ取得、マッピング、ナビゲーションの各機能を統合的に管理・実行するメインスクリプト。
+  - **処理の流れ**: 起動時にメニューダイアログを表示し、ユーザーの選択（データ取得、マッピング、ナビゲーション）に応じて分岐します。ファイル選択ダイアログ等で必要なパラメータ（Bagファイル、マップ名など）を取得し、対応する `start_*.sh` スクリプトを呼び出します。
+- **`scripts/start_mapping.sh`**: Web GUIやCoordinatorからのリクエストを受け、マッピング処理 (`p2o`, `lio_raw`, `pcd2pgm`) を実行するラッパースクリプト。処理の進捗管理や完了フラグの生成も行います。
+  - **処理の流れ**: 引数で指定されたマッピングモード（p2o, lio_raw, pcd2pgmなど）に従い、対応するバックエンドのシェルスクリプト（`hokuyo_slam.bash` 等）を新しいターミナルウィンドウで起動します。
+- **`scripts/start_getting_rosbag.sh`**: センサーデータの記録 (ROS Bag) を開始するためのスクリプト。
+  - **処理の流れ**: 既存のROSノードを終了させた後、モータドライバとセンサー群、およびデータ記録用のLaunchファイルを起動します。
+- **`scripts/start_navigation.sh`**: 指定されたマップと設定に基づいてナビゲーション（単一マップ/マルチマップ）を起動するスクリプト。
+  - **処理の流れ**: 引数で指定されたモード（単一マップGNSS/LIO、マルチマップ）に従い、`nav_single_map.sh` または `nav_multi_map.sh` を新しいターミナルで起動します。
+- **`scripts/setup_ros_env.sh`**: ワークスペースのパス解決や環境変数の読み込みを行う共通セットアップスクリプト。
+  - **処理の流れ**: スクリプトの配置場所からパッケージとワークスペースのルートパスを自動特定し、ROS 2の `setup.bash` を読み込んで環境変数を設定します。
+
+#### ナビゲーション実行スクリプト
+
+- **`scripts/navigation/nav_single_map.sh`**: 単一のマップとウェイポイントファイルを使用してナビゲーションを実行するスクリプト。
+  - **処理の流れ**: 指定されたマップの初期位置情報を読み込み、モータドライバとナビゲーションシステムを起動します。その後、`waypoint_manager` を実行して自律走行を開始します。エラー終了時には自動的にリトライする機能が含まれています。
+- **`scripts/navigation/nav_multi_map.sh`**: CSVファイルで定義された複数のマップを順次切り替えながら連続走行するスクリプト。
+  - **処理の流れ**: CSVファイルを1行ずつ読み込み、各マップに対して `nav_single_map.sh` と同様の起動・実行・終了のサイクルを繰り返します。マップ間の切り替え時にはROSノードのクリーンアップと待機処理(15秒)を行い、システムをリセットしてから次のマップを開始します。
+
+#### scripts/00_sample_util/ (ユーティリティスクリプト)
+
+- **`scripts/00_sample_util/start_server.bash`**: Web GUI (`hokuyo_navigation2_gui`) と (`vizanti`) のサーバーを起動するスクリプト。
+  - **処理の流れ**: Webインターフェース用のFlaskサーバーとVizantiサーバーをバックグラウンドで起動します。
+- **`scripts/00_sample_util/stop_server.bash`**: 起動している(`hokuyo_navigation2_gui`) と (`vizanti`) のサーバーを停止するスクリプト。
+  - **処理の流れ**: サーバーに関連するプロセスを特定し、終了させます。
