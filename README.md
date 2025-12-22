@@ -1,7 +1,7 @@
 # hokuyo_navigation2
 
 `hokuyo_navigation2`は、北陽電機製の3D LiDAR（RSFセンサ）専用のROS 2ベースの屋内外対応ナビゲーションシステムです。
-3D-SLAMによる自己位置推定とROS 2 Navigation Stack (Nav2)を連携させ、高精度な2D自律移動を実現します。
+3D-SLAM、自己位置推定、ROS 2 Navigation Stack (Nav2)を連携させ、高精度な2D自律移動を実現します。
 
 また、直感的な操作を可能にするWebベースのGUI `hokuyo_navigation2_gui` を用いることで、マッピングからナビゲーションまでの一連の操作をブラウザから簡単に行うことができます。
 
@@ -34,8 +34,7 @@
 ## 主な機能
 
 - **ロボットとセンサノードの起動**
-  - ``
-
+  - モータドライバ・センサのROS2ノードの起動
 - **3D SLAMと2Dウェイポイントファイル出力の同時実行**:
   - `hokuyo_lio` を用いた高精度なLiDAR慣性オドメトリ（LIO）と3D点群マップ生成。
   - ROS Bagから`lio_raw`（軌跡ベース）または`p2o`（点群ベース）の3Dマップ（`.pcd`）を作成。
@@ -48,7 +47,7 @@
   - Nav2 (Navigation2) スタックと連携し、指定されたウェイポイントに沿った自律走行。
   - 単一マップ走行および複数マップを連続して走行するマルチマップナビゲーションに対応。
 
-- **Webベースの統合GUI (`hokuyo_navigation2_gui`)**:
+- **Webベースの統合GUI [`hokuyo_navigation2_gui`](https://github.com/hokuyo-rd/hokuyo_navigation2_gui)**:
   - **プロセス実行**: データ取得、マッピング、ナビゲーションの各プロセスをブラウザから起動。
   - **ファイル管理**: マップ、ウェイポイント、設定ファイルなどをブラウザ上で管理（作成、名前変更、削除）。
   - **高機能エディタ**:
