@@ -1,8 +1,7 @@
 # hokuyo_navigation2
 
 `hokuyo_navigation2`は、北陽電機製の3D LiDAR（RSFセンサ）専用のROS 2ベースの屋内外対応ナビゲーションシステムです。
-3D-SLAM、自己位置推定、ROS 2 Navigation Stack (Nav2)を連携させ、高精度な2D自律移動を実現します。
-
+3D-SLAM、自己位置推定、ROS 2 Navigation Stack (Nav2)を連携させ、高精度な自律移動を実現します。
 また、直感的な操作を可能にするWebベースのGUI `hokuyo_navigation2_gui` を用いることで、マッピングからナビゲーションまでの一連の操作をブラウザから簡単に行うことができます。
 
 ![hokuyo_navigation2](Image/hokuyo_navigation2.png)
@@ -20,11 +19,12 @@
     - [Python パッケージ](#python-パッケージ)
   - [ビルド](#ビルド)
   - [実行方法](#実行方法)
-    - [方法1: Web GUIを使用する](#方法1-web-guiを使用する)
-    - [方法2: CUIから実行する](#方法2-cuiから実行する)
+    - [方法1: ブラウザベースのGUIを使用する](#方法1-ブラウザベースのguiを使用する)
+    - [方法2: ターミナルから使用する](#方法2-ターミナルから使用する)
   - [パッケージ構成](#パッケージ構成)
   - [プログラムの説明](#プログラムの説明)
     - [ROS 2 ノード \& ツール](#ros-2-ノード--ツール)
+    - [Launch ファイル](#launch-ファイル)
     - [実行・補助スクリプト](#実行補助スクリプト)
       - [ナビゲーション実行スクリプト](#ナビゲーション実行スクリプト)
       - [scripts/00\_sample\_util/ (ユーティリティスクリプト)](#scripts00_sample_util-ユーティリティスクリプト)
@@ -41,13 +41,13 @@
   - 3D点群マップ生成と同時にウェイポイント作成
   - 3D点群マップをNav2用の2Dグリッドマップ（`.pgm`, `.yaml`）へ変換。
 
-- **2Dナビゲーション**:
+- **ナビゲーション**:
   - `hokuyo_rsf`を利用したリアルタイム3D自己位置推定を用いた自律走行
   - 3D点群マップと`simple_fastlio_localization` を利用したリアルタイム自己位置推定を用いた自律走行
   - Nav2 (Navigation2) スタックと連携し、指定されたウェイポイントに沿った自律走行。
   - 単一マップ走行および複数マップを連続して走行するマルチマップナビゲーションに対応。
 
-- **Webベースの統合GUI [`hokuyo_navigation2_gui`](https://github.com/hokuyo-rd/hokuyo_navigation2_gui)**:
+- **ブラウザベースの統合GUI [`hokuyo_navigation2_gui`](https://github.com/hokuyo-rd/hokuyo_navigation2_gui)**:
   - **プロセス実行**: データ取得、マッピング、ナビゲーションの各プロセスをブラウザから起動。
   - **ファイル管理**: マップ、ウェイポイント、設定ファイルなどをブラウザ上で管理（作成、名前変更、削除）。
   - **高機能エディタ**:
@@ -77,8 +77,6 @@ sudo apt-get install -y tree xdotool wmctrl zenity
   - websocket を使ってウェブで ROS Topic 通信を実現するパッケージ vizanti が依存
 - [**jsk_visualization**](https://github.com/hokuyo-rd/jsk_visualization.git)
   - RViz2 のカスタムヴィジュアルプラグイン
-- [**icart_mini_driver_ros2**](https://github.com/hokuyo-rd/icart_mini_driver_ros2.git)
-  - T-frog project 製のロボットベース `iCart-mini` 用のROS 2ドライバ。ロボットを制御する場合に必要です。
 - [**hokuyo_slam_ros2**](https://github.com/hokuyo-rd/hokuyo_slam_ros2.git)
   - 3D SLAM アルゴリズム `p2o` を提供するパッケージ。
   - 高精度な3D点群マップの生成に使用されます。
@@ -145,7 +143,7 @@ pipreqs src/ # requirements.txt を生成
 本システムは、GUIからの操作とCUIから`coordinator.sh`スクリプトを直接実行する方法があります。GUIからの操作が推奨されますが、CUIから`coordinator.sh`スクリプトを実行することも可能です。
 
 
-### 方法1: Web GUIを使用する
+### 方法1: ブラウザベースのGUIを使用する
 
 Webサーバーとvizantiサーバーを起動します。
 ```bash
@@ -163,12 +161,12 @@ sudo ufw allow 5001 # vizanti
 sudo ufw allow 9090 # vizanti
 ```
 
-
 Webブラウザで `http://<ホストマシンのIPアドレス>:5050` にアクセスします。GUIの指示に従い、マッピングやナビゲーションを実行してください。詳細は `hokuyo_navigation2_gui` のドキュメントを参照してください。
 
-### 方法2: CUIから実行する
+### 方法2: ターミナルから使用する
 
 `coordinator.sh`は、Zenityを利用したメニューを通じて、マッピングやナビゲーションなどの各機能を実行するための統合スクリプトです。
+**ウェイポイントの編集機能はございません。**
 
 **coordinatorの実行**:
     スクリプトを実行すると、実行したい機能を選択するダイアログが表示されます。
@@ -272,10 +270,38 @@ ros2 run hokuyo_navigation2 coordinator.sh
   - 出力される waypoint のフォーマット
     ```json
     [
-      [ [x, y, 0.0], [0.0, 0.0, z, w], {"type": "normal", ...} ],
-      ...
-    ]
+        [
+            -11.920628746521896, # x座標
+            14.08871893867121, # y座標
+            0 # z座標
+        ],
+        [
+            0, # qx
+            0, # qy
+            0.8242643361478786, # qz
+            0.5662051784951254  # qw
+        ],
+        {
+            "type": "slow", # type: normal, slow, stop
+            "value": 0.2, # vlaue: slow m/s stop s
+            "xy_tolerance": 1, # 到着しきい値　位置 [m]
+            "yaw_tolerance": 3.14 # 到着しきい値 姿勢 [rad]
+        }
+    ],
     ```
+
+### Launch ファイル
+
+- **`launch/hokuyo_nav2_bringup_launch.xml`**: ナビゲーションシステム全体を起動するメインのLaunchファイル。
+  - **機能**: 引数 (`use_navigation`, `use_mapping`, `use_lio` など) に応じて、LIOノード、Nav2スタック、各種変換ノード (`fix2xyz` 等) を条件付きで起動します。
+- **`launch/sensors_launch.xml`**: ロボットに搭載されたセンサー群を起動するLaunchファイル。
+  - **機能**: GNSSドライバ (`nmea_navsat_driver`) や 3D LiDAR (`hokuyo3d_node`) を起動します。
+- **`launch/icart_mini_drive_launch.xml`**: ロボットの足回り（モータドライバ）を起動するLaunchファイル。
+  - **機能**: `icart_mini_driver` を起動し、`robot_state_publisher` を用いてロボットモデル (`URDF`) を配信します。
+- **`launch/hokuyo_lio_node_with_yaml_ros2.xml`**: `hokuyo_lio` ノードを起動するLaunchファイル。
+  - **機能**: パラメータファイル (`.yaml`) を読み込み、LIOアルゴリズムを実行します。同期モード (`sync_enable`) の切り替えが可能です。
+- **`launch/safety_urg_node2_2sensor.launch.py`**: 安全機能用の2つのURGセンサノードを起動するLaunchファイル。
+  - **機能**: 前後などに配置された2つの障害物検知用LiDAR (`safety_urg_node2`) を、それぞれの設定ファイル (`uam1_param.yaml`, `uam2_param.yaml`) で起動します。
 
 ### 実行・補助スクリプト
 
