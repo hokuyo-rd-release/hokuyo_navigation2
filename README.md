@@ -28,6 +28,7 @@
     - [実行・補助スクリプト](#実行補助スクリプト)
       - [ナビゲーション実行スクリプト](#ナビゲーション実行スクリプト)
       - [scripts/00\_sample\_util/ (ユーティリティスクリプト)](#scripts00_sample_util-ユーティリティスクリプト)
+      - [scripts/ctrl/ (制御スクリプト)](#scriptsctrl-制御スクリプト)
 
 ---
 
@@ -329,3 +330,12 @@ ros2 run hokuyo_navigation2 coordinator.sh
   - **処理の流れ**: Webインターフェース用のFlaskサーバーとVizantiサーバーをバックグラウンドで起動します。
 - **`scripts/00_sample_util/stop_server.bash`**: 起動している(`hokuyo_navigation2_gui`) と (`vizanti`) のサーバーを停止するスクリプト。
   - **処理の流れ**: サーバーに関連するプロセスを特定し、終了させます。
+
+#### scripts/ctrl/ (制御スクリプト)
+
+- **`scripts/ctrl/kill_all_rosnode.sh`**: 実行中の全てのROS 2ノードを強制終了するスクリプト。
+  - **処理の流れ**: `ros2 daemon stop` を実行し、`ros2` 関連のプロセスや、`python3` で実行されているROSノードプロセスを `kill` コマンドで終了させます。ナビゲーションやマッピングの開始前に、環境をクリーンな状態にするために使用されます。
+- **`scripts/ctrl/multi_map_kill.sh`**: マルチマップナビゲーションのマップ切り替え時やリトライ時に、ナビゲーション関連のノード群を終了するスクリプト。
+  - **処理の流れ**: 次のマップでのナビゲーションを開始するために、現在実行中のナビゲーション関連ノード（Nav2, LIO, モータドライバなど）を終了します。親スクリプト（`nav_multi_map.sh`など）の実行は継続したまま、ROSノードのみをリセットする場合に使用されます。
+- **`scripts/ctrl/web_kill_all_rosnode.sh`**: Web GUIから停止を行うために呼び出されるスクリプト。
+  - **処理の流れ**: ナビゲーション実行スクリプト（`nav_multi_map.sh` 等）やROSノード、モータドライバなどを `pkill` で強制終了し、システムを安全に停止させます。
