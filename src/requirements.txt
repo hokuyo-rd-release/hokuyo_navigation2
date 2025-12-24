@@ -15,3 +15,4 @@ scipy==1.8.0
 sensor_msgs==4.9.0
 sensor_msgs_py==4.9.0
 transforms3d==0.4.2
+tqdm

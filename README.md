@@ -1,8 +1,7 @@
 # hokuyo_navigation2
 
-`hokuyo_navigation2`は、北陽電機製の3D LiDAR（RSFセンサ）専用のROS 2ベースの屋内外対応ナビゲーションシステムです。
-3D-SLAM、自己位置推定、ROS 2 Navigation Stack (Nav2)を連携させ、高精度な自律移動を実現します。
-また、直感的な操作を可能にするWebベースのGUI `hokuyo_navigation2_gui` を用いることで、マッピングからナビゲーションまでの一連の操作をブラウザから簡単に行うことができます。
+`hokuyo_navigation2`は、北陽電機製の3D LiDAR, RTK-GNSS一体型センサ RSF 専用のROS 2ベースの屋内外対応ナビゲーションシステムです。
+3D-SLAM、自己位置推定、ROS 2 Navigation Stack (Nav2)を連携させ、高精度な自律移動を実現します。また、直感的な操作を可能にするWebベースのGUI `hokuyo_navigation2_gui` を用いることで、マッピングからナビゲーションまでの一連の操作をブラウザから簡単に行うことができます。
 
 ![hokuyo_navigation2](Image/hokuyo_navigation2.png)
 
@@ -100,12 +99,7 @@ sudo apt-get install -y tree xdotool wmctrl zenity bc
 
 ### Python パッケージ
 ```bash
-pip3 install pipreqs # pipreqs で .py ファイルの 依存パッケージをrequirements.txt に格納。
-cd hokuyo_navigation2
-pipreqs src/ # requirements.txt を生成
-```
-```bash
-cd hokuyo_navigation2
+cd <YOUR_ROS2_WORKSPACE>/src/hokuyo_navigation2
 pip3 install -r src/requirements.txt
 ```
 
@@ -162,9 +156,14 @@ Webサーバーとvizantiサーバーを起動します。
 ```
 ```bash
 sudo ufw allow 5050 # hokuyo_navigation2_gui
+sudo ufw allow 5050/tcp
 sudo ufw allow 5000 # vizanti
+sudo ufw allow 5000/tcp
 sudo ufw allow 5001 # vizanti
+sudo ufw allow 5001/tcp
 sudo ufw allow 9090 # vizanti
+sudo ufw allow 9090/tcp
+sudo ufw enable 
 ```
 
 Webブラウザで `http://<ホストマシンのIPアドレス>:5050` にアクセスします。GUIの指示に従い、マッピングやナビゲーションを実行してください。詳細は `hokuyo_navigation2_gui` のドキュメントを参照してください。
