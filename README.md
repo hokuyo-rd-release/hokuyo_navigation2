@@ -70,7 +70,7 @@ sudo apt-get install -y tree xdotool wmctrl zenity
 ### ROS 2 パッケージ
 本パッケージは以下のROS 2パッケージに依存しています。
 
-**※※ 本パッケージは、モータドライバ`icart_mini_driver_ros2` を使用したサンプルです。モータドライバを変更する場合は、[ナビゲーション実行スクリプト](#ナビゲーション実行スクリプト) の `nav_common.sh` 内の`launch_motor_driver` 関数を編集してください。※※**
+**※※ 本パッケージは、モータドライバ`icart_mini_driver_ros2` を使用しています。モータドライバを変更する場合は、[ナビゲーション実行スクリプト](#ナビゲーション実行スクリプト) の `nav_common.sh` 内の`launch_motor_driver` 関数を編集してください。※※**
 
 詳細は`hokuyo_navigation2` を参照してください。
 (まとめてクローン・ビルドする方法が記載されています。)
@@ -101,14 +101,14 @@ sudo apt-get install -y tree xdotool wmctrl zenity
 
 ### Python パッケージ
 ```bash
-pip3 install -r src/requirements.txt
-```
-
-```bash
 pip3 install pipreqs # pipreqs で .py ファイルの 依存パッケージをrequirements.txt に格納。
+cd hokuyo_navigation2
 pipreqs src/ # requirements.txt を生成
 ```
-
+```bash
+cd hokuyo_navigation2
+pip3 install -r src/requirements.txt
+```
 
 ## ビルド
 
@@ -221,6 +221,12 @@ ros2 run hokuyo_navigation2 coordinator.sh
   - **処理の流れ**: 点群トピックとオドメトリトピックをサブスクライブし、オドメトリの姿勢情報を用いて点群を座標変換して再パブリッシュします。`simple_fastlio_localization` で、入力点群をオドメトリフレームに位置合わせするために使用されます。
 
 #### hokuyo_slam_ros2
+
+以下のプログラムは、`hokuyo_slam_ros2` のユーティリティです。
+
+- **`scripts/mapping/hokuyo_slam.bash`**: ROS Bagファイルから3D SLAM (p2o) を実行し、点群マップを生成する一連の処理を自動化するスクリプト。
+  - **処理の流れ**: GNSSデータの品質チェック、P2O用データの生成、グラフ最適化 (`run_p2o`)、点群の抽出と結合、絶対座標から相対座標への変換を行い、最終的な `.pcd` ファイルを出力します。
+
 - **`src/p2o_from_rosbag_ros2.py`**: ROS 2 Bagファイル (`.mcap` または `.db3`) からLIOとGNSSのトピックデータを抽出し、Pose Graph Optimization (P2O) 用の頂点とエッジデータを出力するPythonスクリプト。GNSSデータの共分散フィルタリングや座標変換 (LatLon -> UTM/XYZ) も実行します。
   - **処理の流れ**: 指定されたBagファイルからLIOオドメトリとGNSSデータを読み込みます。LIOの移動量に基づいてグラフのノード（頂点）を作成し、隣接ノード間をエッジで結びます。同時にGNSSデータをUTM座標に変換し、信頼度（共分散）に基づいてLIOノードに対する位置拘束エッジを追加生成し、最適化用のテキスト形式で出力します。
 - **`src/p2o_gnsslog_from_rosbag_ros2.py`**: ROS Bag内のGNSSデータの品質（共分散）を解析するスクリプト。
@@ -237,6 +243,11 @@ ros2 run hokuyo_navigation2 coordinator.sh
   - **実行例**: `python3 src/pcd_to_Rcord.py abs_map.pcd rel_map.pcd poses.txt init_pose.txt init_lla.txt`
 
 #### hokuyo_lio_to_map, 3D点群マップから2D占有格子マップへ変換
+
+- **`scripts/mapping/lio_raw.bash`**: ROS BagからLIOベースの3D点群マップ（.pcd）を生成するスクリプト。
+  - **処理の流れ**: `pcd_tf_extractor.py` を使用して、ROS Bag内のLIOオドメトリと点群データから、オドメトリ軌跡に基づいた点群マップを作成します。同時にウェイポイントファイルも生成可能です。
+- **`scripts/mapping/pcd2pgm.bash`**: 3D点群マップ（.pcd）を2D占有格子マップ（.pgm, .yaml）に変換するスクリプト。
+  - **処理の流れ**: `pcd2pgm_converter.py` を使用して、指定された高さ範囲の点群を2D平面に投影し、Nav2で使用可能なマップ形式に変換します。ウェイポイントファイルを指定することで、経路上の障害物を除去（通行可能領域としてマーク）する機能もあります。
 
 - **`src/pcd_tf_extractor.py`**: PCDファイルからTF情報を抽出するツール。
   - **仕様**: PCDファイルに含まれるViewPoint情報などから、センサー位置や座標変換情報を抽出するために使用されます。
