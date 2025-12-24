@@ -64,7 +64,7 @@
 以下のツールがシステムにインストールされている必要があります。
 ```bash
 sudo apt-get update
-sudo apt-get install -y tree xdotool wmctrl zenity
+sudo apt-get install -y tree xdotool wmctrl zenity bc
 ```
 
 ### ROS 2 パッケージ
