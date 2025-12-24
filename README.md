@@ -72,8 +72,7 @@ sudo apt-get install -y tree xdotool wmctrl zenity bc
 
 **※※ 本パッケージは、モータドライバ`icart_mini_driver_ros2` を使用しています。モータドライバを変更する場合は、[ナビゲーション実行スクリプト](#ナビゲーション実行スクリプト) の `nav_common.sh` 内の`launch_motor_driver` 関数を編集してください。※※**
 
-詳細は`hokuyo_navigation2` を参照してください。
-(まとめてクローン・ビルドする方法が記載されています。)
+**以下を全てインストールすることが前提となっております。`hokuyo_navigation2` に以下をまとめてクローン・ビルドする方法が記載されているので、参照ください。**
 
 - [**hokuyo_rsf**](https://github.com/Hokuyo-aut/hokuyo_rsf.git)
   - Hokuyo RSF センサの ROS2 パッケージです。GNSSとLiDAR Inertial Odometry (LIO) の相互変換による位置出力 (Odometry, fix) を提供します。
