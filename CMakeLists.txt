@@ -27,6 +27,7 @@ endif()
 # Add your new executable here
 add_executable(gnss_lio_debug src/gnss_lio_debug.cpp)
 add_executable(pcd_tf_transform src/pcd_tf_transform.cpp)
+add_executable(pointcloud_transform_for_loc src/pointcloud_transform_for_loc.cpp)
 add_executable(odom_frame_changer src/odom_frame_changer.cpp)
 add_executable(cmdvel_stopper src/cmdvel_stopper.cpp)
 
@@ -38,6 +39,17 @@ ament_target_dependencies(gnss_lio_debug
 )
 
 ament_target_dependencies(pcd_tf_transform
+  rclcpp
+  nav_msgs
+  sensor_msgs
+  geometry_msgs
+  tf2
+  tf2_ros
+  tf2_sensor_msgs
+  pcl_conversions
+)
+
+ament_target_dependencies(pointcloud_transform_for_loc
   rclcpp
   nav_msgs
   sensor_msgs
@@ -74,6 +86,9 @@ target_include_directories(gnss_lio_debug PUBLIC
 target_include_directories(pcd_tf_transform PUBLIC
   ${pcl_conversions_INCLUDE_DIRS}
 )
+target_include_directories(pointcloud_transform_for_loc PUBLIC
+  ${pcl_conversions_INCLUDE_DIRS}
+)
 target_include_directories( odom_frame_changer PUBLIC
   "/usr/local/include/eigen3"
 )
@@ -81,6 +96,7 @@ target_include_directories( odom_frame_changer PUBLIC
 install(TARGETS
   gnss_lio_debug
   pcd_tf_transform
+  pointcloud_transform_for_loc
   odom_frame_changer
   cmdvel_stopper
   DESTINATION lib/${PROJECT_NAME}
