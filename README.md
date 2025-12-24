@@ -24,6 +24,9 @@
   - [パッケージ構成](#パッケージ構成)
   - [プログラムの説明](#プログラムの説明)
     - [ROS 2 ノード \& ツール](#ros-2-ノード--ツール)
+      - [ROS 2 ノード](#ros-2-ノード)
+      - [hokuyo\_slam\_ros2](#hokuyo_slam_ros2)
+      - [hokuyo\_lio\_to\_map, 3D点群マップから2D占有格子マップへ変換](#hokuyo_lio_to_map-3d点群マップから2d占有格子マップへ変換)
     - [Launch ファイル](#launch-ファイル)
     - [実行・補助スクリプト](#実行補助スクリプト)
       - [ナビゲーション実行スクリプト](#ナビゲーション実行スクリプト)
@@ -66,6 +69,9 @@ sudo apt-get install -y tree xdotool wmctrl zenity
 
 ### ROS 2 パッケージ
 本パッケージは以下のROS 2パッケージに依存しています。
+
+**※※ 本パッケージは、モータドライバ`icart_mini_driver_ros2` を使用したサンプルです。モータドライバを変更する場合は、[ナビゲーション実行スクリプト](#ナビゲーション実行スクリプト) の `nav_common.sh` 内の`launch_motor_driver` 関数を編集してください。※※**
+
 詳細は`hokuyo_navigation2` を参照してください。
 (まとめてクローン・ビルドする方法が記載されています。)
 
@@ -204,6 +210,7 @@ ros2 run hokuyo_navigation2 coordinator.sh
 
 ### ROS 2 ノード & ツール
 
+#### ROS 2 ノード
 - **`src/gnss_lio_debug.cpp`**: GNSSとLIOのデータを比較・検証するためのデバッグ用ノード。
   - **処理の流れ**: GNSS (`NavSatFix`)、Odometry、ステータス文字列をサブスクライブし、GNSSの共分散（精度）やオドメトリの種類（LIO/GNSS）に基づいて、RViz上のオーバーレイテキスト (`OverlayText`) の色と内容を更新します。また、Lidarオドメトリの受信周波数を計測・表示します。
 - **`src/odom_frame_changer.cpp`**: オドメトリメッセージのフレームIDを書き換えるノード。
@@ -212,39 +219,24 @@ ros2 run hokuyo_navigation2 coordinator.sh
   - **処理の流れ**: 上位からの `cmd_vel` を監視しつつ、停止/開始/減速の制御トピックをサブスクライブします。停止指令時はゼロ速度を出力し、減速指令時は速度を制限して、下位のモータドライバへ `cmd_vel` を中継します。
 - **`src/pointcloud_transform_for_loc.cpp`**: 自己位置推定用に点群を座標変換するノード。
   - **処理の流れ**: 点群トピックとオドメトリトピックをサブスクライブし、オドメトリの姿勢情報を用いて点群を座標変換して再パブリッシュします。`simple_fastlio_localization` で、入力点群をオドメトリフレームに位置合わせするために使用されます。
+
+#### hokuyo_slam_ros2
 - **`src/p2o_from_rosbag_ros2.py`**: ROS 2 Bagファイル (`.mcap` または `.db3`) からLIOとGNSSのトピックデータを抽出し、Pose Graph Optimization (P2O) 用の頂点とエッジデータを出力するPythonスクリプト。GNSSデータの共分散フィルタリングや座標変換 (LatLon -> UTM/XYZ) も実行します。
   - **処理の流れ**: 指定されたBagファイルからLIOオドメトリとGNSSデータを読み込みます。LIOの移動量に基づいてグラフのノード（頂点）を作成し、隣接ノード間をエッジで結びます。同時にGNSSデータをUTM座標に変換し、信頼度（共分散）に基づいてLIOノードに対する位置拘束エッジを追加生成し、最適化用のテキスト形式で出力します。
 - **`src/p2o_gnsslog_from_rosbag_ros2.py`**: ROS Bag内のGNSSデータの品質（共分散）を解析するスクリプト。
   - **仕様**: 指定されたGNSSトピックを読み込み、共分散が閾値以下のデータの割合などを計算してCSVファイルに出力します。マッピング処理の前にGNSSデータの品質をチェックするために使用されます。
   - **引数**: `<bag_file> <output_csv> <gnss_topic> <cov_threshold>`
-  - **実行例**: `python3 src/p2o_gnsslog_from_rosbag_ros2.py my_data.mcap log.csv /fix 10.0`
+  - **実行例**: `python3 src/p2o_gnsslog_from_rosbag_ros2.py my_data_bag/ log.csv /fix 10.0`
 - **`src/extract_pcd_ros2.py`**: ROS Bagから点群データを抽出するスクリプト。
   - **仕様**: 指定されたタイムスタンプリスト（`p2o`などで生成）に基づいて、ROS Bagから点群トピックを抽出し、個別のPCDファイルとして保存します。
   - **引数**: `<bag_file> <pointcloud_topic> <timestamp_list_file>`
-  - **実行例**: `python3 src/extract_pcd_ros2.py my_data.mcap /hokuyo_cloud2 timestamps.txt`
+  - **実行例**: `python3 src/extract_pcd_ros2.py my_data_bag/ /hokuyo_cloud2 timestamps.txt`
 - **`src/pcd_to_Rcord.py`**: PCDマップの座標系を絶対座標から相対座標へ変換するスクリプト。
   - **仕様**: 絶対座標系（UTMなど）で作成されたPCDマップを、初期位置を原点(0,0,0)とする相対座標系に変換します。同時に、初期位置情報（UTM座標、緯度経度）をテキストファイルとして出力します。
   - **引数**: `<input_pcd> <output_pcd> <p2o_poses_file> <output_init_pose> <output_init_lla>`
   - **実行例**: `python3 src/pcd_to_Rcord.py abs_map.pcd rel_map.pcd poses.txt init_pose.txt init_lla.txt`
-- **`src/pcd2pgm_converter.py`**: 3D点群マップを2Dマップへ変換するスクリプト。
-  - **仕様**: 3D点群データ（PCD）を読み込み、指定された高さ範囲の点群を2D平面に投影して、Nav2で使用可能な占有格子マップ（PGM画像とYAMLファイル）を生成します。
-  - **引数**: `<input_pcd> <output_pgm_base_name> <resolution> ...`
-  - **実行例①**: `python3 src/pcd2pgm_converter.py map.pcd map_2d 0.05`
-  - **実行例②**: フィルタリング条件を指定
 
-    ```bash
-    python pcd_to_pgm.py input_map.pcd my_map \
-    --thre_z_min 0.2 \ #使用する点群の最小高さ [m]
-    --thre_z_max 2.0 \ #使用する点群の最大高さ [m]
-    --map_resolution 0.05 # pixel
-    ```
-  - **実行例③**: 記録した走行ログ（ウェイポイント）を使って、地図上の障害物を消し、通行可能領域として上書きします。
-    ```bash
-    python pcd_to_pgm.py input_map.pcd cleaned_map \
-    --waypoints_file waypoints.json \ # ウェイポイント読み込み
-    --waypoint_tolerance 1.5 \ # 通過した点の周囲[m] を通行可能領域とする
-    --loop_waypoints # 最後の点と最初の点を結んで、ループ状の経路をFreeにします。
-    ```
+#### hokuyo_lio_to_map, 3D点群マップから2D占有格子マップへ変換
 
 - **`src/pcd_tf_extractor.py`**: PCDファイルからTF情報を抽出するツール。
   - **仕様**: PCDファイルに含まれるViewPoint情報などから、センサー位置や座標変換情報を抽出するために使用されます。
@@ -293,6 +285,27 @@ ros2 run hokuyo_navigation2 coordinator.sh
     ],
     ```
 
+- **`src/pcd2pgm_converter.py`**: 3D点群マップを2Dマップへ変換するスクリプト。
+  - **仕様**: 3D点群データ（PCD）を読み込み、指定された高さ範囲の点群を2D平面に投影して、Nav2で使用可能な占有格子マップ（PGM画像とYAMLファイル）を生成します。
+  - **引数**: `<input_pcd> <output_pgm_base_name> <resolution> ...`
+  - **実行例①**: `python3 src/pcd2pgm_converter.py map.pcd map_2d 0.05`
+  - **実行例②**: フィルタリング条件を指定
+
+    ```bash
+    python pcd_to_pgm.py input_map.pcd my_map \
+    --thre_z_min 0.2 \ #使用する点群の最小高さ [m]
+    --thre_z_max 2.0 \ #使用する点群の最大高さ [m]
+    --map_resolution 0.05 # pixel
+    ```
+  - **実行例③**: 記録した走行ログ（ウェイポイント）を使って、地図上の障害物を消し、通行可能領域として上書きします。
+    ```bash
+    python pcd_to_pgm.py input_map.pcd cleaned_map \
+    --waypoints_file waypoints.json \ # ウェイポイント読み込み
+    --waypoint_tolerance 1.5 \ # 通過した点の周囲[m] を通行可能領域とする
+    --loop_waypoints # 最後の点と最初の点を結んで、ループ状の経路をFreeにします。
+    ```
+
+
 ### Launch ファイル
 
 - **`launch/hokuyo_nav2_bringup_launch.xml`**: ナビゲーションシステム全体を起動するメインのLaunchファイル。
@@ -321,6 +334,8 @@ ros2 run hokuyo_navigation2 coordinator.sh
 
 #### ナビゲーション実行スクリプト
 
+- **`scripts/navigation/nav_common.sh`**: ナビゲーションやデータ取得スクリプトで使用される共通関数を定義したライブラリ。
+  - **機能**: 設定ファイルの読み込み (`load_options`)、初期位置の設定 (`load_initial_poses`)、モータドライバやナビゲーションシステムの起動 (`launch_motor_driver`) (`launch_navigation_system`) などの共通処理を提供します。
 - **`scripts/navigation/nav_single_map.sh`**: 単一のマップとウェイポイントファイルを使用してナビゲーションを実行するスクリプト。
   - **処理の流れ**: 指定されたマップの初期位置情報を読み込み、モータドライバとナビゲーションシステムを起動します。その後、`waypoint_manager` を実行して自律走行を開始します。エラー終了時には自動的にリトライする機能が含まれています。
 - **`scripts/navigation/nav_multi_map.sh`**: CSVファイルで定義された複数のマップを順次切り替えながら連続走行するスクリプト。
