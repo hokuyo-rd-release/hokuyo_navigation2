@@ -75,25 +75,25 @@ sudo apt-get install -y tree xdotool wmctrl zenity bc
 
 - [**hokuyo_rsf**](https://github.com/Hokuyo-aut/hokuyo_rsf.git)
   - Hokuyo RSF センサの ROS2 パッケージです。GNSSとLiDAR Inertial Odometry (LIO) の相互変換による位置出力 (Odometry, fix) を提供します。
-- [**vizanti**](https://github.com/hokuyo-rd/vizanti.git)
+- [**vizanti**](https://github.com/hokuyo-rd-release/vizanti.git)
   - Webブラウザ上でROSトピックを可視化するためのツール。
   - `hokuyo_navigation2_gui` の Map Viewer 機能のバックエンドとして使用されます。
-- [**rosbridge_suite**](https://github.com/hokuyo-rd/rosbridge_suite.git)
+- [**rosbridge_suite**](https://github.com/hokuyo-rd-release/rosbridge_suite.git)
   - websocket を使ってウェブで ROS Topic 通信を実現するパッケージ vizanti が依存
-- [**jsk_visualization**](https://github.com/hokuyo-rd/jsk_visualization.git)
+- [**jsk_visualization**](https://github.com/hokuyo-rd-release/jsk_visualization.git)
   - RViz2 のカスタムヴィジュアルプラグイン
-- [**hokuyo_slam_ros2**](https://github.com/hokuyo-rd/hokuyo_slam_ros2.git)
+- [**hokuyo_slam_ros2**](https://github.com/hokuyo-rd-release/hokuyo_slam_ros2.git)
   - 3D SLAM アルゴリズム `p2o` を提供するパッケージ。
   - 高精度な3D点群マップの生成に使用されます。
-- [**simple_fastlio_localization**](https://github.com/hokuyo-rd/simple_fastlio_localization.git)
+- [**simple_fastlio_localization**](https://github.com/hokuyo-rd-release/simple_fastlio_localization.git)
   - LIOベースの自己位置推定パッケージ。
   - 事前に作成した3Dマップ上での現在のロボット位置を推定します。
-- [**fix2xyz**](https://github.com/hokuyo-rd/fix2xyz.git)
+- [**fix2xyz_packages_ros2**](https://github.com/hokuyo-rd-release/fix2xyz_packages_ros2.git)
   - GNSSデータ (NavSatFix) を直交座標系 (XYZ) に変換するツール。
   - GNSSを使用したナビゲーションやマッピングで使用されます。
-- [**lio_nav2_bringup**](https://github.com/hokuyo-rd/lio_nav2_bringup.git)
+- [**lio_nav2_bringup**](https://github.com/hokuyo-rd-release/lio_nav2_bringup.git)
   - LIOとNav2を連携させて起動するためのLaunchファイル群を含むパッケージ。
-- [**waypoint_manager**](https://github.com/hokuyo-rd/waypoint_manager.git)
+- [**waypoint_manager**](https://github.com/hokuyo-rd-release/waypoint_manager.git)
   - Waypoint
   - Nav2 に ウェイポイントを送信するノード
 
@@ -110,7 +110,7 @@ pip3 install -r src/requirements.txt
 
     ```bash
     cd <your_colcon_ws>
-    git clone https://github.com/hokuyo-rd/hokuyo_navigation2.git
+    git clone https://github.com/hokuyo-rd-release/hokuyo_navigation2.git
     rosdep install -i --from-path src/ -y
     ```
 
