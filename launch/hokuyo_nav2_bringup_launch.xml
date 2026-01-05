@@ -37,6 +37,8 @@
   <arg name="gnss_lio_switch_only_param" default="$(var hokuyo_navigation_pkg_path)/config/gnss_lio_switch_only.yaml" />
   <arg name="initial_pose" default="0.0 0.0 0.0 0.0 0.0 0.0 0.0"/>
   <arg name="latlon_pose" default="35.0 135.0 40.0"/>
+
+  <arg name="launch_for_demo" default="true" />
  
   <!-- <group if="$(var use_sensor)">
     <include file="$(var hokuyo_navigation_pkg_path)/launch/sensors_launch.xml" />
@@ -59,6 +61,38 @@
   <!-- 関連ソフト waypoint_controller -->
   <node name="waypoint_controller" pkg="hokuyo_navigation2" exec="cmdvel_stopper" output="log"/>
   <node name="gnss_lio_debug" pkg="hokuyo_navigation2" exec="gnss_lio_debug" output="log"/>
+
+  <!-- 関連ソフト デモ用のtf作成と点群座標変換 -->
+  <group if="$(var launch_for_demo)">
+
+    <node pkg="hokuyo_navigation2" exec="odom_frame_changer" name="switch_tf">
+      <param name="sub_topic_name" value="/odometry/switch"/>
+      <param name="frame_id" value="/lio_odom"/>
+      <param name="child_frame_id" value="/switch"/>
+    </node>
+
+    <node pkg="hokuyo_navigation2" exec="pcd_tf_transform" name="switch_cloud" output="log">
+      <param name="sub_topic" value="/hokuyo3d/hokuyo_cloud2"/>
+      <param name="pub_topic" value="/gnss_lio_switch/hokuyo_cloud2"/>
+      <param name="target_frame" value="/switch"/>
+      <param name="pc_save_distance" value="0"/>
+    </node>
+
+    <!-- 以下、rsfのデフォルトと同じため多分不要 -->
+    <!-- <node pkg="hokuyo_navigation2" exec="odom_frame_changer" name="lio_tf">
+      <param name="sub_topic_name" value="/hokuyo_lio/imu_rate_odom"/>
+      <param name="frame_id" value="/lio_odom"/>
+      <param name="child_frame_id" value="/hokuyo3d"/>
+    </node> -->
+
+    <!-- <node pkg="hokuyo_navigation2" exec="pcd_tf_transform" name="lio_cloud" output="log">
+      <param name="sub_topic" value="/hokuyo3d/hokuyo_cloud2"/>
+      <param name="target_frame" value="/hokuyo3d"/>
+      <param name="pc_save_distance" value="0"/>
+    </node> -->
+
+  </group>
+
 
   <!-- 以下 RSF_NODE に置き換え -->
   <!-- コア技術 hokuyo_lio -->
@@ -119,7 +153,7 @@
           <param name="fix_topic" value="fix/switch" />
           <param name="fix_with_orient_topic" value="/fix_with_orient/switch" />
         </node>
-        <node pkg="hokuyo_navigation2" exec="odom_frame_changer" name="switch_odom_tf"/>
+        <node pkg="hokuyo_navigation2" exec="odom_frame_changer" name="switch_map_odom_tf"/>
         <include file="$(find-pkg-share lio_nav2_bringup)/launch/navigation_launch.py">
           <arg name="map" value="$(var map_dir)/$(var map_file).yaml"/>
           <arg name="cmd_vel_topic" value="wizurg/cmd_vel"/>
@@ -160,5 +194,7 @@
       </group>
     </group>
   </group>
+
+  <node pkg="rviz2" exec="rviz2" name="demo_rviz" output="log" args="-d $(find-pkg-share hokuyo_navigation2)/config/rviz/demo.rviz" if="$(var launch_for_demo)" />
 
 </launch>
