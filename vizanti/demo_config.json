@@ -1,0 +1,114 @@
+{
+  "navbar": [
+    {
+      "type": "settings",
+      "id": "settings_default"
+    },
+    {
+      "type": "rosbridge",
+      "id": "rosbridge_default"
+    },
+    {
+      "type": "grid",
+      "id": "grid_default"
+    },
+    {
+      "type": "tf",
+      "id": "tf_default"
+    },
+    {
+      "type": "satelite",
+      "id": "satelite_autoID_1",
+      "container_id": "icon_container"
+    },
+    {
+      "type": "odom",
+      "id": "odom_autoID_2",
+      "container_id": "icon_container"
+    },
+    {
+      "type": "odom",
+      "id": "odom_autoID_3",
+      "container_id": "icon_container"
+    },
+    {
+      "type": "inspector",
+      "id": "inspector_autoID_6",
+      "container_id": "icon_container"
+    }
+  ],
+  "view": {
+    "center": {
+      "x": -2.33647455178269,
+      "y": -4.404509626582704
+    },
+    "scale": 24.050854904548025
+  },
+  "settings_default": {
+    "fixed_frame": "rsf_gnss",
+    "background_color": "#273444"
+  },
+  "tf_default": {
+    "show_names": true,
+    "show_axes": true,
+    "show_lines": true,
+    "scale": 1,
+    "frame_visibility": {
+      "base_scan": false,
+      "base_link": false,
+      "camera": false,
+      "gnss": false,
+      "ust": false,
+      "ust2": false,
+      "ylm": false,
+      "yvt": false,
+      "/switch": true,
+      "/lio_odom": true,
+      "hokuyo3d": false,
+      "lio_odom": true,
+      "left_wheel": false,
+      "right_wheel": false,
+      "/rsf": true,
+      "/rsf_gnss": true,
+      "rsf": true,
+      "rsf_gnss": false,
+      "hokuyo_lio": true
+    }
+  },
+  "grid_default": {
+    "size": 1,
+    "thickness": 1,
+    "colour": "#3e556a",
+    "colour_sub": "#294056",
+    "autoscale": "Coarse",
+    "subdivisions": 2
+  },
+  "uid": 7,
+  "satelite_autoID_1": {
+    "topic": "/fix/switch",
+    "server_url": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+    "opacity": "0.7",
+    "smoothing": true,
+    "ignore_rotation": false
+  },
+  "odom_autoID_2": {
+    "topic": "/hokuyo_lio/lidar_rate_odom (Odometry)",
+    "history": "2",
+    "color": "#00eeff",
+    "throttle": "500",
+    "draw_arrows": true,
+    "draw_path": false
+  },
+  "odom_autoID_3": {
+    "topic": "/odometry/switch (Odometry)",
+    "history": "2",
+    "color": "#ffae00",
+    "throttle": "500",
+    "draw_arrows": true,
+    "draw_path": false
+  },
+  "inspector_autoID_6": {
+    "topic": "/fix/switch/type",
+    "throttle": "500"
+  }
+}
