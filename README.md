@@ -97,7 +97,6 @@ sudo apt-get install -y tree xdotool wmctrl zenity bc
 - [**lio_nav2_bringup**](https://github.com/hokuyo-rd-release/lio_nav2_bringup.git)
   - LIOとNav2を連携させて起動するためのLaunchファイル群を含むパッケージ。
 - [**waypoint_manager**](https://github.com/hokuyo-rd-release/waypoint_manager.git)
-  - Waypoint
   - Nav2 に ウェイポイントを送信するノード
 
 ### Python パッケージ
