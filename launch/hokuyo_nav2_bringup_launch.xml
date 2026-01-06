@@ -65,31 +65,41 @@
   <!-- 関連ソフト デモ用のtf作成と点群座標変換 -->
   <group if="$(var launch_for_demo)">
 
-    <node pkg="hokuyo_navigation2" exec="odom_frame_changer" name="switch_tf">
+    <node pkg="hokuyo_navigation2" exec="odom_frame_changer" name="rsf_tf">
       <param name="sub_topic_name" value="/odometry/switch"/>
-      <param name="frame_id" value="/lio_odom"/>
-      <param name="child_frame_id" value="/switch"/>
+      <param name="frame_id" value="lio_odom"/>
+      <param name="child_frame_id" value="rsf"/>
+    </node>
+    <!-- vizantiでの地図表示のため、方位に合わせたtfを作る. -->
+    <node pkg="hokuyo_navigation2" exec="odom_frame_changer" name="rsf_gnss_tf">
+      <param name="sub_topic_name" value="/odometry/utm"/>
+      <param name="mode_zero_position" value="true"/>
+      <param name="mode_inverse_orientation" value="true"/>
+      <param name="R_arr" value="[1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]"/>
+      <param name="frame_id" value="rsf"/>
+      <param name="child_frame_id" value="rsf_gnss"/>
     </node>
 
     <node pkg="hokuyo_navigation2" exec="pcd_tf_transform" name="switch_cloud" output="log">
       <param name="sub_topic" value="/hokuyo3d/hokuyo_cloud2"/>
       <param name="pub_topic" value="/gnss_lio_switch/hokuyo_cloud2"/>
-      <param name="target_frame" value="/switch"/>
+      <param name="target_frame" value="rsf"/>
       <param name="pc_save_distance" value="0"/>
     </node>
 
-    <!-- 以下、rsfのデフォルトと同じため多分不要 -->
-    <!-- <node pkg="hokuyo_navigation2" exec="odom_frame_changer" name="lio_tf">
+    <!-- 以下、RSF_NODEの仕様次第で変更する.(lioのtfとpoint_cloud) -->
+    <node pkg="hokuyo_navigation2" exec="odom_frame_changer" name="lio_tf">
       <param name="sub_topic_name" value="/hokuyo_lio/imu_rate_odom"/>
-      <param name="frame_id" value="/lio_odom"/>
-      <param name="child_frame_id" value="/hokuyo3d"/>
-    </node> -->
+      <param name="frame_id" value="lio_odom"/>
+      <param name="child_frame_id" value="hokuyo_lio"/>
+    </node>
 
-    <!-- <node pkg="hokuyo_navigation2" exec="pcd_tf_transform" name="lio_cloud" output="log">
+    <node pkg="hokuyo_navigation2" exec="pcd_tf_transform" name="lio_cloud" output="log">
       <param name="sub_topic" value="/hokuyo3d/hokuyo_cloud2"/>
-      <param name="target_frame" value="/hokuyo3d"/>
+      <param name="pub_topic" value="/hokuyo_lio/hokuyo_cloud2"/>
+      <param name="target_frame" value="hokuyo_lio"/>
       <param name="pc_save_distance" value="0"/>
-    </node> -->
+    </node>
 
   </group>
 
@@ -195,6 +205,6 @@
     </group>
   </group>
 
-  <node pkg="rviz2" exec="rviz2" name="demo_rviz" output="log" args="-d $(find-pkg-share hokuyo_navigation2)/config/rviz/demo.rviz" if="$(var launch_for_demo)" />
+  <node pkg="rviz2" exec="rviz2" name="demo_rviz" output="log" args="-d $(find-pkg-share hokuyo_navigation2)/rviz/demo.rviz" if="$(var launch_for_demo)" />
 
 </launch>

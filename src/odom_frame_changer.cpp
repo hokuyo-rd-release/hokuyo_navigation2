@@ -192,6 +192,9 @@ private:
     bool initial_tf_en_;
     bool odom_en_;
     bool mode_2d_;
+    bool mode_zero_position_;
+    bool mode_zero_orientation_;
+    bool mode_inverse_orientation_;
     bool use_init_R_;
     int sub_count_;
     int init_num_;
@@ -228,6 +231,9 @@ public:
         this->declare_parameter<bool>("initial_tf_en", true);
         this->declare_parameter<bool>("odom_en", false);
         this->declare_parameter<bool>("mode_2d", false);
+        this->declare_parameter<bool>("mode_zero_position", false);
+        this->declare_parameter<bool>("mode_zero_orientation", false);
+        this->declare_parameter<bool>("mode_inverse_orientation", false);
         this->declare_parameter<bool>("use_init_R", false);
         this->declare_parameter<int>("init_num", 5);
         this->declare_parameter<std::vector<double>>("R_arr", R_arr_);
@@ -241,6 +247,9 @@ public:
         this->get_parameter("initial_tf_en", initial_tf_en_);
         this->get_parameter("odom_en", odom_en_);
         this->get_parameter("mode_2d", mode_2d_);
+        this->get_parameter("mode_zero_position", mode_zero_position_);
+        this->get_parameter("mode_zero_orientation", mode_zero_orientation_);
+        this->get_parameter("mode_inverse_orientation", mode_inverse_orientation_);
         this->get_parameter("use_init_R", use_init_R_);
         this->get_parameter("init_num", init_num_);
         this->get_parameter("R_arr", R_arr_);
@@ -293,6 +302,10 @@ public:
 
         Vector3d odom_tmp = PositionToVector(pub_msg.pose.pose.position);
         Vector4d quat_tmp = OrientationToQuat(pub_msg.pose.pose.orientation);
+        if(mode_inverse_orientation_){
+            Matrix3d R_inv = RotMatFromQuat(quat_tmp).transpose();
+            quat_tmp = QuatFromRotMat(R_inv);
+        }
 
         if(use_init_R_){
             if(sub_count_ < init_num_)return;
@@ -314,6 +327,13 @@ public:
             ret_quat(0) = 0.0;
             ret_quat(1) = 0.0;
         }
+        if(mode_zero_position_){
+            ret_odom = Vector3d::Zero(); 
+        }
+        if(mode_zero_orientation_){
+            ret_quat << 0.0, 0.0, 0.0, 1.0;
+        }
+
         ret_quat.normalize();
 
         pub_msg.pose.pose.position = VectorToPosition(ret_odom);
