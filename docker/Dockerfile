@@ -36,7 +36,7 @@ ARG ros2_ver=humble
 ENV ROS_DISTRO=$ros2_ver
 
 #Indtall ROS2(Foxy etc..) and Install Tool for ROS2 and setup script の自動実行 and Install turtlesim and gazebo and Install ros2_example and turtulebot3_gazebo(waffle or burger)
-RUN apt install -y ros-$ROS_DISTRO-desktop-full ros-$ROS_DISTRO-turtlesim ros-$ROS_DISTRO-gazebo-ros-pkgs ros-$ROS_DISTRO-rqt-* ros-humble-joint-state-publisher \
+RUN apt install -y ros-$ROS_DISTRO-desktop-full ros-$ROS_DISTRO-turtlesim ros-$ROS_DISTRO-gazebo-ros-pkgs ros-$ROS_DISTRO-rqt-* ros-$ROS_DISTRO-joint-state-publisher ros-$ROS_DISTRO-tf* \
 	python3-rosdep python3-argcomplete python3-colcon-common-extensions && \
 	apt install -y python3-vcstool && \
 	echo "ros installed" && \
@@ -50,7 +50,7 @@ RUN apt install -y ros-$ROS_DISTRO-desktop-full ros-$ROS_DISTRO-turtlesim ros-$R
 	echo "export LIBGL_ALWAYS_SOFTWARE=1" >> ~/.bashrc && \
 	echo "export RMW_IMPLEMENTATION=rmw_fastrtps_cpp" >> ~/.bashrc && \
 	apt update && \
-    apt install -y bash-completion gnome-terminal xdotool dbus-x11 libcanberra-gtk* x11-xserver-utils bc gedit ufw && \
+    apt install -y bash-completion gnome-terminal xdotool dbus-x11 libcanberra-gtk* x11-xserver-utils bc gedit ufw zenity tree terminator && \
     source /etc/bash_completion && \
     apt clean && \
     rm -rf /var/lib/apt/lists/* && \

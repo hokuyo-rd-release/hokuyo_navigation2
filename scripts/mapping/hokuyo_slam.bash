@@ -149,8 +149,10 @@ fi
 
 if [ ${fix_rate1} -eq 1 ] ; then
   echo 'fix トピックの共分散のfix率が'${gnss_opt_arr}'%です。gnss_cov_threの値を大きくしてください。'
+  echo 'Fix率が低いため、Z軸拘束(擬似観測)を追加してSLAMを続行します。'
+fi
 
-elif [ ${fix_rate} -eq 1 ] ; then
+if [ ${fix_rate1} -eq 1 ] || [ ${fix_rate} -eq 1 ] ; then
   echo 'p2o 開始'
 
   sleep 1
@@ -162,6 +164,13 @@ elif [ ${fix_rate} -eq 1 ] ; then
   echo 'error status:' ${result}
 
   if [ ${result} -eq 0 ] ; then
+    # fix_rate1 (fix率 < 40%) の場合、Z軸拘束を追加
+    if [ ${fix_rate1} -eq 1 ]; then
+        echo 'Applying pseudo Z0 observations...'
+        mv data/$2/output.p2o data/$2/output_raw.p2o
+        bash -c "python3 src/add_pseudo_z0_obs.py data/$2/output_raw.p2o > data/$2/output.p2o"
+    fi
+
     echo 'run_p2o'
     bash -c "${HOKUYO_SLAM_BIN_DIR}/run_p2o data/$2/center_utm.txt data/$2/output.p2o"
     #bash -c "gnuplot atc_odom_gnss.plt"
