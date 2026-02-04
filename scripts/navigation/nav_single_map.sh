@@ -68,7 +68,6 @@ while true; do
 
     # ナビゲーションシステムを起動
     launch_navigation_system "${mapfile}" "${use_gnss_switch}"
-    sleep 5
 
     echo "ウェイポイント追従を開始します: ${wayfile}.json"
     cd "${HOKUYO_NAV2_PKG_PATH}/waypoints"

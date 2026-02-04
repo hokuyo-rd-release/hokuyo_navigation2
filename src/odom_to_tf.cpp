@@ -22,8 +22,8 @@ private:
 public:
     OdomToTf() : Node("odom_to_tf") {
         // Declare and get parameters
-        this->declare_parameter<std::string>("sub_topic_name", "odometry/switch_on_map");
-        this->declare_parameter<std::string>("pub_topic_name", "dummy");
+        this->declare_parameter<std::string>("sub_topic_name", "/rsf/rsf_odom_on_map");
+        this->declare_parameter<std::string>("pub_topic_name", "/dummy");
         this->declare_parameter<std::string>("frame_id", "map");
         this->declare_parameter<std::string>("child_frame_id", "base_link");
         this->declare_parameter<bool>("initial_tf_en", true);

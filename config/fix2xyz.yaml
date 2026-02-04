@@ -9,8 +9,8 @@ fix2xyz_out:
     pub_odom_topic0: "odometry/fix"
 
     # expo_fix_msgs::FixWithOrientation => nav_msgs::Odometry
-    sub_fix_topic1: "fix_with_orient/switch"
-    pub_odom_topic1: "odometry/switch_on_map"
+    sub_fix_topic1: "rsf/rsf_fix_with_orient"
+    pub_odom_topic1: "rsf/rsf_odom_on_map"
 
     # sensor_msgs::NavSatFix => geometry_msgs::PoseStamped
     sub_fix_topic2: "expo_waypoint"
