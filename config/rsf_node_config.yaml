@@ -12,6 +12,7 @@ hokuyo_rsf:
     gpzda_topic: "/zda"
     hokuyo_cloud2_topic: "/hokuyo3d/hokuyo_cloud2"
     imu_topic: "/hokuyo3d/imu"
+    lidar_rate_odom_topic: "/rsf/lio_lidar_rate_odom"
     imu_rate_odom_topic: "/rsf/lio_imu_rate_odom"
     nav_sat_fix_switch_topic: "/rsf/rsf_fix"
     utm_odom_topic: "/rsf/utm_coord_odom"
