@@ -60,18 +60,9 @@
 
   <!-- RSF_NODE -->
   <group if="$(var use_rsf)">
-    <group if="$(var use_gnss_switch)">
-      <node pkg="hokuyo_spel_master" exec="hokuyo_spel_ros_node" name="hokuyo_rsf" output="screen">
-        <param from="$(var rsf_param)"/>
-        <param name="broadcast_tf" value="false"/>
-      </node>
-    </group>
-    <group unless="$(var use_gnss_switch)">
-      <node pkg="hokuyo_spel_master" exec="hokuyo_spel_ros_node" name="hokuyo_rsf" output="screen">
-        <param from="$(var rsf_param)"/>
-        <param name="broadcast_tf" value="true"/>
-      </node>
-    </group>
+    <node pkg="hokuyo_spel_master" exec="hokuyo_spel_ros_node" name="hokuyo_rsf" output="screen">
+      <param from="$(var rsf_param)"/>
+    </node>
   </group>
   
   <group if="$(var use_navigation)">

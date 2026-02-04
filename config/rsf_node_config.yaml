@@ -27,13 +27,9 @@ hokuyo_rsf:
     ip_address_topic: "/rsf/ip_address"
 
     # TF
-    broadcast_tf: true
+    broadcast_tf: false
     odom_frame: "lio_odom"
-    lidr_frame: "base_link" # 注意：   map->hokuyo3dのTfはないのでlocalization中のmap座標では直接使えない. local_costmapなどで特に困る. 
-                           #          以前のようにbase_linkにしてしまうと、親フレームがlocalizationの2dのodomとlio_odomの２つできてしまいおかしくなる.
-                           #          ( おそらく以前まではその状態で無理やり動かしていたのだと思う。だから、ロボットの位置が遅れて反映されたりしていた )
-                           # 解決策①： yvtのトピックのframe_idを、tfとは独立して設定できるようにする→RSFノード懸念対策案５に反する      
-                           # 解決策②： 周辺技術側で、local_costmap用にframe_idだけ変えたトピックを複製する→重複      
+    lidr_frame: "yvt"
     imu_frame: "imu"
     gnss_frame: "rsf_gnss"
     utm_frame: "rsf_utm/utm"
