@@ -12,6 +12,12 @@
 #include <memory>
 #include <cmath>
 
+/*
+  (sub_topicのframe_idに関係なく) sub_topicの点群を
+  sub_odom_topic の position, orientation に基づいてodometry座標系に変換する.
+  出力するpoint_cloudのframe_id は sub_odom_topicのframe_idになる.
+*/
+
 class PointCloudTransform : public rclcpp::Node {
 public:
     PointCloudTransform() : Node("pointcloud_transform_for_loc"),
@@ -58,8 +64,6 @@ private:
     void pcd_sub_callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg) {
 
         sensor_msgs::msg::PointCloud2 sub_msg = *msg;
-        sub_msg.header.frame_id = orig_frame_;
-
         sensor_msgs::msg::PointCloud2 pub_msg;
 
         if(is_initialized_transform_){
@@ -79,7 +83,6 @@ private:
 
     // Parameters
     std::string sub_pcd_topic_, sub_odom_topic_, pub_pcd_topic_;
-    std::string orig_frame_, target_frame_;
 
     // ROS interfaces
     rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr pcd_sub_;

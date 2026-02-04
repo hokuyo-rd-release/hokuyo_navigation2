@@ -1,0 +1,39 @@
+hokuyo_rsf:
+  ros__parameters:
+    # IP address and port
+    spel_ip_address: "192.168.0.100"
+    spel_port: 10940
+
+    # Published topics
+    # 取り敢えず以前のトピック名に合わせている.より良いトピック名に変えたい.
+    nav_sat_fix_topic: "/fix"
+    gpgga_topic: "/gga"
+    gprmc_topic: "/rmc"
+    gpzda_topic: "/zda"
+    hokuyo_cloud2_topic: "/hokuyo3d/hokuyo_cloud2"
+    imu_topic: "/hokuyo3d/imu"
+    imu_rate_odom_topic: "/hokuyo_lio/imu_rate_odom"
+    nav_sat_fix_switch_topic: "/fix/switch"
+    utm_odom_topic: "/odometry/utm"
+    switch_odom_topic: "/odometry/switch"
+    switch_odom_state_topic: "/odometry/switch/state"
+    switch_odom_type_topic: "/odometry/switch/type"
+    switch_fix_state_topic: "/fix/switch/state"
+    switch_fix_type_topic: "/fix/switch/type"
+    diagnostics_topic: "/rsf/diagnostics"
+
+    # Subscribed topics
+    cmd_to_spel_topic: "/rsf/cmd_to_spel"
+    ip_address_topic: "/rsf/ip_address"
+
+    # TF
+    broadcast_tf: true
+    odom_frame: "lio_odom"
+    lidr_frame: "base_link" # 注意：   map->hokuyo3dのTfはないのでlocalization中のmap座標では直接使えない. local_costmapなどで特に困る. 
+                           #          以前のようにbase_linkにしてしまうと、親フレームがlocalizationの2dのodomとlio_odomの２つできてしまいおかしくなる.
+                           #          ( おそらく以前まではその状態で無理やり動かしていたのだと思う。だから、ロボットの位置が遅れて反映されたりしていた )
+                           # 解決策①： yvtのトピックのframe_idを、tfとは独立して設定できるようにする→RSFノード懸念対策案５に反する      
+                           # 解決策②： 周辺技術側で、local_costmap用にframe_idだけ変えたトピックを複製する→重複      
+    imu_frame: "imu"
+    gnss_frame: "rsf_gnss"
+    utm_frame: "rsf_utm/utm"

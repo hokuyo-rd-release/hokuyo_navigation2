@@ -145,7 +145,7 @@ echo "Recording for ${RECORD_DURATION} seconds..."
 echo "Output bag will be saved in: $rosbag_dir/$OUTPUT_BAG_NAME"
 
 cd "$rosbag_dir"
-ros2 bag record -o "$OUTPUT_BAG_NAME" $gnss_topic $pointcloud_topic $lio_topic /hokuyo3d/imu /hokuyo_lio/lidar_odom /tf /gga &
+ros2 bag record -o "$OUTPUT_BAG_NAME" $gnss_topic $pointcloud_topic $lio_topic /hokuyo3d/imu /hokuyo_lio/imu_rate_odom /tf /gga &
 pids+=($!)
 
 #------- ROSBAGの再生 -------

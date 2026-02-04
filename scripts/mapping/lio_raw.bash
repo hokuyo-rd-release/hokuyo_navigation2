@@ -32,7 +32,7 @@ cd "${HOKUYO_NAV2_PKG_PATH}"
 python3 src/pcd_tf_extractor.py \
     "rosbag/${inbagname}" \
     /hokuyo3d/hokuyo_cloud2 \
-    /hokuyo_lio/lidar_odom \
+    /hokuyo_lio/imu_rate_odom \
     dummy_pub_topic \
     base_link \
     lio_odom \
