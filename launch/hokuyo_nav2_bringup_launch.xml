@@ -73,7 +73,7 @@
           <param name="fix_topic" value="fix/switch" />
           <param name="fix_with_orient_topic" value="/fix_with_orient/switch" />
         </node>
-        <node pkg="hokuyo_navigation2" exec="odom_frame_changer" name="switch_odom_tf"/>
+        <node pkg="hokuyo_navigation2" exec="odom_to_tf" name="rsf_odom_tf"/>
         <include file="$(find-pkg-share lio_nav2_bringup)/launch/navigation_launch.py">
           <arg name="map" value="$(var map_dir)/$(var map_file).yaml"/>
           <arg name="cmd_vel_topic" value="wizurg/cmd_vel"/>
