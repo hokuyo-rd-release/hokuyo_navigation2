@@ -28,7 +28,7 @@ public:
     this->declare_parameter("sub_gnss_topic", "fix");
     this->declare_parameter("pub_gnss_text", "gnss_fix_text");
     this->declare_parameter("pub_gnss_data", "gnss_fix_float");
-    this->declare_parameter("sub_odometry_topic", "/odometry/switch/type");
+    this->declare_parameter("sub_odometry_topic", "/rsf/rsf_odom_type");
     this->declare_parameter("pub_odometry_text_topic", "odometry_type_text");
     this->declare_parameter("sub_lidar_odom_topic", "/hokuyo_lio/lidar_odom"); 
     this->declare_parameter("pub_lidar_odom_rate_text", "lidar_odom_rate_text");

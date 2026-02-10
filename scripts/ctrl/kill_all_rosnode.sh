@@ -10,6 +10,8 @@ while true; do
         echo "Closing rosbag terminal!"
         pkill -f bag
         sleep 1s
+        echo "Closing rsf process!"
+        pkill -2 -f "hokuyo_rsf"
         echo "Closing launch terminal!"
         pkill -f bringup
         sleep 1s

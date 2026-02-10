@@ -35,17 +35,22 @@
       "type": "inspector",
       "id": "inspector_autoID_6",
       "container_id": "icon_container"
+    },
+    {
+      "type": "rosbag",
+      "id": "rosbag_autoID_7",
+      "container_id": "icon_container"
     }
   ],
   "view": {
     "center": {
-      "x": -2.33647455178269,
-      "y": -4.404509626582704
+      "x": 16.91003430294488,
+      "y": -9.05425878515682
     },
-    "scale": 24.050854904548025
+    "scale": 3.7664929045407813
   },
   "settings_default": {
-    "fixed_frame": "rsf_gnss",
+    "fixed_frame": "base_link",
     "background_color": "#273444"
   },
   "tf_default": {
@@ -72,7 +77,9 @@
       "/rsf_gnss": true,
       "rsf": true,
       "rsf_gnss": false,
-      "hokuyo_lio": true
+      "hokuyo_lio": true,
+      "odom": true,
+      "lio": true
     }
   },
   "grid_default": {
@@ -83,16 +90,16 @@
     "autoscale": "Coarse",
     "subdivisions": 2
   },
-  "uid": 7,
+  "uid": 8,
   "satelite_autoID_1": {
-    "topic": "/fix/switch",
+    "topic": "/rsf/rsf_fix",
     "server_url": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
     "opacity": "0.7",
     "smoothing": true,
     "ignore_rotation": false
   },
   "odom_autoID_2": {
-    "topic": "/hokuyo_lio/lidar_rate_odom (Odometry)",
+    "topic": "rsf (Frame)",
     "history": "2",
     "color": "#00eeff",
     "throttle": "500",
@@ -100,8 +107,8 @@
     "draw_path": false
   },
   "odom_autoID_3": {
-    "topic": "/odometry/switch (Odometry)",
-    "history": "2",
+    "topic": "rsf (Frame)",
+    "history": "2000",
     "color": "#ffae00",
     "throttle": "500",
     "draw_arrows": true,
@@ -110,5 +117,17 @@
   "inspector_autoID_6": {
     "topic": "/fix/switch/type",
     "throttle": "500"
+  },
+  "rosbag_autoID_7": {
+    "path": "~/colcon_ws/src/hokuyo_navigation2/hokuyo_navigation2/rosbag/rsf_test",
+    "topic_list": [
+      "/fix",
+      "/gga",
+      "/hokuyo_lio/imu_rate_odom",
+      "/hokuyo3d/hokuyo_cloud2",
+      "/hokuyo3d/imu",
+      "/rsf/lio_imu_rate_odom",
+      "/rsf/lio_lidar_rate_odom"
+    ]
   }
 }

@@ -1,0 +1,35 @@
+hokuyo_rsf:
+  ros__parameters:
+    # IP address and port
+    spel_ip_address: "192.168.0.100"
+    spel_port: 10940
+
+    # Published topics
+    nav_sat_fix_topic: "/fix"
+    gpgga_topic: "/gga"
+    gprmc_topic: "/rmc"
+    gpzda_topic: "/zda"
+    hokuyo_cloud2_topic: "/hokuyo3d/hokuyo_cloud2"
+    imu_topic: "/hokuyo3d/imu"
+    lidar_rate_odom_topic: "/rsf/lio_lidar_rate_odom"
+    imu_rate_odom_topic: "/rsf/lio_imu_rate_odom"
+    nav_sat_fix_switch_topic: "/rsf/rsf_fix"
+    utm_odom_topic: "/rsf/utm_coord_odom"
+    switch_odom_topic: "/rsf/rsf_odom"
+    switch_odom_state_topic: "/rsf/rsf_odom_state"
+    switch_odom_type_topic: "/rsf/rsf_odom_type"
+    switch_fix_state_topic: "/rsf/rsf_fix_state"
+    switch_fix_type_topic: "/rsf/rsf_fix_type"
+    diagnostics_topic: "/rsf/diagnostics"
+
+    # Subscribed topics
+    cmd_to_spel_topic: "/rsf/cmd_to_spel"
+    ip_address_topic: "/rsf/ip_address"
+
+    # TF
+    broadcast_tf: false
+    odom_frame: "lio_odom"
+    lidr_frame: "yvt"
+    imu_frame: "imu"
+    gnss_frame: "rsf_gnss"
+    utm_frame: "rsf_utm/utm"

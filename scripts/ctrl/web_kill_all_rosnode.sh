@@ -17,6 +17,9 @@ echo "Stopping rosbag play or record..."
 pkill -f "bag"
 sleep 1s
 
+echo "Closing rsf process!"
+pkill -2 -f "hokuyo_rsf"
+
 echo "Closing bringup launch process!"
 pkill -f "hokuyo_nav2_bringup_launch.xml"
 sleep 1s
