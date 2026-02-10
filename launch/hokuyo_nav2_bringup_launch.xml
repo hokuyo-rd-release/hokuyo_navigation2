@@ -40,6 +40,8 @@
   <arg name="initial_pose" default="0.0 0.0 0.0 0.0 0.0 0.0 0.0"/>
   <arg name="latlon_pose" default="35.0 135.0 40.0"/>
 
+  <arg name="launch_for_demo" default="true" />
+
   <!-- 関連ソフト緯度経度 <-> 平面直角座標-->
   <node pkg="fix2xyz" exec="fix2xyz_node" name="fix2xyz_out" output="log">
     <param from="$(var fix2xyz_params_)" />
@@ -57,6 +59,42 @@
   <!-- 関連ソフト waypoint_controller -->
   <node name="waypoint_controller" pkg="hokuyo_navigation2" exec="cmdvel_stopper" output="log"/>
   <node name="gnss_lio_debug" pkg="hokuyo_navigation2" exec="gnss_lio_debug" output="log"/>
+
+  <!-- 関連ソフト デモ用のtf作成と点群座標変換 -->
+  <group if="$(var launch_for_demo)">
+    <node pkg="hokuyo_navigation2" exec="odom_to_tf" name="rsf_tf">
+      <param name="sub_topic_name" value="/rsf/rsf_odom"/>
+      <param name="frame_id" value="lio_odom"/>
+      <param name="child_frame_id" value="rsf"/>
+    </node>
+    <node pkg="hokuyo_navigation2" exec="odom_to_tf" name="lio_tf">
+      <param name="sub_topic_name" value="/rsf/lio_imu_rate_odom"/>
+      <param name="frame_id" value="lio_odom"/>
+      <param name="child_frame_id" value="lio"/>
+    </node>
+    <!-- vizantiでの地図表示のため、方位に合わせたtfを作る. -->
+    <node pkg="hokuyo_navigation2" exec="odom_to_tf" name="rsf_gnss_tf">
+      <param name="sub_topic_name" value="/rsf/utm_coord_odom"/>
+      <param name="mode_zero_position" value="true"/>
+      <param name="mode_inverse_orientation" value="true"/>
+      <param name="frame_id" value="rsf"/>
+      <param name="child_frame_id" value="rsf_gnss"/>
+    </node>
+
+    <node pkg="hokuyo_navigation2" exec="pointcloud_transform_for_loc" name="rsf_cloud" output="log">
+      <param name="sub_topic" value="/hokuyo3d/hokuyo_cloud2"/>
+      <param name="sub_odom_topic" value="/rsf/rsf_odom"/>
+      <param name="pub_topic" value="gnss_lio_switch/hokuyo_cloud2"/>
+    </node>
+    <node pkg="hokuyo_navigation2" exec="pointcloud_transform_for_loc" name="lio_cloud" output="log">
+      <param name="sub_topic" value="/hokuyo3d/hokuyo_cloud2"/>
+      <param name="sub_odom_topic" value="/rsf/lio_imu_rate_odom"/>
+      <param name="pub_topic" value="hokuyo_lio/hokuyo_cloud2"/>
+    </node>
+
+  </group>
+
+
 
   <!-- RSF_NODE -->
   <group if="$(var use_rsf)">
@@ -118,5 +156,7 @@
       </group>
     </group>
   </group>
+
+  <node pkg="rviz2" exec="rviz2" name="demo_rviz" output="log" args="-d $(find-pkg-share hokuyo_navigation2)/rviz/demo.rviz" if="$(var launch_for_demo)" />
 
 </launch>

@@ -5,7 +5,6 @@ hokuyo_rsf:
     spel_port: 10940
 
     # Published topics
-    # 取り敢えず以前のトピック名に合わせている.より良いトピック名に変えたい.
     nav_sat_fix_topic: "/fix"
     gpgga_topic: "/gga"
     gprmc_topic: "/rmc"

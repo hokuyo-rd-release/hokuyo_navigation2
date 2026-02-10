@@ -1,0 +1,133 @@
+{
+  "navbar": [
+    {
+      "type": "settings",
+      "id": "settings_default"
+    },
+    {
+      "type": "rosbridge",
+      "id": "rosbridge_default"
+    },
+    {
+      "type": "grid",
+      "id": "grid_default"
+    },
+    {
+      "type": "tf",
+      "id": "tf_default"
+    },
+    {
+      "type": "satelite",
+      "id": "satelite_autoID_1",
+      "container_id": "icon_container"
+    },
+    {
+      "type": "odom",
+      "id": "odom_autoID_2",
+      "container_id": "icon_container"
+    },
+    {
+      "type": "odom",
+      "id": "odom_autoID_3",
+      "container_id": "icon_container"
+    },
+    {
+      "type": "inspector",
+      "id": "inspector_autoID_6",
+      "container_id": "icon_container"
+    },
+    {
+      "type": "rosbag",
+      "id": "rosbag_autoID_7",
+      "container_id": "icon_container"
+    }
+  ],
+  "view": {
+    "center": {
+      "x": 16.91003430294488,
+      "y": -9.05425878515682
+    },
+    "scale": 3.7664929045407813
+  },
+  "settings_default": {
+    "fixed_frame": "base_link",
+    "background_color": "#273444"
+  },
+  "tf_default": {
+    "show_names": true,
+    "show_axes": true,
+    "show_lines": true,
+    "scale": 1,
+    "frame_visibility": {
+      "base_scan": false,
+      "base_link": false,
+      "camera": false,
+      "gnss": false,
+      "ust": false,
+      "ust2": false,
+      "ylm": false,
+      "yvt": false,
+      "/switch": true,
+      "/lio_odom": true,
+      "hokuyo3d": false,
+      "lio_odom": true,
+      "left_wheel": false,
+      "right_wheel": false,
+      "/rsf": true,
+      "/rsf_gnss": true,
+      "rsf": true,
+      "rsf_gnss": false,
+      "hokuyo_lio": true,
+      "odom": true,
+      "lio": true
+    }
+  },
+  "grid_default": {
+    "size": 1,
+    "thickness": 1,
+    "colour": "#3e556a",
+    "colour_sub": "#294056",
+    "autoscale": "Coarse",
+    "subdivisions": 2
+  },
+  "uid": 8,
+  "satelite_autoID_1": {
+    "topic": "/rsf/rsf_fix",
+    "server_url": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+    "opacity": "0.7",
+    "smoothing": true,
+    "ignore_rotation": false
+  },
+  "odom_autoID_2": {
+    "topic": "rsf (Frame)",
+    "history": "2",
+    "color": "#00eeff",
+    "throttle": "500",
+    "draw_arrows": true,
+    "draw_path": false
+  },
+  "odom_autoID_3": {
+    "topic": "rsf (Frame)",
+    "history": "2000",
+    "color": "#ffae00",
+    "throttle": "500",
+    "draw_arrows": true,
+    "draw_path": false
+  },
+  "inspector_autoID_6": {
+    "topic": "/fix/switch/type",
+    "throttle": "500"
+  },
+  "rosbag_autoID_7": {
+    "path": "~/colcon_ws/src/hokuyo_navigation2/hokuyo_navigation2/rosbag/rsf_test",
+    "topic_list": [
+      "/fix",
+      "/gga",
+      "/hokuyo_lio/imu_rate_odom",
+      "/hokuyo3d/hokuyo_cloud2",
+      "/hokuyo3d/imu",
+      "/rsf/lio_imu_rate_odom",
+      "/rsf/lio_lidar_rate_odom"
+    ]
+  }
+}

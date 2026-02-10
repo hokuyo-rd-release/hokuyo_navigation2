@@ -16,6 +16,9 @@ private:
     std::string pub_topic_name_;
     std::string frame_id_;
     std::string child_frame_id_;
+    bool mode_zero_position_;
+    bool mode_zero_orientation_;
+    bool mode_inverse_orientation_;
 
     bool initial_tf_en_;
 
@@ -26,14 +29,19 @@ public:
         this->declare_parameter<std::string>("pub_topic_name", "/dummy");
         this->declare_parameter<std::string>("frame_id", "map");
         this->declare_parameter<std::string>("child_frame_id", "base_link");
+        this->declare_parameter<bool>("mode_zero_position", false);
+        this->declare_parameter<bool>("mode_zero_orientation", false);
+        this->declare_parameter<bool>("mode_inverse_orientation", false);
         this->declare_parameter<bool>("initial_tf_en", true);
 
         this->get_parameter("sub_topic_name", sub_topic_name_);
         this->get_parameter("pub_topic_name", pub_topic_name_);
         this->get_parameter("frame_id", frame_id_);
         this->get_parameter("child_frame_id", child_frame_id_);
+        this->get_parameter("mode_zero_position", mode_zero_position_);
+        this->get_parameter("mode_zero_orientation", mode_zero_orientation_);
+        this->get_parameter("mode_inverse_orientation", mode_inverse_orientation_);
         this->get_parameter("initial_tf_en", initial_tf_en_);
-
 
         publisher_ = create_publisher<nav_msgs::msg::Odometry>(pub_topic_name_, 10);
         subscriber_ = create_subscription<nav_msgs::msg::Odometry>(
@@ -73,6 +81,20 @@ public:
         transform_stamped.transform.translation.y = pub_msg.pose.pose.position.y;
         transform_stamped.transform.translation.z = pub_msg.pose.pose.position.z;
         transform_stamped.transform.rotation = pub_msg.pose.pose.orientation;
+        if(mode_inverse_orientation_){
+            transform_stamped.transform.rotation.w = -pub_msg.pose.pose.orientation.w;
+        }
+        if(mode_zero_position_){
+            transform_stamped.transform.translation.x = 0.0;
+            transform_stamped.transform.translation.y = 0.0;
+            transform_stamped.transform.translation.z = 0.0;
+        }
+        if(mode_zero_orientation_){
+            transform_stamped.transform.rotation.x = 0.0;
+            transform_stamped.transform.rotation.y = 0.0;
+            transform_stamped.transform.rotation.z = 0.0;
+            transform_stamped.transform.rotation.w = 1.0;
+        }
         tf_broadcaster_->sendTransform(transform_stamped);
     }
 };
