@@ -5,7 +5,7 @@
   <arg name="urdf_path" default="$(var hokuyo_navigation_pkg_path)/urdf/arno.xacro"/>
   <arg name="robot_description" default="$(command 'xacro $(var urdf_path)')"/>
 
-  <arg name="use_sim_time" default="false"/>
+  <arg name="use_sim_time" default="true"/>
   <!-- <arg name="use_joy" default="false"/> -->
   <!-- <arg name="use_mapping" default="false"/> -->
   <arg name="use_navigation" default="false"/>
@@ -46,10 +46,12 @@
   <node pkg="fix2xyz" exec="fix2xyz_node" name="fix2xyz_out" output="log">
     <param from="$(var fix2xyz_params_)" />
     <param name="origin_pose" value="$(var latlon_pose)" />
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
   </node>
   <node pkg="fix2xyz" exec="xyz2fix_node" name="xyz2fix_out" output="log">
     <param from="$(var xyz2fix_params_)" />
     <param name="origin_pose" value="$(var latlon_pose)" />
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
   </node>
 
   <!-- 関連ソフト UAM_controller -->
@@ -57,8 +59,12 @@
     <param name="enable_manage" value="$(var enable_uam)" />
   </node> -->
   <!-- 関連ソフト waypoint_controller -->
-  <node name="waypoint_controller" pkg="hokuyo_navigation2" exec="cmdvel_stopper" output="log"/>
-  <node name="gnss_lio_debug" pkg="hokuyo_navigation2" exec="gnss_lio_debug" output="log"/>
+  <node name="waypoint_controller" pkg="hokuyo_navigation2" exec="cmdvel_stopper" output="log">
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
+  </node>
+  <node name="gnss_lio_debug" pkg="hokuyo_navigation2" exec="gnss_lio_debug" output="log">
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
+  </node>
 
   <!-- 以下 RSF_NODE に置き換え -->
   <!-- コア技術 hokuyo_lio -->
@@ -67,6 +73,7 @@
       <include file="$(var hokuyo_navigation_pkg_path)/launch/hokuyo_lio_node_with_yaml_ros2.xml">
         <arg name="sync_enable" value="false"/>
         <arg name="lio_frame" value="lio_base_link"/>
+        <arg name="launch_rviz" value="true"/>
       </include>
       <!-- <node pkg="hokuyo_rsf" exec="hokuyo_rsf" name="hokuyo_rsf" output="screen"
               <param name="lio_frame" value="lio_base_link"/>
@@ -79,6 +86,7 @@
           <include file="$(var hokuyo_navigation_pkg_path)/launch/hokuyo_lio_node_with_yaml_ros2.xml">
             <arg name="sync_enable" value="false"/>
             <arg name="lio_frame" value="base_link"/>
+            <arg name="launch_rviz" value="true"/>
           </include>
       <!-- <node pkg="hokuyo_rsf" exec="hokuyo_rsf" name="hokuyo_rsf" output="screen"
               <param name="lio_frame" value="base_link"/>
@@ -89,6 +97,7 @@
           <include file="$(var hokuyo_navigation_pkg_path)/launch/hokuyo_lio_node_with_yaml_ros2.xml">
             <arg name="sync_enable" value="true"/>
             <arg name="lio_frame" value="base_link"/>
+            <arg name="launch_rviz" value="true"/>
           </include>
       <!-- <node pkg="hokuyo_rsf" exec="hokuyo_rsf" name="hokuyo_rsf" output="screen"
             <param name="lio_frame" value="base_link"/>
@@ -102,12 +111,6 @@
     <group if="$(var use_lio)">
       <group if="$(var use_gnss_switch)">
 
-        <!-- コア技術 RSFノードに置き換わるのでいらなくなる-->
-        <node pkg="test_tools" exec="imu_coordinate_changer" name="imu_coordinate_changer">
-          <param name="sub_topic_name" value="hokuyo3d/imu" />
-          <param name="pub_topic_name" value="hokuyo3d/imu_transed" />
-          <param name="averaging_num" value="7" />
-        </node>
         <!-- コア技術 RSFノードに置き換わるのでいらなくなる -->
         <include file="$(var coordinate_transform_pkg_path)/launch/gnss_lio_switch_launch.xml">
           <arg name="param_file" value="$(var gnss_lio_switch_only_param)" />
@@ -118,8 +121,12 @@
           <param name="utm_odom_topic" value="odometry/utm" />
           <param name="fix_topic" value="fix/switch" />
           <param name="fix_with_orient_topic" value="/fix_with_orient/switch" />
+          <param name="use_sim_time" value="$(var use_sim_time)"/>
         </node>
-        <node pkg="hokuyo_navigation2" exec="odom_frame_changer" name="switch_odom_tf"/>
+        <node pkg="hokuyo_navigation2" exec="odom_frame_changer" name="switch_odom_tf">
+          <param name="use_sim_time" value="$(var use_sim_time)"/>
+        </node>
+
         <include file="$(find-pkg-share lio_nav2_bringup)/launch/navigation_launch.py">
           <arg name="map" value="$(var map_dir)/$(var map_file).yaml"/>
           <arg name="cmd_vel_topic" value="wizurg/cmd_vel"/>
@@ -144,12 +151,14 @@
             <remap from="/cloud_registered" to="$(var sub_cloud_name)"/>
             <remap from="/estimated_pose" to="/estimated_pose"/>
             <remap from="/map_cloud" to="/map_cloud"/>
+            <param name="use_sim_time" value="$(var use_sim_time)"/>
           </node>
             <node pkg="hokuyo_navigation2" exec="pointcloud_transform_for_loc" output="log">
               <!-- パラメータの設定 -->
               <param name="sub_topic" value="/hokuyo3d/hokuyo_cloud2"/>
               <param name="sub_odom_topic" value="/hokuyo_lio/lidar_odom"/>
               <param name="pub_topic" value="/hokuyo_lio/aligned"/>
+              <param name="use_sim_time" value="$(var use_sim_time)"/>
             </node>
           </group>
           <include file="$(find-pkg-share lio_nav2_bringup)/launch/navigation_launch.py">

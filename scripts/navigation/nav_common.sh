@@ -128,15 +128,15 @@ launch_navigation_system() {
         use_gnss_switch:=${current_use_gnss_switch} \
         map_file:=${map_name} \
         initial_pose:=\"${pose1},${pose2},${pose3},${pose4},${pose5},${pose6},${pose7}\" \
-        latlon_pose:=\"${latlon1},${latlon2},${latlon3}\"; \
-        bash"
+        latlon_pose:=\"${latlon1},${latlon2},${latlon3}\"; bash"
 }
 
 # モータドライバを起動する関数
 launch_motor_driver() {
     if [ "${use_motor_driver}" = "true" ]; then
         echo "モータドライバを起動します..."
-        gnome-terminal -- bash -c "ros2 launch hokuyo_navigation2 icart_mini_drive_launch.xml; bash"
+        gnome-terminal -- bash -c "ros2 launch hokuyo_navigation2 icart_mini_drive_launch.xml \
+            use_sim_time:=true; bash"
 
         echo "モータドライバ関連ノードの起動を待っています..."
         # local timeout=25

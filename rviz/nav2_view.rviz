@@ -10,6 +10,8 @@ Panels:
         - /LaserScan1
         - /Map1/Topic1
         - /Global Planner1/Path1
+        - /Odometry1
+        - /Odometry1/Shape1
       Splitter Ratio: 0.5833333134651184
     Tree Height: 546
   - Class: rviz_common/Selection
@@ -135,19 +137,15 @@ Visualization Manager:
           Value: true
         dummy_base_link:
           Value: true
-        gnss:
+        dummy_odom:
           Value: true
-        left_wheel:
+        gnss:
           Value: true
         lio_base_link:
           Value: true
         lio_odom:
           Value: true
         map:
-          Value: true
-        odom:
-          Value: true
-        right_wheel:
           Value: true
         ust:
           Value: true
@@ -568,6 +566,45 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /current_goal_marker
       Value: true
+    - Angle Tolerance: 0.10000000149011612
+      Class: rviz_default_plugins/Odometry
+      Covariance:
+        Orientation:
+          Alpha: 0.5
+          Color: 255; 255; 127
+          Color Style: Unique
+          Frame: Local
+          Offset: 1
+          Scale: 1
+          Value: true
+        Position:
+          Alpha: 0.30000001192092896
+          Color: 204; 51; 204
+          Scale: 1
+          Value: true
+        Value: false
+      Enabled: true
+      Keep: 100
+      Name: Odometry
+      Position Tolerance: 0.10000000149011612
+      Shape:
+        Alpha: 1
+        Axes Length: 1
+        Axes Radius: 0.10000000149011612
+        Color: 255; 25; 0
+        Head Length: 0.30000001192092896
+        Head Radius: 0.10000000149011612
+        Shaft Length: 1
+        Shaft Radius: 0.05000000074505806
+        Value: Axes
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /odometry/switch_on_map
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -606,7 +643,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 40.391361236572266
+      Distance: 38.52423858642578
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
