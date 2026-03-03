@@ -3,6 +3,13 @@ hokuyo_lio_node:
     #==========name=========
     imu_name: "/hokuyo3d/imu"
     point_cloud_name: "/hokuyo3d/hokuyo_cloud2"
+    refresh_topic_name: "/hokuyo_lio/refresh"
+    reset_topic_name: "/rsf_reset"
+    stop_topic_name: "/rsf_stop"
+    start_topic_name: "/rsf_start"
+    gnss_lio_switch_reset_topic_name: "/gnss_lio_switch_reset"
+    gnss_lio_switch_stop_topic_name: "/gnss_lio_switch_stop"
+    gnss_lio_switch_start_topic_name: "/gnss_lio_switch_start"
 
     imu_pose_name: "/hokuyo_lio/imu_pose"
     lidar_pose_name: "/hokuyo_lio/lidar_pose"
@@ -69,7 +76,7 @@ hokuyo_lio_node:
     verbose: false
     use_robust_kernel: true
     use_voxel_map: false
-    output_at_imu_rate: true
+    start_with_active: true
       
     #==========pose=========
     initial_lidar_translation: "[ 0.0, 0.0, 0.0]"
