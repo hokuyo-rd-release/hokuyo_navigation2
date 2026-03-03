@@ -24,20 +24,21 @@ gnss_lio_switch:
         threshold_mag: 6.0
 
     UtmOdomSwitch:
+        supplement_gnss_with_imu_ekf: false
         supplement_gnss_with_lio: true
         supplement_gnss_with_velocity: false
         use_covariance: true
         use_pseudo_odometry_system: true
 
-        average_time_auto: false #7/15 false
+        average_time_auto: true #7/15 false
         SD_odom2utm_auto: false #7/15 false
         SD_thre_width_auto: true #7/15 true
-        reset_diatance_auto: false #7/15 false
-        reset_time_auto: false #7/15 false
-        SD_thre_auto:  false #7/15 false
-        lio_average_time: 1.0
+        reset_diatance_auto: true #7/15 false
+        reset_time_auto: true #7/15 false
+        SD_thre_auto:  true #7/15 false
+        lio_average_time: 5.0
         gnss_average_time: 30.5
-        SD_odom2utm_ratio: 20.0
+        SD_odom2utm_ratio: 20000000000000.0
         #SD_thre_width: 30 # [%]
         lio_SD_thre: 1.0
         gnss_SD_thre: 1.0
