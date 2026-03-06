@@ -33,7 +33,6 @@
   <arg name="gnss_tf_param" default="$(var hokuyo_navigation_pkg_path)/config/gnss_tf.yaml"/>
   <arg name="switch_tf_param" default="$(var hokuyo_navigation_pkg_path)/config/switch_tf.yaml"/>
   <arg name="switch_only_tf_param" default="$(var hokuyo_navigation_pkg_path)/config/switch_only_tf.yaml"/>
-  <arg name="gnss_lio_switch_param" default="$(var hokuyo_navigation_pkg_path)/config/gnss_lio_switch.yaml" />
   <arg name="gnss_lio_switch_only_param" default="$(var hokuyo_navigation_pkg_path)/config/gnss_lio_switch_only.yaml" />
   <arg name="initial_pose" default="0.0 0.0 0.0 0.0 0.0 0.0 0.0"/>
   <arg name="latlon_pose" default="35.0 135.0 40.0"/>
@@ -112,7 +111,7 @@
       <group if="$(var use_gnss_switch)">
 
         <!-- コア技術 RSFノードに置き換わるのでいらなくなる -->
-        <include file="$(var coordinate_transform_pkg_path)/launch/gnss_lio_switch_launch.xml">
+        <include file="$(var hokuyo_navigation_pkg_path)/launch/gnss_lio_switch_launch.xml">
           <arg name="param_file" value="$(var gnss_lio_switch_only_param)" />
         </include>
         <!-- コア技術 -->

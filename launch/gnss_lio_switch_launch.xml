@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+
+<launch>
+    <arg name="use_sim_time_" default="false"/>
+    
+    <!-- パラメーターファイル -->
+    <arg name="param_file" default="$(find-pkg-share hokuyo_navigation2)/config/gnss_lio_switch_only.yaml" />
+
+    <!-- ノード名 -->
+    <arg name="name" default="gnss_lio_switch"/>
+    <node name="gnss_lio_switch" pkg="coordinate_transform" exec="gnss_lio_switch" output="screen">
+        <param from="$(var param_file)"/>
+        <param name="use_sim_time" value="$(var use_sim_time_)"/>
+    </node>
+</launch>
