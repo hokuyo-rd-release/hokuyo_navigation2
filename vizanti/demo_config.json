@@ -37,17 +37,22 @@
       "container_id": "icon_container"
     },
     {
+      "type": "robotmodel",
+      "id": "robotmodel_autoID_8",
+      "container_id": "icon_container"
+    },
+    {
       "type": "rosbag",
-      "id": "rosbag_autoID_7",
+      "id": "rosbag_autoID_13",
       "container_id": "icon_container"
     }
   ],
   "view": {
     "center": {
-      "x": 16.91003430294488,
-      "y": -9.05425878515682
+      "x": -1.4403369320647752,
+      "y": -2.375785913655416
     },
-    "scale": 3.7664929045407813
+    "scale": 53.50140545046486
   },
   "settings_default": {
     "fixed_frame": "base_link",
@@ -79,7 +84,8 @@
       "rsf_gnss": false,
       "hokuyo_lio": true,
       "odom": true,
-      "lio": true
+      "lio": true,
+      "dummy_base_link": true
     }
   },
   "grid_default": {
@@ -90,7 +96,7 @@
     "autoscale": "Coarse",
     "subdivisions": 2
   },
-  "uid": 8,
+  "uid": 14,
   "satelite_autoID_1": {
     "topic": "/rsf/rsf_fix",
     "server_url": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
@@ -115,19 +121,32 @@
     "draw_path": false
   },
   "inspector_autoID_6": {
-    "topic": "/fix/switch/type",
+    "topic": "/gga",
     "throttle": "500"
   },
-  "rosbag_autoID_7": {
-    "path": "~/colcon_ws/src/hokuyo_navigation2/hokuyo_navigation2/rosbag/rsf_test",
+  "robotmodel_autoID_8": {
+    "frame": "rsf",
+    "sprite": "arrow",
+    "opacity": "1",
+    "length": "10",
+    "offset_x": "0.0",
+    "offset_y": "0.0",
+    "offset_yaw": "0.0"
+  },
+  "rosbag_autoID_13": {
+    "path": "/home/hokuyo/colcon_ws/src/hokuyo_navigation2/hokuyo_navigation2/rosbag/tokyo",
     "topic_list": [
+      "/rsf/lio_imu_rate_odom",
+      "/rsf/lio_lidar_rate_odom",
+      "/rsf/rsf_odom",
+      "/rsf/utm_coord_odom",
       "/fix",
+      "/rsf/rsf_fix",
       "/gga",
-      "/hokuyo_lio/imu_rate_odom",
       "/hokuyo3d/hokuyo_cloud2",
       "/hokuyo3d/imu",
-      "/rsf/lio_imu_rate_odom",
-      "/rsf/lio_lidar_rate_odom"
+      "/rsf/rsf_odom_state",
+      "/rsf/rsf_odom_type"
     ]
   }
 }
