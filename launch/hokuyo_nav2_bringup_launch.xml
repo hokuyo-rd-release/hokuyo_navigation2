@@ -60,7 +60,7 @@
 
   <!-- RSF_NODE -->
   <group if="$(var use_rsf)">
-    <node pkg="hokuyo_spel_master" exec="hokuyo_spel_ros_node" name="hokuyo_rsf" output="screen">
+    <node pkg="hokuyo_rsf" exec="hokuyo_rsf" name="hokuyo_rsf" output="screen">
       <param from="$(var rsf_param)"/>
     </node>
   </group>
