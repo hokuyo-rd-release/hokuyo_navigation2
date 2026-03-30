@@ -165,6 +165,8 @@ sudo ufw allow 5001 # vizanti
 sudo ufw allow 5001/tcp
 sudo ufw allow 9090 # vizanti
 sudo ufw allow 9090/tcp
+sudo ufw allow 10940 # hokuyo_rsf
+sudo ufw allow 10940/tcp
 sudo ufw enable 
 ```
 

@@ -83,6 +83,7 @@ docker run -it  $CONTAINER_NAME_CMD \
             -p 9000:9000 \
             -p 8080:8080 \
             -p 8000:8000 \
+            -p 10940:10940 \
             -p 7400-7800:7400-7800/udp \
             $GPU_CMD \
             $REMOVE_CMD \
