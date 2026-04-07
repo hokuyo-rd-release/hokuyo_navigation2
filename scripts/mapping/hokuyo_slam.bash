@@ -113,11 +113,15 @@ gnss_topic="${option_arr[0]}";
 pointcloud_topic="${option_arr[1]}";
 lio_topic="${option_arr[2]}";
 gnss_cov_thre="${option_arr[4]}";
+imu_topic="${option_arr[5]}";
+slam_mode="${option_arr[6]}";
 
 echo 'gnss_topic: '${gnss_topic}
 echo 'pointcloud_topic: '${pointcloud_topic}
 echo 'lio_topic: '${lio_topic}
 echo 'gnss_cov_thre: '${gnss_cov_thre}
+echo 'imu_topic: '${imu_topic}
+echo 'slam_mode: '${slam_mode}
 sleep 1
 
 cd $HOKUYO_NAV2_PKG_PATH
@@ -127,6 +131,60 @@ rm -rf data/$2
 mkdir -p data/$2
 mkdir -p data/$2/PCDs
 sleep 1
+
+# ------- Gravity SLAM Mode (IMU Gravity を使用した推定) -------
+if [ "$slam_mode" = "gravity" ]; then
+    echo "--> IMU Gravity ベースの SLAM モードを開始します。"
+    
+    # 1. 点群データの出力 (dump_lidar_pointcloud.py)
+    echo "Extracting PCD files from bag..."
+    python3 src/dump_lidar_pointcloud.py \
+        --bag "rosbag/$1" \
+        --topic "$pointcloud_topic" \
+        --outdir "data/$2/PCDs/"
+    
+    # 2. ダミーの原点ファイル作成 (run_p2o の実行に必要)
+    echo "0.0 0.0 0.0" > "data/$2/center_utm.txt"
+    echo "0.0 0.0 0.0" > "data/$2/center_lat_lon_alt.txt"
+    
+    # 3. IMU重力情報を利用した p2o グラフの生成
+    echo "Generating p2o graph with gravity edges..."
+    python3 src/dump_p2o_with_imufilter_hokuyo_lio.py \
+        "rosbag/$1" \
+        --odom-topic "$lio_topic" \
+        --imu-topic "$imu_topic" \
+        --pcd-dir "data/$2/PCDs" \
+        --stride 10 \
+        --out "data/$2/output.p2o"
+
+    # 4. グラフ最適化の実行
+    echo "Optimizing pose graph (run_p2o)..."
+    "${HOKUYO_SLAM_BIN_DIR}/run_p2o" "data/$2/center_utm.txt" "data/$2/output.p2o"
+    
+    # 5. 最適化結果から点群結合用のリスト (concat.txt) を作成
+    # 形式: [pcd_path] [id] [x] [y] [z] [qx] [qy] [qz] [qw]
+    # dump_p2o スクリプトが VERTEX 行の末尾に PCD パスを付与していることを利用します。
+    grep "VERTEX_SE3:QUAT" "data/$2/output.p2o_out.txt" | \
+        awk '$10 != "" {print $10, $2, $3, $4, $5, $6, $7, $8, $9}' > "data/$2/concat.txt"
+
+    # 6. 点群の再配置と結合 (PCDマップとウェイポイントの生成)
+    cd "data/$2"
+    "${HOKUYO_SLAM_BIN_DIR}/rearrange_pointcloud" "concat.txt" "$2" "$5/${2}.json"
+    cd ../..
+
+    # 7. 絶対座標から相対座標への変換
+    python3 src/pcd_to_Rcord.py \
+        "data/$2/${2}_Acord.pcd" "data/$2/${2}_Rcord.pcd" "data/$2/output.p2o_out.txt" \
+        "data/$2/init_pose.txt" "data/$2/init_lat_lon_alt.txt"
+    
+    # 8. 結果の移動と完了フラグ生成
+    mv "data/$2/${2}_Rcord.pcd" "$MAP_DIR/${2}.pcd"
+    FLAG_PATH="${MAP_DIR}/${FLAG_FILE_NAME}"
+    touch "$FLAG_PATH"
+    
+    echo "Gravity SLAM completed. Map and flag created at: $FLAG_PATH"
+    exit 0
+fi
 
 # gnssのログを確認する。
 bash -c "python3 src/p2o_gnsslog_from_rosbag_ros2.py rosbag/$1 gnss_log/${2}_gnss_cov_${gnss_cov_thre}.csv $gnss_topic $gnss_cov_thre"
