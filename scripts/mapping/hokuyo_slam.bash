@@ -37,6 +37,13 @@ if [ "$4" = "" ]; then
 else
   FLAG_FILE_NAME="$4"  # server.py の $OUTPUT_MAP_NAME.P2O_DONE
 fi
+
+# ウェイポイント出力先を絶対パスに変換 (cd 対策)
+if [ ! -z "$5" ]; then
+    WP_DIR_ABS=$(readlink -f "$5")
+else
+    WP_DIR_ABS=$(readlink -f "$HOKUYO_NAV2_PKG_PATH/waypoints")
+fi
 # ----------------------------------------------------
 
 export CMAKE_PREFIX_PATH=/opt/vtk8
@@ -142,9 +149,13 @@ if [ "$slam_mode" = "gravity" ]; then
         --bag "rosbag/$1" \
         --topic "$pointcloud_topic" \
         --outdir "data/$2/PCDs/"
+    if [ $? -ne 0 ]; then
+        echo "Error: dump_lidar_pointcloud.py failed. Please check if the topic exists in the bag."
+        exit 1
+    fi
     
     # 2. ダミーの原点ファイル作成 (run_p2o の実行に必要)
-    echo "0.0 0.0 0.0" > "data/$2/center_utm.txt"
+    echo "0,0.0,0.0,0.0" > "data/$2/center_utm.txt"
     echo "0.0 0.0 0.0" > "data/$2/center_lat_lon_alt.txt"
     
     # 3. IMU重力情報を利用した p2o グラフの生成
@@ -156,20 +167,47 @@ if [ "$slam_mode" = "gravity" ]; then
         --pcd-dir "data/$2/PCDs" \
         --stride 10 \
         --out "data/$2/output.p2o"
+    if [ $? -ne 0 ]; then
+        echo "Error: dump_p2o_with_imufilter_hokuyo_lio.py failed."
+        exit 1
+    fi
+
+    if [ ! -s "data/$2/output.p2o" ]; then
+        echo "Error: data/$2/output.p2o is empty. Verify that odom/IMU topics are correct."
+        exit 1
+    fi
 
     # 4. グラフ最適化の実行
     echo "Optimizing pose graph (run_p2o)..."
-    "${HOKUYO_SLAM_BIN_DIR}/run_p2o" "data/$2/center_utm.txt" "data/$2/output.p2o"
+    # ログを保存するように変更
+    "${HOKUYO_SLAM_BIN_DIR}/run_p2o" "data/$2/center_utm.txt" "data/$2/output.p2o" > "data/$2/run_p2o.log" 2>&1
+    RET=$?
+
+    if [ ! -s "data/$2/output.p2o_out.txt" ] || [ $RET -ne 0 ]; then
+        echo "Error: run_p2o optimization failed or produced empty output."
+        echo "--- Last 20 lines of run_p2o.log ---"
+        tail -n 20 "data/$2/run_p2o.log"
+        exit 1
+    fi
     
     # 5. 最適化結果から点群結合用のリスト (concat.txt) を作成
-    # 形式: [pcd_path] [id] [x] [y] [z] [qx] [qy] [qz] [qw]
-    # dump_p2o スクリプトが VERTEX 行の末尾に PCD パスを付与していることを利用します。
-    grep "VERTEX_SE3:QUAT" "data/$2/output.p2o_out.txt" | \
-        awk '$10 != "" {print $10, $2, $3, $4, $5, $6, $7, $8, $9}' > "data/$2/concat.txt"
+    echo "Joining optimized poses with PCD paths..."
+    # rearrange_pointcloud.cpp が期待する 11 カラム [path x y z qx qy qz qw rx ry rz] 形式を作成します。
+    # run_p2o は Vertex 0, 1, 2... の順に出力するため、行番号-1 を ID として利用します。
+    # ID 0 (none) は点群を持たないため除外します。
+    grep "VERTEX_SE3:QUAT" "data/$2/output.p2o" | awk '{print $2, $10}' > "data/$2/pcd_map.tmp"
+    awk 'NR==FNR {pcd[$1]=$2; next} {id=FNR-1; if(id in pcd && pcd[id] != "none") print pcd[id], $1, $2, $3, $4, $5, $6, $7, 0, 0, 0}' \
+        "data/$2/pcd_map.tmp" "data/$2/output.p2o_out.txt" > "data/$2/concat.txt"
+    rm "data/$2/pcd_map.tmp"
+
+    if [ ! -s "data/$2/concat.txt" ]; then
+        echo "Error: concat.txt is empty. Check if run_p2o output contains VERTEX lines with PCD paths."
+        exit 1
+    fi
 
     # 6. 点群の再配置と結合 (PCDマップとウェイポイントの生成)
     cd "data/$2"
-    "${HOKUYO_SLAM_BIN_DIR}/rearrange_pointcloud" "concat.txt" "$2" "$5/${2}.json"
+    "${HOKUYO_SLAM_BIN_DIR}/rearrange_pointcloud" "concat.txt" "$2" "${WP_DIR_ABS}/${2}.json"
     cd ../..
 
     # 7. 絶対座標から相対座標への変換

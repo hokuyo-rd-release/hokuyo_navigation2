@@ -224,8 +224,9 @@ def main():
 
             poses.append(np.array(np.concatenate([p_xyz, q_xyzw]), dtype=float))
             node_times.append(t)
-            pcdfile = nearest_pcd_name(int(t), pcd_ts_ns, pcd_names)
-            pcd_files.append(args.pcd_dir + "/" + pcdfile)
+            pcd_name = nearest_pcd_name(int(t), pcd_ts_ns, pcd_names)
+            # p2o_viewer との互換性のため相対パスで保存
+            pcd_files.append(f"PCDs/{pcd_name}")
 
             # Gravity measurement from latest IMU orientation (NOT odom orientation)
             if q_imu is None or t_imu_latest is None:
@@ -236,7 +237,9 @@ def main():
 
     kept = len(poses)
     if kept == 0:
-        raise RuntimeError("No odom poses !")
+        raise RuntimeError(f"No odom poses found for topic '{args.odom_topic}'! Check your bag and topic name.")
+
+    print(f"Processing complete. Total odom msgs: {odom_count}, Kept vertices: {kept}")
 
     out_path = Path(args.out)
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -244,19 +247,24 @@ def main():
     info_se3 = info_upper_triangular_6x6(args.odom_info)
     info_g00, info_g01, info_g11 = info_upper_triangular_2x2(args.grav_info)
 
+    print(f"Writing graph to {out_path}...")
+
     with out_path.open("w", encoding="utf-8") as f:
-        # node 0 fixed upright origin (recommended usage) :contentReference[oaicite:1]{index=1}
-        f.write("VERTEX_SE3:QUAT 0 0 0 0 0 0 0 1\n")
+        # node 0: p2o_viewer のパースエラーを防ぐためダミーのパス "none" を追加
+        f.write("VERTEX_SE3:QUAT 0 0.000000000 0.000000000 0.000000000 0.000000 0.000000 0.000000 1.000000 none\n")
 
         # vertices 1..N from odom absolute poses
         for k, p in enumerate(poses, start=1):
-            pcdfile = " " + pcd_files[k-1]
+            # ファイルパスに含まれる可能性のあるスペースを考慮し末尾に配置
+            pcd_rel_path = pcd_files[k-1]
             f.write(
                 f"VERTEX_SE3:QUAT {k} "
-                + " ".join(f"{v:.9f}" for v in p) + pcdfile + "\n"
+                + " ".join(f"{v:.9f}" for v in p) + f" {pcd_rel_path}\n"
             )
         # odom edges:
         # 0->1 and consecutive (i->i+1), relative from odom poses
+        # Edge 0 -> 1: 原点(Identity)から最初のポーズへの相対変化
+        # kgeom3d.ominus_se3(target, source) -> source^-1 * target
         diff = ominus_se3(poses[0], np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0], dtype=float))
         f.write(
             "EDGE_SE3:QUAT 0 1 "
@@ -264,6 +272,8 @@ def main():
             + " ".join(f"{v:.6f}" for v in info_se3) + "\n"
         )
         for i in range(1, kept):
+            # Edge i -> i+1: 前のポーズ(i)から次のポーズ(i+1)への相対変化
+            # インデックスのずれに注意: 頂点 i は poses[i-1]
             diff = ominus_se3(poses[i], poses[i-1])
             f.write(
                 f"EDGE_SE3:QUAT {i} {i+1} "
