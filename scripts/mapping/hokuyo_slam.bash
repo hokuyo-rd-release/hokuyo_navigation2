@@ -124,6 +124,9 @@ imu_topic="${option_arr[5]}";
 slam_mode="${option_arr[6]}";
 pc_save_distance="${option_arr[7]:-1.0}";
 wp_save_distance="${option_arr[8]:-4.0}";
+gnss_min_movement_thre="${option_arr[9]:-4.0}";
+lio_min_movement_thre="${option_arr[10]:-0.1}";
+gravity_stride="${option_arr[11]:-1}";
 
 echo 'gnss_topic: '${gnss_topic}
 echo 'pointcloud_topic: '${pointcloud_topic}
@@ -133,6 +136,9 @@ echo 'imu_topic: '${imu_topic}
 echo 'slam_mode: '${slam_mode}
 echo 'pc_save_distance: '${pc_save_distance}
 echo 'wp_save_distance: '${wp_save_distance}
+echo 'gnss_min_movement_thre: '${gnss_min_movement_thre}
+echo 'lio_min_movement_thre: '${lio_min_movement_thre}
+echo 'gravity_stride: '${gravity_stride}
 sleep 1
 
 cd $HOKUYO_NAV2_PKG_PATH
@@ -169,7 +175,7 @@ if [ "$slam_mode" = "gravity" ]; then
         --odom-topic "$lio_topic" \
         --imu-topic "$imu_topic" \
         --pcd-dir "data/$2/PCDs" \
-        --stride 1 \
+        --stride "$gravity_stride" \
         --out "data/$2/output.p2o"
     if [ $? -ne 0 ]; then
         echo "Error: dump_p2o_with_imufilter_hokuyo_lio.py failed."
@@ -258,7 +264,17 @@ if [ ${fix_rate1} -eq 1 ] || [ ${fix_rate} -eq 1 ] ; then
   sleep 1
   # p2o　正常終了の場合のみ処理を実行したい。
   echo 'p2o_from_rosbag'
-  bash -c "python3 src/p2o_from_rosbag_ros2.py rosbag/$1 $lio_topic $gnss_topic $gnss_cov_thre data/$2/center_lat_lon_alt.txt data/$2/center_utm.txt data/$2/lio_edge_timestamps.txt > data/$2/output.p2o" # 引数2 input.bag
+  bash -c "python3 src/p2o_from_rosbag_ros2.py \
+    rosbag/$1 \
+    $lio_topic \
+    $gnss_topic \
+    $gnss_cov_thre \
+    data/$2/center_lat_lon_alt.txt \
+    data/$2/center_utm.txt \
+    data/$2/lio_edge_timestamps.txt \
+    --gnss-min-movement-thre $gnss_min_movement_thre \
+    --lio-min-movement-thre $lio_min_movement_thre \
+    > data/$2/output.p2o"
   result=$?
 
   echo 'error status:' ${result}
@@ -286,7 +302,7 @@ if [ ${fix_rate1} -eq 1 ] || [ ${fix_rate} -eq 1 ] ; then
     find . | grep pcd > clouds.txt
     sort clouds.txt > sorted_clouds.txt
     paste sorted_clouds.txt poses.txt > concat.txt
-    bash -c "${HOKUYO_SLAM_BIN_DIR}/rearrange_pointcloud concat.txt $2 ${WP_DIR_ABS}/${2}.json $pc_save_distance $wp_save_distance"
+        bash -c "${HOKUYO_SLAM_BIN_DIR}/rearrange_pointcloud concat.txt $2 ${WP_DIR_ABS}/${2}.json $pc_save_distance $wp_save_distance"
 
     # 絶対座標を相対座標に変換
     cd ../..
