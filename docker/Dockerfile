@@ -1,7 +1,31 @@
 ARG ubuntu_ver=22.04
 
-# --- Stage 1: PCL Builder (Dedicated stage for heavy compilation) ---
-FROM nvidia/cuda:11.8.0-devel-ubuntu22.04 AS pcl-builder
+# --- Stage 1: Deps Builder (PROJ, yp-spur) ---
+FROM nvidia/cuda:11.8.0-devel-ubuntu22.04 AS deps-builder
+ARG MAKEJOBS=4
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN touch /etc/apt/apt.conf.d/99fixbadproxy && \
+    echo "Acquire::http::Pipeline-Depth 0; Acquire::http::No-Cache true; Acquire::BrokenProxy true;" >> /etc/apt/apt.conf.d/99fixbadproxy && \
+    apt-get update && apt-get install -y --no-install-recommends \
+    wget git build-essential cmake libmodbus-dev libsqlite3-dev sqlite3 libtiff-dev libcurl4-openssl-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /home/deps_build
+# yp-spur
+RUN git clone https://github.com/hokuyo-rd-release/yp-spur.git && \
+    cd yp-spur && mkdir build && cd build && \
+    cmake .. && make -j${MAKEJOBS} && make install
+
+# PROJ 9.4.1
+RUN wget --tries=10 -q https://download.osgeo.org/proj/proj-9.4.1.tar.gz && \
+    tar -zxvf proj-9.4.1.tar.gz && cd proj-9.4.1 && \
+    mkdir build && cd build && \
+    cmake .. && cmake --build . -j${MAKEJOBS} && cmake --build . --target install
+
+# --- Stage 2: PCL Builder (Dedicated stage for heavy compilation) ---
+# PROJ 9.4.1 が入った状態から PCL をビルドすることで整合性を確保
+FROM deps-builder AS pcl-builder
 
 # Use ARG to allow limiting parallel build jobs to prevent OOM
 ARG MAKEJOBS=4
@@ -11,7 +35,7 @@ RUN touch /etc/apt/apt.conf.d/99fixbadproxy && \
     apt-get update && apt-get install -y --no-install-recommends \
     wget git build-essential cmake libeigen3-dev sqlite3 libtiff-dev libcurl4-openssl-dev libboost-all-dev libpng-dev \
     libgl1-mesa-dev libglu1-mesa-dev \
-    pkg-config zlib1g-dev libqhull-dev \
+    pkg-config zlib1g-dev libqhull-dev libvtk9-dev \
     libflann-dev libpcap-dev libusb-1.0-0-dev && \
     rm -rf /var/lib/apt/lists/*
 
@@ -36,29 +60,6 @@ RUN wget --tries=10 https://github.com/PointCloudLibrary/pcl/releases/download/p
     . && \
     cmake --build build -j${MAKEJOBS} && \
     cmake --install build
-
-# --- Stage 2: Deps Builder (PROJ, yp-spur) ---
-FROM nvidia/cuda:11.8.0-devel-ubuntu22.04 AS deps-builder
-ARG MAKEJOBS=4
-
-ENV DEBIAN_FRONTEND=noninteractive
-RUN touch /etc/apt/apt.conf.d/99fixbadproxy && \
-    echo "Acquire::http::Pipeline-Depth 0; Acquire::http::No-Cache true; Acquire::BrokenProxy true;" >> /etc/apt/apt.conf.d/99fixbadproxy && \
-    apt-get update && apt-get install -y --no-install-recommends \
-    wget git build-essential cmake libmodbus-dev libsqlite3-dev sqlite3 libtiff-dev libcurl4-openssl-dev && \
-    rm -rf /var/lib/apt/lists/*
-
-WORKDIR /home/deps_build
-# yp-spur
-RUN git clone https://github.com/hokuyo-rd-release/yp-spur.git && \
-    cd yp-spur && mkdir build && cd build && \
-    cmake .. && make -j${MAKEJOBS} && make install
-
-# PROJ 9.4.1
-RUN wget --tries=10 -q https://download.osgeo.org/proj/proj-9.4.1.tar.gz && \
-    tar -zxvf proj-9.4.1.tar.gz && cd proj-9.4.1 && \
-    mkdir build && cd build && \
-    cmake .. && cmake --build . -j${MAKEJOBS} && cmake --build . --target install
 
 # --- Stage 3: ROS Workspace Builder ---
 FROM nvidia/cuda:11.8.0-devel-ubuntu22.04 AS builder
@@ -118,9 +119,10 @@ RUN mkdir -p src && cd src && \
 RUN source /opt/ros/$ROS_DISTRO/setup.bash && \
     cd src/hokuyo_navigation2/hokuyo_slam_ros2 && \
     sed -i 's/add_subdirectory(p2o_viewer)/# add_subdirectory(p2o_viewer)/g' CMakeLists.txt && \
-    export CMAKE_PREFIX_PATH=/opt/pcl:$CMAKE_PREFIX_PATH && \
-    mkdir build && cmake -Bbuild . -DCMAKE_BUILD_TYPE=Release && cmake --build build -j${MAKEJOBS} && \
-    cd /home/colcon_ws && export CMAKE_PREFIX_PATH=/opt/pcl:$CMAKE_PREFIX_PATH && \
+    export CMAKE_PREFIX_PATH=/opt/pcl:/usr/local:$CMAKE_PREFIX_PATH && \
+    mkdir build && cmake -Bbuild . -DPROJ_DIR=/usr/local/lib/cmake/proj && cmake --build build -j${MAKEJOBS} && \
+    cd /home/colcon_ws && \
+    export CMAKE_PREFIX_PATH=/opt/pcl:/usr/local:$CMAKE_PREFIX_PATH && export PROJ_DIR=/usr/local/lib/cmake/proj && \
     colcon build && \
     colcon build --symlink-install --packages-select icart_mini_driver hokuyo_navigation2 lio_nav2_bringup simple_fastlio_localization
 
