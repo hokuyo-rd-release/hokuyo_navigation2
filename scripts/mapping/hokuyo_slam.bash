@@ -122,6 +122,8 @@ lio_topic="${option_arr[2]}";
 gnss_cov_thre="${option_arr[4]}";
 imu_topic="${option_arr[5]}";
 slam_mode="${option_arr[6]}";
+pc_save_distance="${option_arr[7]:-1.0}";
+wp_save_distance="${option_arr[8]:-4.0}";
 
 echo 'gnss_topic: '${gnss_topic}
 echo 'pointcloud_topic: '${pointcloud_topic}
@@ -129,6 +131,8 @@ echo 'lio_topic: '${lio_topic}
 echo 'gnss_cov_thre: '${gnss_cov_thre}
 echo 'imu_topic: '${imu_topic}
 echo 'slam_mode: '${slam_mode}
+echo 'pc_save_distance: '${pc_save_distance}
+echo 'wp_save_distance: '${wp_save_distance}
 sleep 1
 
 cd $HOKUYO_NAV2_PKG_PATH
@@ -165,7 +169,7 @@ if [ "$slam_mode" = "gravity" ]; then
         --odom-topic "$lio_topic" \
         --imu-topic "$imu_topic" \
         --pcd-dir "data/$2/PCDs" \
-        --stride 10 \
+        --stride 1 \
         --out "data/$2/output.p2o"
     if [ $? -ne 0 ]; then
         echo "Error: dump_p2o_with_imufilter_hokuyo_lio.py failed."
@@ -207,7 +211,7 @@ if [ "$slam_mode" = "gravity" ]; then
 
     # 6. 点群の再配置と結合 (PCDマップとウェイポイントの生成)
     cd "data/$2"
-    "${HOKUYO_SLAM_BIN_DIR}/rearrange_pointcloud" "concat.txt" "$2" "${WP_DIR_ABS}/${2}.json"
+    "${HOKUYO_SLAM_BIN_DIR}/rearrange_pointcloud" "concat.txt" "$2" "${WP_DIR_ABS}/${2}.json" "$pc_save_distance" "$wp_save_distance"
     cd ../..
 
     # 7. 絶対座標から相対座標への変換
@@ -282,7 +286,7 @@ if [ ${fix_rate1} -eq 1 ] || [ ${fix_rate} -eq 1 ] ; then
     find . | grep pcd > clouds.txt
     sort clouds.txt > sorted_clouds.txt
     paste sorted_clouds.txt poses.txt > concat.txt
-    bash -c "${HOKUYO_SLAM_BIN_DIR}/rearrange_pointcloud concat.txt $2 $5/${2}.json"
+    bash -c "${HOKUYO_SLAM_BIN_DIR}/rearrange_pointcloud concat.txt $2 ${WP_DIR_ABS}/${2}.json $pc_save_distance $wp_save_distance"
 
     # 絶対座標を相対座標に変換
     cd ../..
