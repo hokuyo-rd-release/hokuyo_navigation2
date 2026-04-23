@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import sqlite3
+import argparse
 from rosidl_runtime_py.utilities import get_message
 from rclpy.serialization import deserialize_message
 import sys
@@ -12,8 +13,6 @@ from pyproj import Transformer
 from rosbag2_py import SequentialReader, StorageFilter, ConverterOptions, StorageOptions
 
 # parameters
-odom_infom = '1e2 0 0 0 0 0 1e2 0 0 0 0 1e2 0 0 0 1e2 0 0 1e2 0 1e2'
-
 def judge_utm_zone(longitude: float) -> int:
     zone = int((longitude + 180.0 + 5) / 6)
     return zone
@@ -159,18 +158,44 @@ def latlon_to_xyz(trans, lat, lon, alt):
     return x, y, alt
 
 if __name__ == "__main__":
-    args = sys.argv
-    assert len(args) >= 7, "Usage: ros2 run your_package_name your_script_name <bag_folder> <lio_topic> <gnss_topic> <gnss_cov_threshold> <output_center_lla_file_path> <output_center_utm_path> <output_lio_edge_timestamps_path>"
+    parser = argparse.ArgumentParser(
+        description="Extract LIO and GNSS data from ROS2 bag for Pose Graph Optimization (P2O)."
+    )
+    parser.add_argument("bag_folder", help="Path to rosbag2 directory (contains metadata.yaml or .db3 file)")
+    parser.add_argument("lio_topic", help="Odometry topic (nav_msgs/msg/Odometry)")
+    parser.add_argument("gnss_topic", help="GNSS topic (sensor_msgs/msg/NavSatFix)")
+    parser.add_argument("gnss_cov_threshold", type=float, help="GNSS position covariance threshold for valid fixes")
+    parser.add_argument("output_center_lla_file_path", help="Output file path for initial Lat/Lon/Alt")
+    parser.add_argument("output_center_utm_path", help="Output file path for initial UTM coordinates")
+    parser.add_argument("output_lio_edge_timestamps_path", help="Output file path for LIO edge timestamps")
+    parser.add_argument(
+        "--gnss-min-movement-thre",
+        type=float,
+        default=4.0,  # Default value
+        help="Minimum movement threshold for GNSS to be considered a valid observation (m)"
+    )
+    parser.add_argument(
+        "--lio-min-movement-thre",
+        type=float,
+        default=0.1,  # Default value
+        help="Minimum movement threshold for LIO to create a new vertex (m)"
+    )
+    parsed_args = parser.parse_args()
 
-    bag_folder = os.path.normpath(os.path.join(os.getcwd(), args[1]))
-    center_lat_lon_alt_path = os.path.normpath(os.path.join(os.getcwd(), args[5]))
-    center_utm_path = os.path.normpath(os.path.join(os.getcwd(), args[6]))
-    lio_edge_timestamps_path = os.path.normpath(os.path.join(os.getcwd(), args[7]))
-    lio_topic_name = args[2]
-    gnss_topic_name = args[3]
-    gnss_cov_thre = float(args[4])
-    gnss_min_movement_thre = 4.0 # [m] # GNSSの移動距離のしきい値を設定.
-    lio_min_movement_thre = 0.1 # [m] # LIOの移動距離のしきい値を設定.
+    bag_folder = os.path.normpath(os.path.join(os.getcwd(), parsed_args.bag_folder))
+    center_lat_lon_alt_path = os.path.normpath(os.path.join(os.getcwd(), parsed_args.output_center_lla_file_path))
+    center_utm_path = os.path.normpath(os.path.join(os.getcwd(), parsed_args.output_center_utm_path))
+    lio_edge_timestamps_path = os.path.normpath(os.path.join(os.getcwd(), parsed_args.output_lio_edge_timestamps_path))
+    lio_topic_name = parsed_args.lio_topic
+    gnss_topic_name = parsed_args.gnss_topic
+    gnss_cov_thre = parsed_args.gnss_cov_threshold
+    gnss_min_movement_thre = parsed_args.gnss_min_movement_thre # Use parsed argument
+    lio_min_movement_thre = parsed_args.lio_min_movement_thre   # Use parsed argument
+    odom_infom = '1e2 0 0 0 0 0 1e2 0 0 0 0 1e2 0 0 0 1e2 0 0 1e2 0 1e2' # This was a global parameter, moved it here as it's used in this scope.
+
+    # Debug prints to confirm parameters
+    print(f"DEBUG: gnss_min_movement_thre set to {gnss_min_movement_thre}", file=sys.stderr)
+    print(f"DEBUG: lio_min_movement_thre set to {lio_min_movement_thre}", file=sys.stderr)
 
     mcap_files = glob.glob(os.path.join(bag_folder, '*.mcap'))
     db_file = find_db_file(bag_folder)
