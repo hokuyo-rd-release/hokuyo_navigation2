@@ -1,6 +1,6 @@
 #!/bin/bash
 
-IMAGE_NAME=hokuyo_navigation2:spel_demo
+IMAGE_NAME=hokuyo_navigation2:release
 CONTAINER_NAME=hokuyo_navigation2
 SHARE_FOLDER_PATH=""
 SHARE_FOLDER_CMD=""
@@ -88,5 +88,6 @@ docker run -it  $CONTAINER_NAME_CMD \
             $GPU_CMD \
             $REMOVE_CMD \
             --privileged \
-            $IMAGE_NAME /bin/bash
+            $IMAGE_NAME /bin/bash \
+            -login
 
