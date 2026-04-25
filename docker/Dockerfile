@@ -36,7 +36,8 @@ RUN touch /etc/apt/apt.conf.d/99fixbadproxy && \
     wget git build-essential cmake libeigen3-dev sqlite3 libtiff-dev libcurl4-openssl-dev libboost-all-dev libpng-dev \
     libgl1-mesa-dev libglu1-mesa-dev \
     pkg-config zlib1g-dev libqhull-dev libvtk9-dev \
-    libflann-dev libpcap-dev libusb-1.0-0-dev && \
+    libflann-dev libpcap-dev libusb-1.0-0-dev \
+    qtbase5-dev clang qtcreator libqt5x11extras5-dev libqt5opengl5-dev && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /home/pcl_build
@@ -48,7 +49,7 @@ RUN wget --tries=10 https://github.com/PointCloudLibrary/pcl/releases/download/p
     cmake -Bbuild \
     -DCMAKE_INSTALL_PREFIX=/opt/pcl \
     -DCMAKE_BUILD_TYPE=Release \
-    -DBUILD_visualization=OFF \
+    -DBUILD_visualization=ON \
     -DBUILD_examples=OFF \
     -DBUILD_apps=OFF \
     -DBUILD_tools=OFF \
@@ -115,7 +116,6 @@ RUN mkdir -p src && cd src && \
 
 RUN source /opt/ros/$ROS_DISTRO/setup.bash && \
     cd src/hokuyo_navigation2/hokuyo_slam_ros2 && \
-    sed -i 's/add_subdirectory(p2o_viewer)/# add_subdirectory(p2o_viewer)/g' CMakeLists.txt && \
     export CMAKE_PREFIX_PATH=/opt/pcl:/usr/local:$CMAKE_PREFIX_PATH && \
     mkdir build && cmake -Bbuild . -DPROJ_DIR=/usr/local/lib/cmake/proj && cmake --build build -j${MAKEJOBS} && \
     cd /home/colcon_ws && \
