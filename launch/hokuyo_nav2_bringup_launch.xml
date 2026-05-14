@@ -43,7 +43,7 @@
   <arg name="launch_for_demo" default="true" />
 
   <!-- 関連ソフト緯度経度 <-> 平面直角座標-->
-  <node pkg="fix2xyz" exec="fix2xyz_node" name="fix2xyz_out" output="log">
+  <node pkg="fix2xyz" exec="fix2xyz_node" name="fix2xyz_out" output="screen">
     <param from="$(var fix2xyz_params_)" />
     <param name="origin_pose" value="$(var latlon_pose)" />
   </node>
@@ -60,8 +60,10 @@
   <node name="waypoint_controller" pkg="hokuyo_navigation2" exec="cmdvel_stopper" output="log"/>
   <node name="gnss_lio_debug" pkg="hokuyo_navigation2" exec="gnss_lio_debug" output="log"/>
 
-  <!-- 関連ソフト デモ用のtf作成と点群座標変換 -->
+  <!-- 関連ソフト デモ用 -->
   <group if="$(var launch_for_demo)">
+
+    <!-- tf作成と点群座標変換 -->
     <node pkg="hokuyo_navigation2" exec="odom_to_tf" name="rsf_tf">
       <param name="sub_topic_name" value="/rsf/rsf_odom"/>
       <param name="frame_id" value="lio_odom"/>
@@ -72,15 +74,6 @@
       <param name="frame_id" value="lio_odom"/>
       <param name="child_frame_id" value="lio"/>
     </node>
-    <!-- vizantiでの地図表示のため、方位に合わせたtfを作る. -->
-    <node pkg="hokuyo_navigation2" exec="odom_to_tf" name="rsf_gnss_tf">
-      <param name="sub_topic_name" value="/rsf/utm_coord_odom"/>
-      <param name="mode_zero_position" value="true"/>
-      <param name="mode_inverse_orientation" value="true"/>
-      <param name="frame_id" value="rsf"/>
-      <param name="child_frame_id" value="rsf_gnss"/>
-    </node>
-
     <node pkg="hokuyo_navigation2" exec="pointcloud_transform_for_loc" name="rsf_cloud" output="log">
       <param name="sub_topic" value="/hokuyo3d/hokuyo_cloud2"/>
       <param name="sub_odom_topic" value="/rsf/rsf_odom"/>
@@ -92,6 +85,28 @@
       <param name="pub_topic" value="hokuyo_lio/hokuyo_cloud2"/>
     </node>
 
+    <!-- gnss緯度経度をオドメトリ座標に映す -->
+    <node pkg="fix2xyz" exec="fix2utm_node" name="fix2utm_for_demo" output="log">
+      <param name="sub_fix_topic" value="/fix" />
+      <param name="pub_odom_topic" value="/rsf/fix_on_utm" />
+      <param name="frame_id" value="utm" />
+    </node>
+    <node pkg="hokuyo_navigation2" exec="odom_relative" name="fix_on_odom" output="log">
+      <param name="base_odom_topic" value="/rsf/utm_coord_odom" />
+      <param name="target_odom_topic" value="/rsf/fix_on_utm" />
+      <param name="publish_odom_topic" value="/rsf/fix_on_odom" />
+      <param name="frame_id" value="rsf" />
+      <param name="child_frame_id" value="fix_on_odom" />
+    </node>
+
+    <!-- vizantiでの地図表示のため、方位に合わせたtfを作る. -->
+    <node pkg="hokuyo_navigation2" exec="odom_to_tf" name="rsf_gnss_tf">
+      <param name="sub_topic_name" value="/rsf/utm_coord_odom"/>
+      <param name="mode_zero_position" value="true"/>
+      <param name="mode_inverse_orientation" value="true"/>
+      <param name="frame_id" value="rsf"/>
+      <param name="child_frame_id" value="rsf_gnss"/>
+    </node>
   </group>
 
 

@@ -45,18 +45,31 @@
       "type": "rosbag",
       "id": "rosbag_autoID_13",
       "container_id": "icon_container"
+    },
+    {
+      "type": "odom",
+      "id": "odom_autoID_14",
+      "container_id": "icon_container"
     }
   ],
   "view": {
     "center": {
-      "x": -1.4403369320647752,
-      "y": -2.375785913655416
+      "x": -0.8006326100919083,
+      "y": -20.342083234584337
     },
-    "scale": 53.50140545046486
+    "scale": 10.110613857477592
   },
   "settings_default": {
-    "fixed_frame": "base_link",
+    "fixed_frame": "lio_odom",
     "background_color": "#273444"
+  },
+  "grid_default": {
+    "size": 1,
+    "thickness": 1,
+    "colour": "#3e556a",
+    "colour_sub": "#294056",
+    "autoscale": "Coarse",
+    "subdivisions": 2
   },
   "tf_default": {
     "show_names": true,
@@ -85,18 +98,13 @@
       "hokuyo_lio": true,
       "odom": true,
       "lio": true,
-      "dummy_base_link": true
+      "dummy_base_link": true,
+      "world": false,
+      "/lio_odom_inv": true,
+      "lio_odom_inv": true
     }
   },
-  "grid_default": {
-    "size": 1,
-    "thickness": 1,
-    "colour": "#3e556a",
-    "colour_sub": "#294056",
-    "autoscale": "Coarse",
-    "subdivisions": 2
-  },
-  "uid": 14,
+  "uid": 15,
   "satelite_autoID_1": {
     "topic": "/rsf/rsf_fix",
     "server_url": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
@@ -105,24 +113,48 @@
     "ignore_rotation": false
   },
   "odom_autoID_2": {
-    "topic": "rsf (Frame)",
-    "history": "2",
+    "topic": "/rsf/lio_imu_rate_odom (Odometry)",
+    "history": "2000",
     "color": "#00eeff",
-    "throttle": "500",
+    "throttle": "10",
     "draw_arrows": true,
     "draw_path": false
   },
   "odom_autoID_3": {
-    "topic": "rsf (Frame)",
+    "topic": "/rsf/rsf_odom (Odometry)",
     "history": "2000",
     "color": "#ffae00",
-    "throttle": "500",
+    "throttle": "10",
     "draw_arrows": true,
     "draw_path": false
   },
   "inspector_autoID_6": {
     "topic": "/gga",
     "throttle": "500"
+  },
+  "rosbag_autoID_7": {
+    "path": "~/colcon_ws/src/hokuyo_navigation2/hokuyo_navigation2/rosbag/sample4",
+    "topic_list": [
+      "/rsf/lio_imu_rate_odom",
+      "/rsf/rsf_odom",
+      "/fix",
+      "/rsf/rsf_fix",
+      "/gga",
+      "/hokuyo3d/hokuyo_cloud2",
+      "/hokuyo3d/imu",
+      "/rsf/rsf_fix_state",
+      "/rsf/rsf_fix_type",
+      "/rsf/rsf_odom_state",
+      "/rsf/rsf_odom_type",
+      "/rsf/utm_coord_odom"
+    ]
+  },
+  "pointcloud_autoID_10": {
+    "topic": "/gnss_lio_switch/hokuyo_cloud2",
+    "opacity": "1",
+    "thickness": "0.02",
+    "color": "#1f8eec",
+    "throttle": "2000"
   },
   "robotmodel_autoID_8": {
     "frame": "rsf",
@@ -134,7 +166,7 @@
     "offset_yaw": "0.0"
   },
   "rosbag_autoID_13": {
-    "path": "/home/hokuyo/colcon_ws/src/hokuyo_navigation2/hokuyo_navigation2/rosbag/tokyo",
+    "path": "/home/hokuyo/colcon_ws/src/hokuyo_navigation2/hokuyo_navigation2/rosbag",
     "topic_list": [
       "/rsf/lio_imu_rate_odom",
       "/rsf/lio_lidar_rate_odom",
@@ -148,5 +180,13 @@
       "/rsf/rsf_odom_state",
       "/rsf/rsf_odom_type"
     ]
+  },
+  "odom_autoID_14": {
+    "topic": "/rsf/fix_on_odom (Odometry)",
+    "history": "100",
+    "color": "#c43b00",
+    "throttle": "500",
+    "draw_arrows": true,
+    "draw_path": false
   }
 }
