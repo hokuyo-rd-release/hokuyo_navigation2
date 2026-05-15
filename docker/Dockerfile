@@ -89,7 +89,7 @@ apt-get update && apt-get install -y --no-install-recommends \
     tmux vim git wget python3-pip bash-completion \
     liburdfdom-tools qtbase5-dev clang libqt5x11extras5-dev libvtk9-dev \
     ros-$ROS_DISTRO-desktop-full \
-    ros-$ROS_DISTRO-tf-transformations ros-$ROS_DISTRO-sensor-msgs-py \
+    ros-$ROS_DISTRO-tf-transformations ros-$ROS_DISTRO-sensor-msgs-py ros-$ROS_DISTRO-joint-state-publisher \
     python3-rosdep python3-colcon-common-extensions python3-vcstool python3-transforms3d python3-autobahn \
     xdotool wmctrl bc zenity ufw terminator tree gnome-terminal dbus-x11 gedit \
     libsqlite3-0 libmodbus5 nautilus && \
