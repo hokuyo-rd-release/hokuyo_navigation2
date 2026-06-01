@@ -18,6 +18,7 @@ source "$(dirname "$0")/../setup_ros_env.sh"
 # $4: waypoint_filename (例: my_waypoints.json)
 # $5: loop_waypoints_flag (ウェイポイントをループとして扱うか: true/false) <-- 【新規/変更】
 # $6: FLAG_FILE_NAME (完了フラグファイル名, 例: my_map_pgm.PCD2PGM_DONE) <-- 【変更】
+# $7: config_file (設定ファイルパス) <-- 【追加】
 
 input_pcd_filename="$1"
 output_map_name="$2"
@@ -25,6 +26,43 @@ pgm_output_dir="$3"
 waypoint_filename="$4"
 loop_waypoints_flag="$5"  # 新しい5番目の引数
 flag_file_name="$6"       # 6番目にずらされた引数
+config_file="$7"
+
+#------- CSV設定ファイル読み込み -------
+# デフォルト値の設定
+thre_z_min="-1.0"
+thre_z_max="20.0"
+map_resolution="0.05"
+thres_point_count="1"
+flag_pass_through="False"
+thre_radius="0.1"
+waypoint_tolerance="1.0"
+
+if [ -z "$config_file" ]; then
+  # 引数がない場合はデフォルトのパスを試行
+  config_file="${HOKUYO_NAV2_PKG_PATH}/config/hokuyo_slam_topics_cfg.csv"
+fi
+
+if [ -f "$config_file" ]; then
+    echo "Loading config from: $config_file"
+    options=(`cat $config_file`)
+    for i in ${!options[@]}; do
+     if [ $i -gt 0 ]; then
+      j=$((${i}-1))
+      option_arr[$j]=`echo ${options[$i]} | cut -d ',' -f 2`
+      fi
+    done
+    # 必要に応じてCSVのインデックスを調整してください
+    thre_z_min="${option_arr[14]:-$thre_z_min}"
+    thre_z_max="${option_arr[15]:-$thre_z_max}"
+    map_resolution="${option_arr[16]:-$map_resolution}"
+    thres_point_count="${option_arr[17]:-$thres_point_count}"
+    flag_pass_through="${option_arr[18]:-$flag_pass_through}"
+    thre_radius="${option_arr[19]:-$thre_radius}"
+    waypoint_tolerance="${option_arr[20]:-$waypoint_tolerance}"
+else
+    echo "WARNING: Config file not found at $config_file. Using default values."
+fi
 
 # --------------------------------------------------------------------------
 # パス設定
@@ -42,6 +80,7 @@ echo "    出力PGMベース名: ${OUTPUT_BASE_PATH}"
 echo "    ウェイポイントファイル名: ${waypoint_filename}"
 echo "    ループ処理フラグ: ${loop_waypoints_flag}"
 echo "    完了フラグ: ${COMPLETION_FLAG_PATH}"
+echo "    設定ファイル: ${config_file}"
 
 # 1. 入力ファイルとPythonスクリプトの存在確認
 if [ ! -f "${PCD_FILE_PATH}" ]; then
@@ -85,12 +124,13 @@ fi
 
 # 2. pcd2pgm_converter.py の実行
 echo "Running: python3 ${PYTHON_SCRIPT} \
---thre_z_min -1.0 \
---thre_z_max 20.0 \
---flag_pass_through False \
---thre_radius 0.1 \
---map_resolution 0.05 \
---thres_point_count 1 \
+--thre_z_min ${thre_z_min} \
+--thre_z_max ${thre_z_max} \
+--flag_pass_through ${flag_pass_through} \
+--thre_radius ${thre_radius} \
+--waypoint_tolerance ${waypoint_tolerance} \
+--map_resolution ${map_resolution} \
+--thres_point_count ${thres_point_count} \
 --odom_to_lidar_odom 0.0 0.0 0.0 0.0 0.0 0.0 \
 ${CMD_WAYPOINTS} \
 ${CMD_LOOP_FLAG} \
@@ -99,12 +139,13 @@ ${CMD_LOOP_FLAG} \
 
 # 【重要】Pythonの引数規則に従い、位置引数（PCD/OUTPUTパス）を最後に配置する
 python3 "${PYTHON_SCRIPT}" \
-    --thre_z_min -1.0 \
-    --thre_z_max 20.0 \
-    --flag_pass_through False \
-    --thre_radius 0.1 \
-    --map_resolution 0.05 \
-    --thres_point_count 1 \
+    --thre_z_min "${thre_z_min}" \
+    --thre_z_max "${thre_z_max}" \
+    --flag_pass_through "${flag_pass_through}" \
+    --thre_radius "${thre_radius}" \
+    --waypoint_tolerance "${waypoint_tolerance}" \
+    --map_resolution "${map_resolution}" \
+    --thres_point_count "${thres_point_count}" \
     --odom_to_lidar_odom 0.0 0.0 0.0 0.0 0.0 0.0 \
     ${CMD_WAYPOINTS} \
     ${CMD_LOOP_FLAG} \

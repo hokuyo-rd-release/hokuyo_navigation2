@@ -26,9 +26,10 @@ case "${MAPPING_OPTION}" in
         # NOTE: get_rosbag.bash がフルパスを期待する場合があるため、/rosbag/ を付けて渡す
         inbagname="${HOKUYO_NAV2_PKG_PATH}/rosbag/$2" 
         outbagname="$3"                   
+        config_file="$4"
 
         # scripts/get_rosbag.bash を gnome-terminal で実行
-        gnome-terminal -- bash -c "cd ${HOKUYO_NAV2_PKG_PATH}; scripts/mapping/sync_topic.bash ${inbagname} ${outbagname} ; bash"; exit
+        gnome-terminal -- bash -c "cd ${HOKUYO_NAV2_PKG_PATH}; scripts/mapping/sync_topic.bash ${inbagname} ${outbagname} ${config_file} ; bash"; exit
         
         ;;
 
@@ -45,6 +46,7 @@ case "${MAPPING_OPTION}" in
         pcd_output_dir="$4"
         wp_output_dir="$5"
         flag_file_name="$6"
+        config_file="$7"
         
         # scripts/hokuyo_slam.bash に引数を渡して実行
         # NOTE: scripts/hokuyo_slam.bash の引数の順番も確認し、適切に渡すこと
@@ -53,7 +55,8 @@ case "${MAPPING_OPTION}" in
             \"${p2omapname}\" \
             \"${pcd_output_dir}\" \
             \"${flag_file_name}\" \
-            \"${wp_output_dir}\" ; bash"; exit
+            \"${wp_output_dir}\" \
+            \"${config_file}\" ; bash"; exit
         
         ;;
 
@@ -70,6 +73,7 @@ case "${MAPPING_OPTION}" in
         pcd_output_dir="$4"
         wp_output_dir="$5"
         flag_file_name="$6"
+        config_file="$7"
         
         # scripts/lio_raw.bash に引数を渡して実行
         gnome-terminal -- bash -c "cd ${HOKUYO_NAV2_PKG_PATH}; scripts/mapping/lio_raw.bash \
@@ -77,7 +81,8 @@ case "${MAPPING_OPTION}" in
             \"${liomapname}\" \
             \"${pcd_output_dir}\" \
             \"${wp_output_dir}\" \
-            \"${flag_file_name}\" ; bash"; exit
+            \"${flag_file_name}\" \
+            \"${config_file}\" ; bash"; exit
         
         ;;
     
@@ -98,6 +103,7 @@ case "${MAPPING_OPTION}" in
         waypoint_filename="$5" 
         loop_waypoints_flag="$6" # 👈 新しい引数
         flag_file_name="$7"      # 👈 インデックスが変更
+        config_file="$8"         # 👈 追加
 
         
         # scripts/pcd2pgm.bash に引数を渡して実行
@@ -108,7 +114,8 @@ case "${MAPPING_OPTION}" in
             \"${pgm_output_dir}\" \
             \"${waypoint_filename}\" \
             \"${loop_waypoints_flag}\" \
-            \"${flag_file_name}\" ; bash"; exit
+            \"${flag_file_name}\" \
+            \"${config_file}\" ; bash"; exit
         
         ;;
 
