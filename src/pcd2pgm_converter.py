@@ -104,11 +104,20 @@ class PcdToPgmConverter:
         if self.cloud is None:
             return
         
+        # flag_pass_through が False (または文字列の 'False') の場合はフィルタリングをスキップ
+        flag = self.params.get('flag_pass_through', False)
+        if str(flag).lower() == 'false':
+            print("PassThrough filter is disabled. Using all points for height.")
+            self.cloud_filtered = self.cloud
+            return
+
         points = np.asarray(self.cloud.points)
         
         thre_z_min = self.params['thre_z_min']
         thre_z_max = self.params['thre_z_max']
         
+        print(f"Applying PassThrough filter (Z: {thre_z_min} to {thre_z_max})")
+
         # Z軸でフィルタリング
         z_filter = (points[:, 2] >= thre_z_min) & (points[:, 2] <= thre_z_max)
         

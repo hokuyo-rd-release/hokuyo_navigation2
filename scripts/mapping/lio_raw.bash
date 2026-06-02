@@ -12,9 +12,45 @@ inbagname="$1"
 liomapname="$2"
 pcd_output_dir="$3"
 wp_output_dir="$4"
-flag_file_name="$5" # 🌟 完了フラグの絶対パス 🌟
+flag_file_name="$5"
+config_file="$6"
 
-echo "lio_raw.bash $0 $1 $2 $3 $4 $5"
+echo "lio_raw.bash $0 $1 $2 $3 $4 $5 $6"
+
+#------- CSV設定ファイル読み込み -------
+# デフォルト値の設定
+pointcloud_topic="/hokuyo3d/hokuyo_cloud2"
+lio_topic="/rsf/lio_lidar_rate_odom"
+pc_save_distance="1.0"
+wp_save_distance="4.0"
+tf_topic="/tf"
+orig_frame="yvt"
+target_frame="lio_odom"
+
+if [ -z "$config_file" ]; then
+  # 引数がない場合はデフォルトのパスを試行
+  config_file="${HOKUYO_NAV2_PKG_PATH}/config/hokuyo_slam_topics_cfg.csv"
+fi
+
+if [ -f "$config_file" ]; then
+    echo "Loading config from: $config_file"
+    options=(`cat $config_file`)
+    for i in ${!options[@]}; do
+     if [ $i -gt 0 ]; then
+      j=$((${i}-1))
+      option_arr[$j]=`echo ${options[$i]} | cut -d ',' -f 2`
+      fi
+    done
+    pointcloud_topic="${option_arr[1]:-$pointcloud_topic}"
+    lio_topic="${option_arr[2]:-$lio_topic}"
+    pc_save_distance="${option_arr[7]:-$pc_save_distance}"
+    wp_save_distance="${option_arr[8]:-$wp_save_distance}"
+    tf_topic="/dummy_tf"
+    orig_frame="${option_arr[12]:-$orig_frame}"
+    target_frame="${option_arr[13]:-$target_frame}"
+else
+    echo "WARNING: Config file not found at $config_file. Using default values."
+fi
 
 # 1. マップディレクトリを作成し、初期ポーズファイルを生成
 # mkdir -p の引数も引用符で囲み、堅牢性を高めます。
@@ -31,17 +67,17 @@ cd "${HOKUYO_NAV2_PKG_PATH}"
 
 python3 src/pcd_tf_extractor.py \
     "rosbag/${inbagname}" \
-    /hokuyo3d/hokuyo_cloud2 \
-    /rsf/lio_lidar_rate_odom \
+    "${pointcloud_topic}" \
+    "${lio_topic}" \
     dummy_pub_topic \
-    yvt \
-    lio_odom \
+    "${orig_frame}" \
+    "${target_frame}" \
     "${pcd_output_dir}" \
     "${liomapname}.pcd" \
     "${wp_output_dir}"\
-    1.0 \
-    4.0 \
-    /tf
+    "${pc_save_distance}" \
+    "${wp_save_distance}" \
+    "${tf_topic}"
 
 # 正常終了チェック
 if [ $? -ne 0 ]; then
