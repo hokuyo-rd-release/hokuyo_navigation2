@@ -50,14 +50,29 @@
       "type": "odom",
       "id": "odom_autoID_14",
       "container_id": "icon_container"
+    },
+    {
+      "type": "teleop",
+      "id": "teleop_autoID_15",
+      "container_id": "icon_container"
+    },
+    {
+      "type": "button",
+      "id": "button_autoID_16",
+      "container_id": "icon_container"
+    },
+    {
+      "type": "button",
+      "id": "button_autoID_17",
+      "container_id": "icon_container"
     }
   ],
   "view": {
     "center": {
-      "x": -0.8006326100919083,
-      "y": -20.342083234584337
+      "x": 86.27492822137978,
+      "y": 61.38491162849678
     },
-    "scale": 10.110613857477592
+    "scale": 2.579153262653216
   },
   "settings_default": {
     "fixed_frame": "lio_odom",
@@ -104,7 +119,11 @@
       "lio_odom_inv": true
     }
   },
-  "uid": 15,
+  "uid": 19,
+  "rosbag_autoID_0": {
+    "path": "~/recording.bag",
+    "topic_list": []
+  },
   "satelite_autoID_1": {
     "topic": "/rsf/rsf_fix",
     "server_url": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
@@ -166,7 +185,7 @@
     "offset_yaw": "0.0"
   },
   "rosbag_autoID_13": {
-    "path": "/home/hokuyo/colcon_ws/src/hokuyo_navigation2/hokuyo_navigation2/rosbag",
+    "path": "/home/hokuyo/colcon_ws/src/hokuyo_navigation2/hokuyo_navigation2/rosbag/office",
     "topic_list": [
       "/rsf/lio_imu_rate_odom",
       "/rsf/lio_lidar_rate_odom",
@@ -188,5 +207,49 @@
     "throttle": "500",
     "draw_arrows": true,
     "draw_path": false
+  },
+  "teleop_autoID_15": {
+    "topic": "/wizurg/cmd_vel",
+    "color": "#ffffff",
+    "opacity": "0.6",
+    "axis_horiz": "angular_z",
+    "axis_vert": "linear_x",
+    "vel_vert": 0.3,
+    "vel_horiz": 0.5,
+    "accel_vert": 0.5,
+    "accel_horiz": 1,
+    "invert_vert": false,
+    "invert_horiz": true,
+    "ackermann_emulation": true,
+    "instant_stop": false,
+    "keyboard_control": false,
+    "keybindings": {
+      "key_up": "w",
+      "key_left": "a",
+      "key_down": "s",
+      "key_right": "d"
+    },
+    "joy_offset_x": "85.02604166666666%",
+    "joy_offset_y": "70.67003792667509%",
+    "typedict": {
+      "/cmd_vel": "geometry_msgs/msg/Twist",
+      "/wizurg/cmd_vel": "geometry_msgs/msg/Twist"
+    }
+  },
+  "button_autoID_16": {
+    "topic": "/wizurg/stop_cmd_vel",
+    "text": "Stop",
+    "typedict": {
+      "/wizurg/start_cmd_vel": "std_msgs/msg/Empty",
+      "/wizurg/stop_cmd_vel": "std_msgs/msg/Empty"
+    }
+  },
+  "button_autoID_17": {
+    "topic": "/wizurg/start_cmd_vel",
+    "text": "Start",
+    "typedict": {
+      "/wizurg/start_cmd_vel": "std_msgs/msg/Empty",
+      "/wizurg/stop_cmd_vel": "std_msgs/msg/Empty"
+    }
   }
 }
