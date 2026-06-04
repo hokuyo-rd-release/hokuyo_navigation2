@@ -34,7 +34,7 @@ python3 src/pcd_tf_extractor.py \
     /hokuyo3d/hokuyo_cloud2 \
     /hokuyo_lio/lidar_odom \
     dummy_pub_topic \
-    base_link \
+    hokuyo3d \
     lio_odom \
     "${pcd_output_dir}" \
     "${liomapname}.pcd" \
