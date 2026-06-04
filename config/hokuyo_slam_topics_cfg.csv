@@ -1,6 +1,13 @@
 オプション,指定値,デフォルト値
 gnss_topic,/fix,/fix
 pointcloud_topic,/hokuyo3d/hokuyo_cloud2,/hokuyo3d3/hokuyo_cloud2
-lio_topic,/hokuyo_lio/lidar_odom,/hokuyo_lio/sync_odom
+lio_topic,/rsf/lio_lidar_rate_odom,/hokuyo_lio/sync_odom
 run_lio,true,true
 gnss_cov_thre,0.01,0.01
+imu_topic,/hokuyo3d/imu
+slam_mode,gnss
+pc_save_distance,1.0
+wp_save_distance,1.0
+gnss_min_movement_thre,4.0
+lio_min_movement_thre,0.1
+gravity_stride,1
