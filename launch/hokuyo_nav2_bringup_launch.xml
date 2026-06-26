@@ -83,7 +83,7 @@
     <!-- Navigation 時 -->
       <group if="$(var use_localization)">
           <include file="$(var hokuyo_navigation_pkg_path)/launch/hokuyo_lio_node_with_yaml_ros2.xml">
-            <arg name="sync_enable" value="false"/>
+            <arg name="sync_enable" value="true"/>
             <arg name="lio_frame" value="base_link"/>
             <arg name="launch_rviz" value="true"/>
           </include>
@@ -138,13 +138,13 @@
           <node pkg="simple_fastlio_localization" exec="localization_node" name="localization_node" output="screen" launch-prefix="bash -c 'sleep 1.0; $0 $@'">
             <param name="map_file" value="$(var map_dir)/$(var map_file).pcd"/>
             <param name="initial_pose" value="$(var initial_pose)"/>
-            <param name="frames_accumulate" value="4"/>
+            <param name="frames_accumulate" value="2"/>
             <param name="min_registration_interval" value="0.0"/>
             <param name="asynchronous_registration" value="false"/>
             <param name="publish_2d_pose" value="true"/>
-            <param name="visualize_registration_result" value="true"/>
+            <param name="visualize_registration_result" value="false"/>
             <param name="enable_sound" value="false"/>
-            <param name="enable_lio_only_update" value="true"/>
+            <param name="enable_lio_only_update" value="false"/>
             <param name="rviz" value="false"/>
             <remap from="/Odometry" to="$(var sub_odom_name)"/> <!-- 変更予定 /hokuyo_lio/imu_rate_odom -->
             <remap from="/cloud_registered" to="$(var sub_cloud_name)"/>
