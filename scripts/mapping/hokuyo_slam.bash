@@ -100,33 +100,50 @@ echo "Flag File Name: $FLAG_FILE_NAME"
 echo "All args are checked."
 
 #------- hokuyo_slam_topics_cfg.csv 読み込み -------
-# 第5引数 (オプション)がconfigファイルパスとして使用される
-if [ "$6" = "" ]; then
-  options=(`cat ${CURRENT}/config/hokuyo_slam_topics_cfg.csv`)
-  echo option: $options
-else
-  options=(`cat $6`)
-  echo option: $options
+# 第6引数 (オプション)がconfigファイルパスとして使用される
+config_file="$6"
+if [ -z "$config_file" ]; then
+  config_file="${CURRENT}/config/hokuyo_slam_topics_cfg.csv"
 fi
 
-for i in ${!options[@]}; do
- if [ $i -gt 0 ]; then
-  j=$((${i}-1))
-  option_arr[$j]=`echo ${options[$i]} | cut -d ',' -f 2`
-  fi
-done
+# デフォルト値の設定 (CSVがない場合や項目が空の場合に使用)
+gnss_topic="/fix"
+pointcloud_topic="/hokuyo3d/hokuyo_cloud2"
+lio_topic="/rsf/lio_lidar_rate_odom"
+gnss_cov_thre="0.1"
+imu_topic="/imu/data"
+slam_mode="p2o"
+pc_save_distance="1.0"
+wp_save_distance="4.0"
+gnss_min_movement_thre="4.0"
+lio_min_movement_thre="0.1"
+gravity_stride="1"
+fix_rate="40"
 
-gnss_topic="${option_arr[0]}";
-pointcloud_topic="${option_arr[1]}";
-lio_topic="${option_arr[2]}";
-gnss_cov_thre="${option_arr[4]}";
-imu_topic="${option_arr[5]}";
-slam_mode="${option_arr[6]}";
-pc_save_distance="${option_arr[7]:-1.0}";
-wp_save_distance="${option_arr[8]:-4.0}";
-gnss_min_movement_thre="${option_arr[9]:-4.0}";
-lio_min_movement_thre="${option_arr[10]:-0.1}";
-gravity_stride="${option_arr[11]:-1}";
+if [ -f "$config_file" ]; then
+    echo "Loading config from: $config_file"
+    options=(`cat "$config_file"`)
+    for i in ${!options[@]}; do
+     if [ $i -gt 0 ]; then
+      j=$((${i}-1))
+      option_arr[$j]=`echo ${options[$i]} | cut -d ',' -f 2`
+      fi
+    done
+    gnss_topic="${option_arr[0]:-$gnss_topic}"
+    pointcloud_topic="${option_arr[1]:-$pointcloud_topic}"
+    lio_topic="${option_arr[2]:-$lio_topic}"
+    gnss_cov_thre="${option_arr[4]:-$gnss_cov_thre}"
+    imu_topic="${option_arr[5]:-$imu_topic}"
+    slam_mode="${option_arr[6]:-$slam_mode}"
+    pc_save_distance="${option_arr[7]:-$pc_save_distance}"
+    wp_save_distance="${option_arr[8]:-$wp_save_distance}"
+    gnss_min_movement_thre="${option_arr[9]:-$gnss_min_movement_thre}"
+    lio_min_movement_thre="${option_arr[10]:-$lio_min_movement_thre}"
+    gravity_stride="${option_arr[11]:-$gravity_stride}"
+    fix_rate="${option_arr[21]:-$fix_rate}"
+else
+    echo "WARNING: Config file not found at $config_file. Using default values."
+fi
 
 echo 'gnss_topic: '${gnss_topic}
 echo 'pointcloud_topic: '${pointcloud_topic}
@@ -139,6 +156,8 @@ echo 'wp_save_distance: '${wp_save_distance}
 echo 'gnss_min_movement_thre: '${gnss_min_movement_thre}
 echo 'lio_min_movement_thre: '${lio_min_movement_thre}
 echo 'gravity_stride: '${gravity_stride}
+echo 'fix_rate: '${fix_rate}
+
 sleep 1
 
 cd $HOKUYO_NAV2_PKG_PATH
@@ -248,17 +267,18 @@ for i in ${!gnss_opt[@]}; do
 done
 
 fix_rate1=0
+fix_rate_ok=0
 if [ -n "${gnss_opt_arr[0]}" ]; then
-    fix_rate1=`echo "${gnss_opt_arr[0]} < 40.0" | bc`
-    fix_rate=`echo "${gnss_opt_arr[0]} >= 40.0" | bc`
+    fix_rate1=$(echo "${gnss_opt_arr[0]} < ${fix_rate}" | bc)
+    fix_rate_ok=$(echo "${gnss_opt_arr[0]} >= ${fix_rate}" | bc)
 fi
 
-if [ ${fix_rate1} -eq 1 ] ; then
-  echo 'fix トピックの共分散のfix率が'${gnss_opt_arr}'%です。gnss_cov_threの値を大きくしてください。'
+if [ "${fix_rate1}" = "1" ] ; then
+  echo "fix トピックの共分散のfix率が ${gnss_opt_arr[0]}% です。gnss_cov_threの値を大きくしてください。"
   echo 'Fix率が低いため、Z軸拘束(擬似観測)を追加してSLAMを続行します。'
 fi
 
-if [ ${fix_rate1} -eq 1 ] || [ ${fix_rate} -eq 1 ] ; then
+if [ "${fix_rate1}" = "1" ] || [ "${fix_rate_ok}" = "1" ] ; then
   echo 'p2o 開始'
 
   sleep 1

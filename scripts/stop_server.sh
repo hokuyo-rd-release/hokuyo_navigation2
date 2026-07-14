@@ -10,7 +10,7 @@ CONTAINER_NAME="hokuyo_navigation2_dev"
 if [ -n "$DOCKER_ENV" ]; then
     echo "Docker環境で実行中です。コンテナ内のプロセスを停止します..."
     # 実行するコマンドの前につけるプレフィックス
-    CMD_PREFIX="docker exec $CONTAINER_NAME"
+    CMD_PREFIX=""
 else
     echo "ホストOS環境で実行中です。ホストのプロセスを停止します..."
     # ホストOSの場合、プレフィックスは不要
@@ -32,7 +32,7 @@ PROCESS_PATTERNS=(
 TARGET_PIDS=""
 for pattern in "${PROCESS_PATTERNS[@]}"; do
     if [ -n "$DOCKER_ENV" ]; then
-        PIDS=$(docker exec "$CONTAINER_NAME" ps aux | grep "$pattern" | grep -v "grep" | awk '{print $2}')
+        PIDS=$(pgrep -f "$pattern")
     else
         # ホストOSでは pgrep を使うのが便利です
         PIDS=$(pgrep -f "$pattern")
@@ -51,7 +51,7 @@ if [ -n "$SORTED_PIDS" ]; then
     for pid in $SORTED_PIDS; do
         echo "Killing PID: $pid"
         if [ -n "$DOCKER_ENV" ]; then
-            docker exec "$CONTAINER_NAME" kill -9 "$pid"
+            kill -9 "$pid"
         else
             kill -9 "$pid"
         fi
@@ -71,7 +71,7 @@ fi
 #sleep 1
 
 # Docker環境の場合のみコンテナを停止
-if [ -n "$DOCKER_ENV" ]; then
-    echo "Stopping the container: $CONTAINER_NAME"
-    docker stop "$CONTAINER_NAME"
-fi
+#if [ -n "$DOCKER_ENV" ]; then
+#    echo "Stopping the container: $CONTAINER_NAME"
+#    docker stop "$CONTAINER_NAME"
+#fi
