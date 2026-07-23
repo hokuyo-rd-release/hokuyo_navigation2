@@ -18,8 +18,10 @@
     <param name="use_sim_time" value="$(var use_sim_time)"/>
   </node>
 
-  <include file="$(var icart_mini_driver_pkg_path)/launch/icart_mini_bringup_launch.py">
+  <node pkg="mvc01_node2" exec="mvc01_node2" name="mvc01_node2" output="screen"/>
+
+  <!-- <include file="$(var icart_mini_driver_pkg_path)/launch/icart_mini_bringup_launch.py">
     <arg name="use_sim_time" value="$(var use_sim_time)"/>
-  </include>
+  </include> -->
 
 </launch>

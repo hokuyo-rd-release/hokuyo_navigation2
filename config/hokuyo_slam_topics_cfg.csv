@@ -6,10 +6,10 @@ run_lio,true,true
 gnss_cov_thre,0.01,0.01
 imu_topic,/hokuyo3d/imu
 slam_mode,gnss
-pc_save_distance,0.3
-wp_save_distance,0.5
-gnss_min_movement_thre,4.0
-lio_min_movement_thre,0.1
+pc_save_distance,1.0
+wp_save_distance,1.0
+gnss_min_movement_thre,2.0
+lio_min_movement_thre,0.2
 gravity_stride,1
 orig_frame,yvt,yvt
 target_frame,lio_odom,lio_odom
