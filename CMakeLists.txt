@@ -30,6 +30,7 @@ add_executable(gnss_lio_debug src/gnss_lio_debug.cpp)
 add_executable(pointcloud_transform_for_loc src/pointcloud_transform_for_loc.cpp)
 add_executable(odom_to_tf src/odom_to_tf.cpp)
 add_executable(odom_relative src/odom_relative.cpp)
+add_executable(odom_normalizer src/odom_normalizer.cpp)
 add_executable(cmdvel_stopper src/cmdvel_stopper.cpp)
 
 ament_target_dependencies(gnss_lio_debug
@@ -69,6 +70,12 @@ ament_target_dependencies(odom_relative
   tf2_geometry_msgs
 )
 
+ament_target_dependencies(odom_normalizer
+  rclcpp
+  std_msgs
+  nav_msgs
+)
+
 ament_target_dependencies(cmdvel_stopper
   rclcpp
   std_msgs
@@ -89,12 +96,15 @@ target_include_directories( odom_to_tf PUBLIC
 )
 target_include_directories( odom_relative PUBLIC
 )
+target_include_directories( odom_normalizer PUBLIC
+)
 
 install(TARGETS
   gnss_lio_debug
   pointcloud_transform_for_loc
   odom_to_tf
   odom_relative
+  odom_normalizer
   cmdvel_stopper
   DESTINATION lib/${PROJECT_NAME}
 )

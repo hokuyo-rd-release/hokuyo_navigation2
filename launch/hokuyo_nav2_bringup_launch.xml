@@ -107,6 +107,17 @@
       <param name="frame_id" value="rsf"/>
       <param name="child_frame_id" value="rsf_gnss"/>
     </node>
+
+    <!-- オドメトリ正規化. -->
+    <node pkg="hokuyo_navigation2" exec="odom_normalizer" name="rsf_odom_normalizer">
+      <param name="sub_odom_topic" value="/rsf/rsf_odom_tmp"/>
+      <param name="pub_odom_topic" value="/rsf/rsf_odom"/>
+    </node>
+    <!-- オドメトリ正規化. -->
+    <node pkg="hokuyo_navigation2" exec="odom_normalizer" name="lio_odom_normalizer">
+      <param name="sub_odom_topic" value="/rsf/lio_imu_rate_odom_tmp"/>
+      <param name="pub_odom_topic" value="/rsf/lio_imu_rate_odom"/>
+    </node>
   </group>
 
 

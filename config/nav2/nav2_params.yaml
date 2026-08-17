@@ -150,14 +150,14 @@ local_costmap:
       width: 10
       height: 10
       resolution: 0.1
-      robot_radius: 0.5
+      robot_radius: 0.3
       update_frequency: 5.0
       publish_frequency: 5.0
       plugins: ["obstacle_layer", "inflation_layer"]
       inflation_layer:
         enabled: true
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 3.0 #3.0
+        cost_scaling_factor: 10.0 #3.0
         inflation_radius: 0.5 #0.3
       obstacle_layer:
         enabled: true
