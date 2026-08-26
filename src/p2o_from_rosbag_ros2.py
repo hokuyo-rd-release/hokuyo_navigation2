@@ -297,7 +297,7 @@ if __name__ == "__main__":
         gnss_xyz = latlon_to_xyz(transformer, msg.latitude, msg.longitude, msg.altitude)
         gnss_movement_sq = (last_gnss_xyz[0]-gnss_xyz[0])*(last_gnss_xyz[0]-gnss_xyz[0]) + (last_gnss_xyz[1]-gnss_xyz[1])*(last_gnss_xyz[1]-gnss_xyz[1]) + (last_gnss_xyz[2]-gnss_xyz[2])*(last_gnss_xyz[2]-gnss_xyz[2])
         if hasattr(msg, 'status') and hasattr(msg.status, 'status') and \
-           (msg.status.status == 0 or msg.status.status == 2) and \
+           (msg.status.status == 0 or msg.status.status == 2 or msg.status.status == 1) and \
            hasattr(msg, 'position_covariance') and len(msg.position_covariance) >= 9 and \
            msg.position_covariance[0] < gnss_cov_thre and \
            gnss_movement_sq > gnss_min_movement_thre*gnss_min_movement_thre:

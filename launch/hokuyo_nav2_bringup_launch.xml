@@ -1,42 +1,25 @@
 <?xml version='1.0' ?>
 <launch>
   <arg name="hokuyo_navigation_pkg_path" default="$(command 'python3 -c &quot;from ament_index_python.packages import get_package_prefix; import os; pkg_name = \'hokuyo_navigation2\'; install_prefix = get_package_prefix(pkg_name); ws_root = os.path.dirname(os.path.dirname(install_prefix)); src_path = os.path.join(ws_root, \'src\', pkg_name, pkg_name); print(src_path if os.path.isdir(src_path) else install_prefix, end=\'\')&quot;')"/>
-  <!-- <arg name="coordinate_transform_pkg_path" default="$(find-pkg-share coordinate_transform)"/> -->
   <arg name="urdf_path" default="$(var hokuyo_navigation_pkg_path)/urdf/arno.xacro"/>
   <arg name="robot_description" default="$(command 'xacro $(var urdf_path)')"/>
-
-  <!-- <arg name="use_sim_time" default="false"/> -->
-  <!-- <arg name="use_joy" default="false"/> -->
-  <!-- <arg name="use_mapping" default="false"/> -->
   <arg name="use_navigation" default="false"/>
-  <!-- <arg name="use_loader" default="false"/>
-  <arg name="use_editor" default="false"/> -->
-  <!-- <arg name="use_sensor" default="false"/> -->
-  <!-- <arg name="use_icart" default="false"/> -->
-  <!-- <arg name="use_lio" default="false"/> -->
   <arg name="use_rsf" default="true" />
-  <!-- <arg name="use_unity_sim" default="false"/> -->
+
   <arg name="enable_uam" default="false"/>
   <arg name="use_gnss_switch" default="false"/>
   <arg name="use_localization" default="true"/>
 
   <arg name="map_dir" default="$(var hokuyo_navigation_pkg_path)/map"/>
   <arg name="map_file" default="test"/>
-  <!-- <arg name="way_dir" default="$(var hokuyo_navigation_pkg_path)/waypoints"/> -->
-  <!-- <arg name="way_file" default="_waypoint"/> -->
 
-  <!-- <arg name="lio_localization_param" default="$(var hokuyo_navigation_pkg_path)/config/localization_params.yaml"/> -->
   <arg name="sub_odom_name" default="/rsf/lio_imu_rate_odom" />
   <arg name="sub_cloud_name" default="/rsf/aligned" />
-  <!-- <arg name="nav2_param_" default="$(var hokuyo_navigation_pkg_path)/config/nav2/nav2_params.yaml"/> -->
+
   <arg name="fix2xyz_params_" default="$(var hokuyo_navigation_pkg_path)/config/fix2xyz.yaml"/>
   <arg name="xyz2fix_params_" default="$(var hokuyo_navigation_pkg_path)/config/xyz2fix.yaml"/>
   <arg name="rsf_param" default="$(var hokuyo_navigation_pkg_path)/config/rsf_node_config.yaml"/>
-  <!-- <arg name="gnss_tf_param" default="$(var hokuyo_navigation_pkg_path)/config/gnss_tf.yaml"/> -->
-  <!-- <arg name="switch_tf_param" default="$(var hokuyo_navigation_pkg_path)/config/switch_tf.yaml"/> -->
-  <!-- <arg name="switch_only_tf_param" default="$(var hokuyo_navigation_pkg_path)/config/switch_only_tf.yaml"/> -->
-  <!-- <arg name="gnss_lio_switch_param" default="$(var hokuyo_navigation_pkg_path)/config/gnss_lio_switch.yaml" /> -->
-  <!-- <arg name="gnss_lio_switch_only_param" default="$(var hokuyo_navigation_pkg_path)/config/gnss_lio_switch_only.yaml" /> -->
+
   <arg name="initial_pose" default="0.0 0.0 0.0 0.0 0.0 0.0 0.0"/>
   <arg name="latlon_pose" default="35.0 135.0 40.0"/>
 
@@ -50,12 +33,6 @@
     <param name="origin_pose" value="$(var latlon_pose)" />
   </node>
 
-  <!-- 関連ソフト UAM_controller -->
-  <!-- <node name="cmdvel_manager" pkg="robot_safety_manage" exec="cmdvel_manager" output="log">
-  <!-- <node name="cmdvel_manager" pkg="robot_safety_manage" exec="cmdvel_manager" output="log">
-    <param name="enable_manage" value="$(var enable_uam)" />
-  </node> -->
-  </node> -->
   <!-- 関連ソフト waypoint_controller -->
   <node name="waypoint_controller" pkg="hokuyo_navigation2" exec="cmdvel_stopper" output="log"/>
   <node name="gnss_lio_debug" pkg="hokuyo_navigation2" exec="gnss_lio_debug" output="log"/>

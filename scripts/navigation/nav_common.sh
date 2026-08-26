@@ -2,6 +2,114 @@
 
 # このスクリプトは nav_single_map.sh と nav_multi_map.sh から source されることを想定しています。
 
+# =========================================================================
+# ライフサイクル / 起動待ち関連
+# =========================================================================
+
+# --- 状態文字列だけを安全に抽出するヘルパー関数 (BrokenPipeError対策済み) ---
+get_lifecycle_state() {
+    local node_name="$1"
+    # 一度変数に受けてから処理することで、PythonのBrokenPipeErrorを完全に回避する
+    local output
+    output=$(ros2 lifecycle get "$node_name" 2>/dev/null || echo "")
+
+    local raw_state
+    raw_state=$(echo "$output" | grep -E '(unconfigured|inactive|active)' | head -n 1 || echo "unknown")
+    echo "$raw_state" | tr -d '[:space:]'
+}
+
+# --- Map Server の起動を安全に待つ関数 ---
+# 第1引数: タイムアウト秒数 (省略時は 30 秒)
+wait_for_map_server() {
+    local timeout="${1:-30}"
+    local start_time=$(date +%s)
+    echo "map_server の起動を待っています..."
+
+    while true; do
+        local state
+        state=$(get_lifecycle_state "/map_server")
+
+        echo "現在の状態: ${state}"
+
+        if [[ "$state" == active* ]]; then
+            echo "map_server はすでに Active です。"
+            return 0
+        fi
+
+        if [[ "$state" == inactive* ]]; then
+            echo "Inactive 状態を検出しました。activate を実行します。"
+            ros2 lifecycle set /map_server activate 2>/dev/null || true
+            sleep 2
+            continue
+        fi
+
+        if [[ "$state" == unconfigured* ]]; then
+            echo "Unconfigured 状態を検出しました。configure と activate を実行します。"
+            ros2 lifecycle set /map_server configure 2>/dev/null || true
+            ros2 lifecycle set /map_server activate 2>/dev/null || true
+            sleep 2
+            continue
+        fi
+
+        local current_time=$(date +%s)
+        if (( current_time - start_time > timeout )); then
+            echo "エラー: map_server の起動確認がタイムアウトしました。"
+            return 1
+        fi
+
+        sleep 1
+    done
+}
+
+# --- Nav2の起動とライフサイクル、アクションサーバーの準備完了を監視する関数 ---
+# 第1引数: タイムアウト秒数 (省略時は 60 秒)
+wait_for_nav2_ready() {
+    local timeout="${1:-60}"
+    local start_time=$(date +%s)
+    echo "Nav2のライフサイクル状態とアクションサーバーの準備を監視しています..."
+
+    while true; do
+        local state
+        state=$(get_lifecycle_state "/bt_navigator")
+
+        local action_exists
+        action_exists=$(ros2 action list 2>/dev/null | grep -c "/navigate_to_pose" || echo "0")
+
+        echo -ne "Debug: bt_navigator state is '${state}', action server ready: ${action_exists}... \r"
+
+        if [[ "$state" == active* ]] && [ "$action_exists" -gt 0 ]; then
+            echo -e "\nNav2システムおよびアクションサーバーの準備が完全に完了しました。"
+            echo "コストマップの安定化を待っています (3秒)..."
+            sleep 3
+            return 0
+        fi
+
+        if [[ "$state" == unconfigured* ]]; then
+            echo -e "\nUnconfigured状態を検出しました。configureを試行します..."
+            ros2 lifecycle set /bt_navigator configure 2>/dev/null || true
+            sleep 1
+        fi
+
+        if [[ "$state" == inactive* ]]; then
+            echo -e "\nInactive状態を検出しました。activateを試行します..."
+            ros2 lifecycle set /bt_navigator activate 2>/dev/null || true
+            sleep 1
+        fi
+
+        local current_time=$(date +%s)
+        if (( current_time - start_time > timeout )); then
+            echo -e "\nエラー: Nav2の起動確認がタイムアウトしました。現在の状態: ${state}"
+            return 1
+        fi
+
+        sleep 1
+    done
+}
+
+# =========================================================================
+# オプション読み込み関連
+# =========================================================================
+
 load_options() {
     local wizurg_opt="$1"
     local options_csv_path="${HOKUYO_NAV2_PKG_PATH}/config/wizurg_opts/${wizurg_opt}.csv"
@@ -130,6 +238,28 @@ launch_navigation_system() {
         initial_pose:=\"${pose1},${pose2},${pose3},${pose4},${pose5},${pose6},${pose7}\" \
         latlon_pose:=\"${latlon1},${latlon2},${latlon3}\"; \
         bash"
+    # ノードが検出されるまで待機
+    echo "map_server の起動を待っています..."
+    while ! ros2 node list | grep -q "^/map_server$"; do sleep 0.5; done
+
+    # 現在の状態を取得
+    CURRENT_STATE=$(ros2 lifecycle get /map_server)
+    echo "現在の状態: $CURRENT_STATE"
+
+    # 状態名、または状態番号[2]（Inactive）を判定してアクティブ化
+    if echo "$CURRENT_STATE" | grep -E -q "unconfigured|\[1\]"; then
+        echo "未設定のため、configure と activate を実行します。"
+        ros2 lifecycle set /map_server configure && sleep 0.5 && ros2 lifecycle set /map_server activate
+    elif echo "$CURRENT_STATE" | grep -E -q "Inactive|inactive|\[2\]"; then
+        echo "Inactive 状態を検出しました。activate を実行します。"
+        ros2 lifecycle set /map_server activate
+    elif echo "$CURRENT_STATE" | grep -E -q "Active|active|\[3\]"; then
+        echo "すでに Active（有効化済み）です。"
+    else
+        echo "想定外の状態ですが、強制的に activate を試みます。"
+        ros2 lifecycle set /map_server activate
+    fi
+
 }
 
 # モータドライバを起動する関数
