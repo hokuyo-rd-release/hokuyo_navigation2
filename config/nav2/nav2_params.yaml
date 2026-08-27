@@ -133,8 +133,8 @@ local_costmap:
       use_sim_time: True
       track_unknown_space: false
       rolling_window: true
-      width: 6.0              # 範囲を6mに縮小して計算コストを削減
-      height: 6.0             # 範囲を6mに縮小して計算コストを削減
+      width: 6              # 範囲を6mに縮小して計算コストを削減
+      height: 6             # 範囲を6mに縮小して計算コストを削減
       resolution: 0.1
       robot_radius: 0.3
       update_frequency: 20.0  # 応答性を上げるため20Hzに高速化
