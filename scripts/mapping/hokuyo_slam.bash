@@ -16,7 +16,7 @@ echo "hokuyo_slam のバイナリディレクトリが見つかりました: ${H
 
 # 実行方法 (server.pyとstart_mapping.shの変更後):
 # ./hokuyo_slam.bash <rosbagベース名> <マップ名> <MAP_DIR> <FLAG_FILE_NAME> <option>
-# $1: rosbagのベース名 (例: sync_bag)
+# $1: rosbagのベース名 (例: my_bag)
 # $2: マップ名 (例: final_map)
 # $3: MAP_DIR (例: /home/hokuyo/colcon_ws/src/hokuyo_navigation2/map)
 # $4: FLAG_FILE_NAME (例: final_map.P2O_DONE)
@@ -246,6 +246,14 @@ if [ "$slam_mode" = "gravity" ]; then
     
     # 8. 結果の移動と完了フラグ生成
     mv "data/$2/${2}_Rcord.pcd" "$MAP_DIR/${2}.pcd"
+
+    # 地図が本当にできているかを確認してからフラグを作る。
+    # 確認せずにフラグを作ると、地図が無いのに GUI 上は「成功」に見えてしまう。
+    if [ ! -s "$MAP_DIR/${2}.pcd" ]; then
+        echo "Error: 地図ファイルが作成されていません: $MAP_DIR/${2}.pcd"
+        exit 1
+    fi
+
     FLAG_PATH="${MAP_DIR}/${FLAG_FILE_NAME}"
     touch "$FLAG_PATH"
     
@@ -331,13 +339,28 @@ if [ "${fix_rate1}" = "1" ] || [ "${fix_rate_ok}" = "1" ] ; then
     # 🌟 PCDファイルの移動先を $MAP_DIR に変更 🌟
     bash -c "mv data/$2/${2}_Rcord.pcd $MAP_DIR"
     bash -c "mv $MAP_DIR/${2}_Rcord.pcd $MAP_DIR/${2}.pcd"
+
+    # 地図が本当にできているかを確認してからフラグを作る。
+    # 確認せずにフラグを作ると、地図が無いのに GUI 上は「成功」に見えてしまう。
+    if [ ! -s "$MAP_DIR/${2}.pcd" ]; then
+        echo "Error: 地図ファイルが作成されていません: $MAP_DIR/${2}.pcd"
+        echo '       トピック名の設定と、rosbag に点群が記録されているかを確認してください。'
+        exit 1
+    fi
     
     # 🌟 完了フラグ作成の追記とパスの修正 🌟
     FLAG_PATH="${MAP_DIR}/${FLAG_FILE_NAME}" # $MAP_DIR と $FLAG_FILE_NAME を結合
     touch "$FLAG_PATH"
     echo "P2O SLAM completion flag created: $FLAG_PATH"
     # ---------------------------
-  elif [ ${result} -eq 1 ] ; then
+  else
+    echo 'Error: p2o_from_rosbag_ros2.py が失敗しました。'
     echo 'rosbag play でfixメッセージがあるかの確認と、gnss_logで共分散の値を確認してください。'
+    exit 1
   fi
+else
+  # fix率を計算できなかった場合。GNSSトピック名が違うか、fixメッセージが無い。
+  echo 'Error: GNSSのfix率を計算できませんでした。処理を中止します。'
+  echo "       gnss_topic (${gnss_topic}) が rosbag に記録されているか確認してください。"
+  exit 1
 fi

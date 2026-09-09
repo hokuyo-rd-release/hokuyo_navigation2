@@ -199,7 +199,12 @@ def save_waypoints_to_json(waypoints, wp_dir, file_name):
 # --- メイン処理 ---
 
 def process_bag_data(all_data):
-    """bagから抽出したデータを使ってC++ノードのロジックを再現し、ウェイポイントを生成する"""
+    """bagから抽出したデータを使ってC++ノードのロジックを再現し、ウェイポイントを生成する
+
+    地図を1点も作れなかった場合は False を返す。呼び出し元はこれを終了コードに
+    反映すること。地図ができていないのに正常終了すると、呼び出し元のスクリプトが
+    完了フラグを作ってしまい、GUI 上は「成功」に見えてしまう。
+    """
     
     pcd_list = all_data.get(TOPICS["PCD"], [])
     odom_list = all_data.get(TOPICS["ODOM"], [])
@@ -212,10 +217,20 @@ def process_bag_data(all_data):
     last_pcd_position = {'x': 1e6, 'y': 1e6, 'z': 1e6}
     current_position = {'x': 0.0, 'y': 0.0, 'z': 0.0}
     combined_pcd = []
+    # 座標系が合わずに読み飛ばしたオドメトリの件数と、実際に入っていた座標系。
+    # 設定ミスを利用者に伝えるために記録する。
+    frame_mismatch_count = 0
+    observed_frames = set()
     
     if not odom_list:
-        print("Error: Odometry data not found. Cannot generate waypoints.")
-        return
+        print(f"Error: Odometry data not found in topic '{TOPICS['ODOM']}'. "
+              f"Cannot generate waypoints.")
+        return False
+
+    if not pcd_list:
+        print(f"Error: PointCloud data not found in topic '{TOPICS['PCD']}'. "
+              f"Cannot build a map.")
+        return False
 
     print(f"\nStarting data processing...")
     print(f"  PointCloud Distance Filter: {PC_SAVE_DISTANCE} m")
@@ -320,9 +335,20 @@ def process_bag_data(all_data):
                 combined_pcd.append(transformed_points)
             
             else:
-                 pass
+                # 設定の orig_frame / target_frame がBagの中身と違うと、
+                # ここで全ての点群が読み飛ばされ、空の地図ができてしまう。
+                frame_mismatch_count += 1
+                observed_frames.add(
+                    f'{odom_msg.header.frame_id} -> {odom_msg.child_frame_id}')
+
+    if frame_mismatch_count:
+        print(f"\nWarning: Skipped {frame_mismatch_count} odometry messages "
+              f"because the frames did not match the configuration.")
+        print(f"   Configured (target_frame -> orig_frame): {TARGET_FRAME} -> {ORIG_FRAME}")
+        print(f"   Found in the bag: {', '.join(sorted(observed_frames))}")
 
     # 7. 地図の保存
+    map_saved = False
     if combined_pcd:
         final_map_points = np.vstack(combined_pcd)
         save_path = os.path.join(MAP_DIR, MAP_NAME)
@@ -340,6 +366,7 @@ def process_bag_data(all_data):
             )
             
             if success:
+                map_saved = True
                 print(f"\n--- Processing Finished ---")
                 print(f"Total points saved: {final_map_points.shape[0]} points.")
                 print(f"✅ Saved map successfully to {save_path} (Binary/Compressed format)")
@@ -353,7 +380,8 @@ def process_bag_data(all_data):
             print(f"   Please check file permissions and disk space for directory: {MAP_DIR}")
     else:
         print("\n--- Processing Finished ---")
-        print("No point clouds were saved due to filtering or empty data.")
+        print("Error: No point clouds were saved due to filtering or empty data. "
+              "The map was not created.")
 
 
     # 8. Waypointの保存 (最初と最後の2つを削除する安定化ロジックを追加)
@@ -379,6 +407,8 @@ def process_bag_data(all_data):
         else:
              print("\n--- Waypoint Processing Finished ---")
              print("Warning: All waypoints were filtered out or removed during stabilization.")
+
+    return map_saved
 
 
 if __name__ == "__main__":
@@ -445,5 +475,12 @@ if __name__ == "__main__":
     else:
         print(f"Error: No .mcap or .db3 files found in '{bag_folder}'.")
         sys.exit(1)
-        
-    process_bag_data(all_data)
+
+    if not all_data:
+        print("Error: The configured topics were not found in the bag. "
+              "Check pointcloud_topic and lio_topic in the parameter config file.")
+        sys.exit(1)
+
+    if not process_bag_data(all_data):
+        print("Error: LIO-RAW mapping failed. No map file was created.")
+        sys.exit(1)

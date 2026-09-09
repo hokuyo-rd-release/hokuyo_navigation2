@@ -4,7 +4,7 @@
 source "$(dirname "$0")/../setup_ros_env.sh"
 
 # コマンドライン引数を取得 (すべてダブルクォーテーションで受け取ることを推奨)
-# $1: rosbagファイル名 (例: my_synced_bag)
+# $1: rosbagファイル名 (例: my_bag)
 # $2: 出力マップ名 (例: final_map)
 # $3: PCDの出力先ディレクトリ (例: /path/to/map)
 # $4: 完了フラグファイルの絶対パス (例: /path/to/map/final_map.LIO_RAW_DONE)
@@ -80,9 +80,21 @@ python3 src/pcd_tf_extractor.py \
     "${tf_topic}"
 
 # 正常終了チェック
-if [ $? -ne 0 ]; then
-    echo "ERROR: pcd_tf_extractor.py がエラーコード $? で終了しました。完了フラグは出力されません。"
+# NOTE: $? は直前のコマンドの結果なので、必ず先に変数へ退避すること。
+#       ( if 文の中で $? を参照すると test コマンドの結果になってしまう )
+EXTRACTOR_STATUS=$?
+if [ ${EXTRACTOR_STATUS} -ne 0 ]; then
+    echo "ERROR: pcd_tf_extractor.py がエラーコード ${EXTRACTOR_STATUS} で終了しました。完了フラグは出力されません。"
     # 処理失敗時は非ゼロで終了
+    exit 1
+fi
+
+# 地図ファイルが本当に出力されたかを確認する。
+# ここを確認せずに完了フラグを作ると、地図が無いのに GUI 上は「成功」に見えてしまう。
+OUTPUT_PCD_PATH="${pcd_output_dir}/${liomapname}.pcd"
+if [ ! -s "${OUTPUT_PCD_PATH}" ]; then
+    echo "ERROR: 地図ファイルが作成されていません: ${OUTPUT_PCD_PATH}"
+    echo "       トピック名と座標系 (orig_frame / target_frame) の設定を確認してください。"
     exit 1
 fi
 
