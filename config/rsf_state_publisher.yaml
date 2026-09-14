@@ -1,0 +1,14 @@
+sensor_status_display_node:
+  ros__parameters:
+    sub_gnss_topic: "/fix"
+    sub_gnss_state_topic: "/rsf/rsf_fix_state"
+    sub_gnss_type_topic: "/rsf/rsf_fix_type"
+    sub_gpgga_topic: "/gga"
+    sub_odometry_type_topic: "/rsf/rsf_odom_type"
+    sub_odometry_state_topic: "/rsf/rsf_odom_state"
+    sub_lidar_odom_topic: "/rsf/rsf_odom"
+    pub_status_summary: "/rsf/status_summary"
+    sub_diagnostics_topic: "/rsf/diagnostics"
+    pub_audio_warning_topic: "/rsf/audio_warning"
+    cpu_limit: 90
+    temp_limit: 70.0

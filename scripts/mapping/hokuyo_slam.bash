@@ -112,7 +112,7 @@ pointcloud_topic="/hokuyo3d/hokuyo_cloud2"
 lio_topic="/rsf/lio_lidar_rate_odom"
 gnss_cov_thre="0.1"
 imu_topic="/imu/data"
-slam_mode="p2o"
+slam_mode="gnss"
 pc_save_distance="1.0"
 wp_save_distance="4.0"
 gnss_min_movement_thre="4.0"
@@ -184,8 +184,10 @@ if [ "$slam_mode" = "gravity" ]; then
     fi
     
     # 2. ダミーの原点ファイル作成 (run_p2o の実行に必要)
-    echo "0,0.0,0.0,0.0" > "data/$2/center_utm.txt"
-    echo "0.0 0.0 0.0" > "data/$2/center_lat_lon_alt.txt"
+    # UTM ゾーン 0 などの無効な値だと run_p2o の緯度経度が inf になり、init_lat_lon_alt.txt も inf になる。
+    # lio_raw.bash と同じダミー地点 (35.0,135.0,40.0) の UTM 座標 (ゾーン 53) を原点にする。
+    echo "53,500000.0,3873043.0645342614,40.0" > "data/$2/center_utm.txt"
+    echo "35.0,135.0,40.0" > "data/$2/center_lat_lon_alt.txt"
     
     # 3. IMU重力情報を利用した p2o グラフの生成
     echo "Generating p2o graph with gravity edges..."
@@ -261,106 +263,129 @@ if [ "$slam_mode" = "gravity" ]; then
     exit 0
 fi
 
-# gnssのログを確認する。
-bash -c "python3 src/p2o_gnsslog_from_rosbag_ros2.py rosbag/$1 gnss_log/${2}_gnss_cov_${gnss_cov_thre}.csv $gnss_topic $gnss_cov_thre"
-gnss_opt=(`cat gnss_log/${2}_gnss_cov_${gnss_cov_thre}.csv`)
+p2o_extra_args=""
 
-sleep 1
-
-for i in ${!gnss_opt[@]}; do
-  if [ $i -gt 0 ]; then
-    j=$((${i}-1))
-    gnss_opt_arr[$j]=`echo ${gnss_opt[$i]} | cut -d ',' -f 2`
-  fi
-done
-
-fix_rate1=0
-fix_rate_ok=0
-if [ -n "${gnss_opt_arr[0]}" ]; then
-    fix_rate1=$(echo "${gnss_opt_arr[0]} < ${fix_rate}" | bc)
-    fix_rate_ok=$(echo "${gnss_opt_arr[0]} >= ${fix_rate}" | bc)
-fi
-
-if [ "${fix_rate1}" = "1" ] ; then
-  echo "fix トピックの共分散のfix率が ${gnss_opt_arr[0]}% です。gnss_cov_threの値を大きくしてください。"
-  echo 'Fix率が低いため、Z軸拘束(擬似観測)を追加してSLAMを続行します。'
-fi
-
-if [ "${fix_rate1}" = "1" ] || [ "${fix_rate_ok}" = "1" ] ; then
-  echo 'p2o 開始'
+if [ "$slam_mode" = "pseudo_z0" ]; then
+  # ------- pseudo_z0 モード -------
+  # GNSS が使えない環境向け。GNSS の制約は使わず、LIO の軌跡を平面 (z=0) に投影して反りを解消する。
+  echo 'slam_mode が pseudo_z0 のため、GNSS を使わずに LIO の軌跡を平面に投影して地図を作成します。'
+  # ダミーの原点ファイル作成 (run_p2o の実行に必要)
+  # UTM ゾーン 0 などの無効な値だと run_p2o の緯度経度が inf になり、rearrange_pointcloud が
+  # その行を読み飛ばして地図が空になる。lio_raw.bash と同じダミー地点
+  # (35.0,135.0,40.0) の UTM 座標 (ゾーン 53) を原点にする。
+  echo "53,500000.0,3873043.0645342614,40.0" > "data/$2/center_utm.txt"
+  echo "35.0,135.0,40.0" > "data/$2/center_lat_lon_alt.txt"
+  p2o_extra_args="--no-gnss"
+else
+  # ------- gnss モード -------
+  # gnssのログを確認する。
+  bash -c "python3 src/p2o_gnsslog_from_rosbag_ros2.py rosbag/$1 gnss_log/${2}_gnss_cov_${gnss_cov_thre}.csv $gnss_topic $gnss_cov_thre"
+  gnss_opt=(`cat gnss_log/${2}_gnss_cov_${gnss_cov_thre}.csv`)
 
   sleep 1
-  # p2o　正常終了の場合のみ処理を実行したい。
-  echo 'p2o_from_rosbag'
-  bash -c "python3 src/p2o_from_rosbag_ros2.py \
-    rosbag/$1 \
-    $lio_topic \
-    $gnss_topic \
-    $gnss_cov_thre \
-    data/$2/center_lat_lon_alt.txt \
-    data/$2/center_utm.txt \
-    data/$2/lio_edge_timestamps.txt \
-    --gnss-min-movement-thre $gnss_min_movement_thre \
-    --lio-min-movement-thre $lio_min_movement_thre \
-    > data/$2/output.p2o"
-  result=$?
 
-  echo 'error status:' ${result}
-
-  if [ ${result} -eq 0 ] ; then
-    # fix_rate1 (fix率 < 40%) の場合、Z軸拘束を追加
-    if [ ${fix_rate1} -eq 1 ]; then
-        echo 'Applying pseudo Z0 observations...'
-        mv data/$2/output.p2o data/$2/output_raw.p2o
-        bash -c "python3 src/add_pseudo_z0_obs.py data/$2/output_raw.p2o > data/$2/output.p2o"
+  for i in ${!gnss_opt[@]}; do
+    if [ $i -gt 0 ]; then
+      j=$((${i}-1))
+      gnss_opt_arr[$j]=`echo ${gnss_opt[$i]} | cut -d ',' -f 2`
     fi
+  done
 
-    echo 'run_p2o'
-    bash -c "${HOKUYO_SLAM_BIN_DIR}/run_p2o data/$2/center_utm.txt data/$2/output.p2o"
-    #bash -c "gnuplot atc_odom_gnss.plt"
+  fix_rate1=0
+  fix_rate_ok=0
+  if [ -n "${gnss_opt_arr[0]}" ]; then
+      fix_rate1=$(echo "${gnss_opt_arr[0]} < ${fix_rate}" | bc)
+      fix_rate_ok=$(echo "${gnss_opt_arr[0]} >= ${fix_rate}" | bc)
+  fi
 
-    # p2o_fastlio_util
-    cd ${HOKUYO_NAV2_PKG_PATH}/data/$2/PCDs 
-
-    bash -c "python3 ../../../src/extract_pcd_ros2.py ../../../rosbag/$1 $pointcloud_topic $HOKUYO_NAV2_PKG_PATH/data/$2/lio_edge_timestamps.txt" # ~/p2o_fastlio_util/extract_pcd 引数1 + 引数2
-
-    # p2o_fastlio_util におけるファイル整理
-    cd ./..
-    tail -n +2 output.p2o_out.txt > poses.txt
-    find . | grep pcd > clouds.txt
-    sort clouds.txt > sorted_clouds.txt
-    paste sorted_clouds.txt poses.txt > concat.txt
-        bash -c "${HOKUYO_SLAM_BIN_DIR}/rearrange_pointcloud concat.txt $2 ${WP_DIR_ABS}/${2}.json $pc_save_distance $wp_save_distance"
-
-    # 絶対座標を相対座標に変換
-    cd ../..
-    bash -c "python3 src/pcd_to_Rcord.py data/$2/${2}_Acord.pcd data/$2/${2}_Rcord.pcd data/$2/output.p2o_out.txt data/$2/init_pose.txt data/$2/init_lat_lon_alt.txt"
-    
-    # 🌟 PCDファイルの移動先を $MAP_DIR に変更 🌟
-    bash -c "mv data/$2/${2}_Rcord.pcd $MAP_DIR"
-    bash -c "mv $MAP_DIR/${2}_Rcord.pcd $MAP_DIR/${2}.pcd"
-
-    # 地図が本当にできているかを確認してからフラグを作る。
-    # 確認せずにフラグを作ると、地図が無いのに GUI 上は「成功」に見えてしまう。
-    if [ ! -s "$MAP_DIR/${2}.pcd" ]; then
-        echo "Error: 地図ファイルが作成されていません: $MAP_DIR/${2}.pcd"
-        echo '       トピック名の設定と、rosbag に点群が記録されているかを確認してください。'
-        exit 1
-    fi
-    
-    # 🌟 完了フラグ作成の追記とパスの修正 🌟
-    FLAG_PATH="${MAP_DIR}/${FLAG_FILE_NAME}" # $MAP_DIR と $FLAG_FILE_NAME を結合
-    touch "$FLAG_PATH"
-    echo "P2O SLAM completion flag created: $FLAG_PATH"
-    # ---------------------------
-  else
-    echo 'Error: p2o_from_rosbag_ros2.py が失敗しました。'
-    echo 'rosbag play でfixメッセージがあるかの確認と、gnss_logで共分散の値を確認してください。'
+  if [ "${fix_rate1}" != "1" ] && [ "${fix_rate_ok}" != "1" ] ; then
+    # fix率を計算できなかった場合。GNSSトピック名が違うか、fixメッセージが無い。
+    echo 'Error: GNSSのfix率を計算できませんでした。処理を中止します。'
+    echo "       gnss_topic (${gnss_topic}) が rosbag に記録されているか確認してください。"
+    echo '       GNSS が使えない環境では slam_mode を pseudo_z0 にしてください。'
     exit 1
   fi
-else
-  # fix率を計算できなかった場合。GNSSトピック名が違うか、fixメッセージが無い。
-  echo 'Error: GNSSのfix率を計算できませんでした。処理を中止します。'
-  echo "       gnss_topic (${gnss_topic}) が rosbag に記録されているか確認してください。"
+
+  if [ "${fix_rate1}" = "1" ] ; then
+    echo "fix トピックの共分散のfix率が ${gnss_opt_arr[0]}% です。gnss_cov_threの値を大きくしてください。"
+    echo "Error: fix率が fix_rate (${fix_rate}%) を下回ったため、処理を中止します。"
+    echo '       gnss_cov_thre の値を大きくするか、slam_mode を pseudo_z0 にしてください。'
+    exit 1
+  fi
+fi
+
+echo 'p2o 開始'
+
+sleep 1
+# p2o　正常終了の場合のみ処理を実行したい。
+echo 'p2o_from_rosbag'
+bash -c "python3 src/p2o_from_rosbag_ros2.py \
+  rosbag/$1 \
+  $lio_topic \
+  $gnss_topic \
+  $gnss_cov_thre \
+  data/$2/center_lat_lon_alt.txt \
+  data/$2/center_utm.txt \
+  data/$2/lio_edge_timestamps.txt \
+  --gnss-min-movement-thre $gnss_min_movement_thre \
+  --lio-min-movement-thre $lio_min_movement_thre \
+  $p2o_extra_args \
+  > data/$2/output.p2o"
+result=$?
+
+echo 'error status:' ${result}
+
+if [ ${result} -ne 0 ] ; then
+  echo 'Error: p2o_from_rosbag_ros2.py が失敗しました。'
+  if [ "$slam_mode" = "pseudo_z0" ]; then
+    echo "       lio_topic (${lio_topic}) が rosbag に記録されているか確認してください。"
+  else
+    echo 'rosbag play でfixメッセージがあるかの確認と、gnss_logで共分散の値を確認してください。'
+  fi
   exit 1
 fi
+
+# slam_mode が pseudo_z0 の場合、Z軸拘束を追加
+if [ "$slam_mode" = "pseudo_z0" ]; then
+    echo 'Applying pseudo Z0 observations...'
+    mv data/$2/output.p2o data/$2/output_raw.p2o
+    bash -c "python3 src/add_pseudo_z0_obs.py data/$2/output_raw.p2o > data/$2/output.p2o"
+fi
+
+echo 'run_p2o'
+bash -c "${HOKUYO_SLAM_BIN_DIR}/run_p2o data/$2/center_utm.txt data/$2/output.p2o"
+#bash -c "gnuplot atc_odom_gnss.plt"
+
+# p2o_fastlio_util
+cd ${HOKUYO_NAV2_PKG_PATH}/data/$2/PCDs 
+
+bash -c "python3 ../../../src/extract_pcd_ros2.py ../../../rosbag/$1 $pointcloud_topic $HOKUYO_NAV2_PKG_PATH/data/$2/lio_edge_timestamps.txt" # ~/p2o_fastlio_util/extract_pcd 引数1 + 引数2
+
+# p2o_fastlio_util におけるファイル整理
+cd ./..
+tail -n +2 output.p2o_out.txt > poses.txt
+find . | grep pcd > clouds.txt
+sort clouds.txt > sorted_clouds.txt
+paste sorted_clouds.txt poses.txt > concat.txt
+bash -c "${HOKUYO_SLAM_BIN_DIR}/rearrange_pointcloud concat.txt $2 ${WP_DIR_ABS}/${2}.json $pc_save_distance $wp_save_distance"
+
+# 絶対座標を相対座標に変換
+cd ../..
+bash -c "python3 src/pcd_to_Rcord.py data/$2/${2}_Acord.pcd data/$2/${2}_Rcord.pcd data/$2/output.p2o_out.txt data/$2/init_pose.txt data/$2/init_lat_lon_alt.txt"
+
+# 🌟 PCDファイルの移動先を $MAP_DIR に変更 🌟
+bash -c "mv data/$2/${2}_Rcord.pcd $MAP_DIR"
+bash -c "mv $MAP_DIR/${2}_Rcord.pcd $MAP_DIR/${2}.pcd"
+
+# 地図が本当にできているかを確認してからフラグを作る。
+# 確認せずにフラグを作ると、地図が無いのに GUI 上は「成功」に見えてしまう。
+if [ ! -s "$MAP_DIR/${2}.pcd" ]; then
+    echo "Error: 地図ファイルが作成されていません: $MAP_DIR/${2}.pcd"
+    echo '       トピック名の設定と、rosbag に点群が記録されているかを確認してください。'
+    exit 1
+fi
+
+# 🌟 完了フラグ作成の追記とパスの修正 🌟
+FLAG_PATH="${MAP_DIR}/${FLAG_FILE_NAME}" # $MAP_DIR と $FLAG_FILE_NAME を結合
+touch "$FLAG_PATH"
+echo "P2O SLAM completion flag created: $FLAG_PATH"

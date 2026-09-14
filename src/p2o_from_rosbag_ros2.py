@@ -180,6 +180,12 @@ if __name__ == "__main__":
         default=0.1,  # Default value
         help="Minimum movement threshold for LIO to create a new vertex (m)"
     )
+    parser.add_argument(
+        "--no-gnss",
+        action="store_true",
+        help="Do not read GNSS (LIO vertices/edges only). gnss_topic and gnss_cov_threshold are ignored, "
+             "and the center files are not written."
+    )
     parsed_args = parser.parse_args()
 
     bag_folder = os.path.normpath(os.path.join(os.getcwd(), parsed_args.bag_folder))
@@ -191,6 +197,7 @@ if __name__ == "__main__":
     gnss_cov_thre = parsed_args.gnss_cov_threshold
     gnss_min_movement_thre = parsed_args.gnss_min_movement_thre # Use parsed argument
     lio_min_movement_thre = parsed_args.lio_min_movement_thre   # Use parsed argument
+    use_gnss = not parsed_args.no_gnss
     odom_infom = '1e2 0 0 0 0 0 1e2 0 0 0 0 1e2 0 0 0 1e2 0 0 1e2 0 1e2' # This was a global parameter, moved it here as it's used in this scope.
 
     # Debug prints to confirm parameters
@@ -213,36 +220,43 @@ if __name__ == "__main__":
         bag_file = mcap_files[0]
         #print(f"Processing ROS 2 bag file: {bag_file}")
         lio_timestamps, lio_msgs, lio_msg_type_str = read_all_messages_mcap(bag_file, lio_topic_name)
-        gnss_timestamps, gnss_msgs, gnss_msg_type_str = read_all_messages_mcap(bag_file, gnss_topic_name)
+        if use_gnss:
+            gnss_timestamps, gnss_msgs, gnss_msg_type_str = read_all_messages_mcap(bag_file, gnss_topic_name)
         get_message_func = get_message_mcap
     elif db_file:
         #print(f"Processing ROS 1 bag file: {db_file}")
         conn, c = connect(db_file)
         lio_msg_type_str = getMsgType(c, lio_topic_name)
-        gnss_msg_type_str = getMsgType(c, gnss_topic_name)
+        if use_gnss:
+            gnss_msg_type_str = getMsgType(c, gnss_topic_name)
 
-        if not lio_msg_type_str or not gnss_msg_type_str:
+        if not lio_msg_type_str or (use_gnss and not gnss_msg_type_str):
             close(conn)
-            exit()
+            print("Error: LIO or GNSS topic not found in bag.", file=sys.stderr)
+            sys.exit(1)
 
         lio_timestamps, lio_msgs_data = getAllMessagesInTopic(c, lio_topic_name)
-        gnss_timestamps, gnss_msgs_data = getAllMessagesInTopic(c, gnss_topic_name)
-
         lio_msgs = [deserialize_message(msg, get_message(lio_msg_type_str)) for msg in lio_msgs_data]
-        gnss_msgs = [deserialize_message(msg, get_message(gnss_msg_type_str)) for msg in gnss_msgs_data]
+        if use_gnss:
+            gnss_timestamps, gnss_msgs_data = getAllMessagesInTopic(c, gnss_topic_name)
+            gnss_msgs = [deserialize_message(msg, get_message(gnss_msg_type_str)) for msg in gnss_msgs_data]
 
         close(conn)
         get_message_func = get_message
     else:
-        print(f"Error: No .mcap or .db3 files found in '{bag_folder}'.")
-        exit()
+        print(f"Error: No .mcap or .db3 files found in '{bag_folder}'.", file=sys.stderr)
+        sys.exit(1)
 
-    if not lio_msgs or not gnss_msgs:
-        print("Error: Could not retrieve LIO or GNSS messages.")
-        exit()
-    
-    utm_zone = judge_utm_zone(gnss_msgs[0].longitude)
-    epsg_code = utm_zone_to_epsg(utm_zone)
+    if not lio_msgs:
+        print(f"Error: Could not retrieve LIO messages ({lio_topic_name}).", file=sys.stderr)
+        sys.exit(1)
+    if use_gnss and not gnss_msgs:
+        print(f"Error: Could not retrieve GNSS messages ({gnss_topic_name}).", file=sys.stderr)
+        sys.exit(1)
+
+    if use_gnss:
+        utm_zone = judge_utm_zone(gnss_msgs[0].longitude)
+        epsg_code = utm_zone_to_epsg(utm_zone)
 
     num_lio = len(lio_timestamps)
     vertices = []  # Pre-allocate list for vertices
@@ -252,8 +266,10 @@ if __name__ == "__main__":
     lio_edge_timestamps = []
 
     # Sample convert to Japan Plane Rectangular Coordinate System No. 6
-    transformer = Transformer.from_crs("epsg:4326", epsg_code)
-    transformer_inverse = Transformer.from_crs(epsg_code, "epsg:4326")
+    # (--no-gnss の場合は gnss_timestamps が空なので、以降の GNSS 処理は行われない)
+    if use_gnss:
+        transformer = Transformer.from_crs("epsg:4326", epsg_code)
+        transformer_inverse = Transformer.from_crs(epsg_code, "epsg:4326")
 
     # Process LIO data
     last_lio_position = [-10,0,0]

@@ -13,9 +13,27 @@ from rosidl_runtime_py.utilities import get_message
 from sensor_msgs_py import point_cloud2 as pc2
 
 
+def detect_storage_id(bag_path: str) -> str:
+    """rosbag2 の storage_id (mcap / sqlite3) を判定する。
+    metadata.yaml の storage_identifier を優先し、無ければファイル拡張子で判定。"""
+    p = Path(bag_path)
+    if p.is_file():
+        return "mcap" if p.suffix == ".mcap" else "sqlite3"
+    metadata = p / "metadata.yaml"
+    if metadata.exists():
+        for line in metadata.read_text(encoding="utf-8").splitlines():
+            if "storage_identifier:" in line:
+                return line.split(":", 1)[1].strip()
+    if any(p.glob("*.mcap")):
+        return "mcap"
+    return "sqlite3"
+
+
 def open_bag(bag_dir: str) -> SequentialReader:
     reader = SequentialReader()
-    storage_options = StorageOptions(uri=bag_dir, storage_id="sqlite3")
+    storage_id = detect_storage_id(bag_dir)
+    print(f"Opening bag: {bag_dir} (storage_id={storage_id})")
+    storage_options = StorageOptions(uri=bag_dir, storage_id=storage_id)
     converter_options = ConverterOptions(
         input_serialization_format="cdr",
         output_serialization_format="cdr",
