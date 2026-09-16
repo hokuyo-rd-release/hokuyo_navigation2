@@ -38,7 +38,7 @@ echo "--- All navigation processes have been requested to terminate. ---"
 
 echo "Clearing cache memory..."
 # sudoersでパスワードなし実行が許可されたキャッシュ解放スクリプトを呼び出します
-sudo /usr/local/bin/clear_memory_cache.sh
-echo "Cache memory has been cleared."
+# sudo /usr/local/bin/clear_memory_cache.sh
+# echo "Cache memory has been cleared."
 
 exit 0

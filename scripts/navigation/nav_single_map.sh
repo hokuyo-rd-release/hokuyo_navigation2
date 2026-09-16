@@ -57,20 +57,20 @@ while true; do
     launch_navigation_system "${mapfile}" "${use_gnss_switch}"
 
     # map_server の状態を確実に監視
-    if ! wait_for_map_server; then
-        echo "エラー: map_server の起動に失敗しました。再試行します..."
-        "${HOKUYO_NAV2_PKG_PATH}/scripts/ctrl/multi_map_kill.sh"
-        sleep 5
-        continue
-    fi
+    # if ! wait_for_map_server; then
+    #     echo "エラー: map_server の起動に失敗しました。再試行します..."
+    #     "${HOKUYO_NAV2_PKG_PATH}/scripts/ctrl/multi_map_kill.sh"
+    #     sleep 5
+    #     continue
+    # fi
 
-    # Nav2全体の準備を監視
-    if ! wait_for_nav2_ready; then
-        echo "エラー: Nav2の起動に失敗しました。再試行します..."
-        "${HOKUYO_NAV2_PKG_PATH}/scripts/ctrl/multi_map_kill.sh"
-        sleep 5
-        continue
-    fi
+    # # Nav2全体の準備を監視
+    # if ! wait_for_nav2_ready; then
+    #     echo "エラー: Nav2の起動に失敗しました。再試行します..."
+    #     "${HOKUYO_NAV2_PKG_PATH}/scripts/ctrl/multi_map_kill.sh"
+    #     sleep 5
+    #     continue
+    # fi
 
     echo "ウェイポイント追従を開始します: ${wayfile}.json"
     cd "${HOKUYO_NAV2_PKG_PATH}/waypoints"
