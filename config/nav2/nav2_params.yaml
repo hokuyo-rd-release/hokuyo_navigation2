@@ -71,7 +71,7 @@ controller_server:
     min_x_velocity_threshold: 0.001
     min_y_velocity_threshold: 0.5
     min_theta_velocity_threshold: 0.001
-    failure_tolerance: 0.3
+    failure_tolerance: 2.0  # 0.3 -> 2.0 : 移動障害物の通過待ち中に軌道生成が一時的に失敗しても中断しない
     progress_checker_plugin: "progress_checker"
     goal_checker_plugins: ["general_goal_checker"]
     odom_topic: /rsf/lio_imu_rate_odom
@@ -79,7 +79,9 @@ controller_server:
     progress_checker:
       plugin: "nav2_controller::SimpleProgressChecker"
       required_movement_radius: 0.5
-      movement_time_allowance: 10.0
+      # 10.0 -> 30.0 : 移動障害物の通過待ちで停止している間に
+      # 「進んでいない」と判定されて recovery (spin/backup) に入るのを防ぐ
+      movement_time_allowance: 30.0
     general_goal_checker:
       stateful: True
       plugin: "nav2_controller::SimpleGoalChecker"
@@ -113,8 +115,12 @@ controller_server:
       trans_stopped_velocity: 0.25
       short_circuit_trajectory_evaluation: True
       stateful: True
-      critics: ["RotateToGoal", "Oscillation", "BaseObstacle", "GoalAlign", "PathAlign", "PathDist", "GoalDist"]
+      # ObstacleFootprint: BaseObstacle は軌道の中心セルしか見ないため、
+      # 車体が前後に長い (後方 0.535 m) 本機では車体そのものの干渉を検査する critic を足す.
+      # 保守的すぎて動けない場合はこの critic を外す.
+      critics: ["RotateToGoal", "Oscillation", "ObstacleFootprint", "BaseObstacle", "GoalAlign", "PathAlign", "PathDist", "GoalDist"]
       BaseObstacle.scale: 0.02
+      ObstacleFootprint.scale: 0.02
       PathAlign.scale: 32.0
       PathAlign.forward_point_distance: 0.1
       GoalAlign.scale: 24.0
@@ -136,7 +142,14 @@ local_costmap:
       width: 8            # 10 -> 8 に縮小
       height: 8           # 10 -> 8 に縮小
       resolution: 0.1
-      robot_radius: 0.3
+      # ローカルとグローバルで「ロボットの大きさ」の定義を必ず一致させること.
+      # robot_radius (円) に大きな値を入れると
+      #   1) footprint_clearing により半径内の障害物が毎周期消され、近傍が見えなくなる
+      #   2) 内接半径がグローバル側 (0.29+padding) より大きくなり、グローバルプランが
+      #      通した隙間を DWB が「衝突」と判定して追従できなくなる
+      # ため、robot_radius ではなく実寸の footprint を使う.
+      footprint: "[[0.195, 0.29], [0.195, -0.29], [-0.535, -0.29], [-0.535, 0.29]]"
+      footprint_padding: 0.1
       update_frequency: 10.0   # 20.0 -> 10.0 に削減
       publish_frequency: 10.0  # 20.0 -> 10.0 に削減
       plugins: ["obstacle_layer", "inflation_layer"]
@@ -163,6 +176,74 @@ local_costmap:
           max_obstacle_height: 1.5
           observation_persistence: 0.0
           expected_update_rate: 0.2   # 0.05 -> 0.2
+
+# グローバルコストマップ
+# 静的地図 (static_layer) に加えて、obstacle_monitor が「静止物」と確定した点だけを
+# obstacle_layer に書き込む。移動物 (歩行者など) は書き込まれないため、
+# 人が横切ってもグローバルプランは変化せず、停止 -> 通過待ち -> 元の経路で再開になる。
+global_costmap:
+  global_costmap:
+    ros__parameters:
+      use_sim_time: True
+      global_frame: map
+      robot_base_frame: base_link
+      update_frequency: 2.0
+      publish_frequency: 1.0
+      resolution: 0.1
+      track_unknown_space: true
+      # 実車の外形 (0.73 x 0.58 m). base_link は車体中心より 0.17 m 前にあるため非対称.
+      # robot_radius ではなく footprint を与えることで、回避経路がロボット幅を考慮したものになる.
+      # footprint を設定すると robot_radius は無視される点に注意.
+      # padding は local_costmap と必ず同じ値にすること (異なるとプランに追従できなくなる).
+      footprint: "[[0.195, 0.29], [0.195, -0.29], [-0.535, -0.29], [-0.535, 0.29]]"
+      footprint_padding: 0.1
+      plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
+      static_layer:
+        plugin: "nav2_costmap_2d::StaticLayer"
+        map_subscribe_transient_local: True
+      obstacle_layer:
+        enabled: true
+        plugin: "nav2_costmap_2d::ObstacleLayer"
+        # clearing_cloud  : 消去専用 (marking しない). 移動物のセルを毎スキャン消す.
+        # static_obstacles: 書き込み専用 (clearing しない). 静止と確定した点のみ.
+        # obstacle_layer は全ての clearing を処理した後に marking するため、この組み合わせで
+        # 「静止物は残り、移動物と消えた障害物は残らない」コストマップになる.
+        observation_sources: clearing_cloud static_obstacles
+        clearing_cloud:
+          topic: /obstacle_monitor/clearing_cloud
+          sensor_frame: yvt
+          data_type: PointCloud2
+          marking: false
+          clearing: true
+          raytrace_min_range: 0.0
+          raytrace_max_range: 8.5
+          obstacle_min_range: 0.0
+          obstacle_max_range: 8.5
+          min_obstacle_height: -0.5
+          max_obstacle_height: 1.5
+          observation_persistence: 0.0
+          expected_update_rate: 0.5
+        static_obstacles:
+          topic: /obstacle_monitor/static_cloud
+          sensor_frame: yvt
+          data_type: PointCloud2
+          marking: true
+          clearing: false
+          obstacle_min_range: 0.3
+          obstacle_max_range: 8.0
+          raytrace_min_range: 0.0
+          raytrace_max_range: 8.0
+          min_obstacle_height: -0.5
+          max_obstacle_height: 1.5
+          observation_persistence: 0.0
+          expected_update_rate: 0.5
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        # inflation_radius は外接円半径 (0.61 m) より大きく取り、
+        # NavFn が障害物から余裕を取った経路を選ぶようにする.
+        cost_scaling_factor: 3.0
+        inflation_radius: 0.9
+      always_send_full_costmap: True
 
 map_server:
   ros__parameters:

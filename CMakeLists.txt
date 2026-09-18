@@ -16,6 +16,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2_sensor_msgs REQUIRED)
+find_package(visualization_msgs REQUIRED)
 find_package(pcl_conversions REQUIRED)
 find_package(Eigen3 REQUIRED)
 
@@ -29,6 +30,7 @@ add_executable(gnss_lio_debug src/gnss_lio_debug.cpp)
 add_executable(pointcloud_transform_for_loc src/pointcloud_transform_for_loc.cpp)
 add_executable(odom_to_tf src/odom_to_tf.cpp)
 add_executable(cmdvel_stopper src/cmdvel_stopper.cpp)
+add_executable(obstacle_monitor src/obstacle_monitor.cpp)
 
 ament_target_dependencies(gnss_lio_debug
   rclcpp
@@ -65,6 +67,17 @@ ament_target_dependencies(cmdvel_stopper
   geometry_msgs
 )
 
+ament_target_dependencies(obstacle_monitor
+  rclcpp
+  std_msgs
+  sensor_msgs
+  geometry_msgs
+  nav_msgs
+  visualization_msgs
+  tf2
+  tf2_ros
+)
+
 # jsk_rviz_plugins のインクルードディレクトリを追加
 target_include_directories(gnss_lio_debug PUBLIC
   ${jsk_rviz_plugins_INCLUDE_DIRS}
@@ -82,6 +95,7 @@ install(TARGETS
   pointcloud_transform_for_loc
   odom_to_tf
   cmdvel_stopper
+  obstacle_monitor
   DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -99,6 +113,7 @@ ament_export_dependencies(
   sensor_msgs
   nav_msgs
   geometry_msgs
+  visualization_msgs
   tf2
   tf2_ros
   tf2_sensor_msgs

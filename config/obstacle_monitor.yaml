@@ -1,0 +1,58 @@
+obstacle_monitor:
+  ros__parameters:
+    global_frame: map
+    robot_base_frame: base_link
+
+    scan_topic: /hokuyo3d/scan
+    plan_topic: /plan
+    static_cloud_topic: obstacle_monitor/static_cloud
+    clearing_cloud_topic: obstacle_monitor/clearing_cloud
+    stop_topic: /wizurg/obstacle_stop_cmd_vel
+    slow_topic: /wizurg/obstacle_slow_cmd_vel
+
+    # --- 検出範囲 [m] ---
+    min_detection_range: 0.3
+    max_detection_range: 8.0
+    # 消去用レイの長さ。global_costmap の raytrace_max_range 以下にしておく.
+    clearing_range: 8.0
+    # 消去レイを計測距離より手前で止める量 [m]。
+    # 0 にすると障害物が自分自身の反射でマーキングを毎スキャン消してしまい、
+    # グローバルプランが点滅して迂回経路に追従できなくなる。
+    clearing_shrink: 0.25
+
+    # --- クラスタリング ---
+    cluster_tolerance: 0.35   # 隣接点がこの距離以内なら同一障害物とみなす [m]
+    min_cluster_points: 2     # これ未満の点数のクラスタは無視する
+    max_beam_gap: 2           # 何ビームまでの欠測を同一クラスタとして許容するか
+
+    # --- 追跡と移動判定 ---
+    association_distance: 0.7     # 前フレームのトラックと対応付ける最大距離 [m]
+    velocity_filter_alpha: 0.4    # 速度の一次遅れフィルタ係数 (大きいほど追従が速い)
+    dynamic_speed_threshold: 0.25 # これ以上の速度なら移動中とみなす [m/s]
+    dynamic_confirm_count: 3      # 連続で何回移動と判定したら「移動障害物」に確定するか
+    dynamic_hold_time: 2.0        # 移動障害物が止まって見えてもこの時間は移動扱いを維持 [s]
+    # 瞬間速度だけで判定すると、接近中に見える面が増えて重心がずれるだけの静止物を
+    # 移動物と誤判定し、障害物の手前で不要な停止をしてしまう。
+    # 「窓内の正味移動量」も条件に加えることで、見かけ上の重心ずれを除外する。
+    dynamic_window: 1.0           # 移動量を評価する時間窓 [s]
+    dynamic_min_displacement: 0.4 # 窓内でこれ以上動いていなければ移動物としない [m]
+    static_confirm_time: 0.6      # この時間静止し続けた点のみ global_costmap に書き込む [s]
+    # クラスタの分裂・結合でトラックが作り直されても静止判定をやり直さないための記憶時間 [s]
+    static_memory_time: 2.0
+    max_dynamic_cluster_radius: 1.2  # これより大きいクラスタ (壁や柵) は常に静止物扱い [m]
+    track_timeout: 0.6            # この時間見えないトラックは破棄する [s]
+
+    # --- グローバルプランとの干渉判定 ---
+    path_lookahead: 6.0        # 前方何 m のプランを監視するか
+    # プラン中心線からこの距離以内に障害物があれば「経路上」と判定する [m].
+    # 車体半幅 0.29 m + マージン.
+    path_clearance: 0.45
+    dynamic_stop_lookahead: 4.0  # 移動障害物がこの距離以内で経路を塞いだら停止する [m]
+    resume_delay: 1.5            # 障害物が経路から外れてから再開するまでの保持時間 [s]
+    # 静止障害物が経路上にある間は減速し、迂回プランへ乗り移る余裕を作る。
+    # static_slow_speed を 0 以下にすると減速しない。
+    static_slow_lookahead: 5.0   # この距離以内に静止障害物があれば減速する [m]
+    static_slow_speed: 0.4       # 減速時の上限速度 [m/s]
+
+    publish_rate: 10.0
+    publish_markers: true

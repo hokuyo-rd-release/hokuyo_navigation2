@@ -9,6 +9,8 @@
   <arg name="enable_uam" default="false"/>
   <arg name="use_gnss_switch" default="false"/>
   <arg name="use_localization" default="true"/>
+  <arg name="use_obstacle_monitor" default="true"/>
+  <arg name="obstacle_monitor_params" default="$(var hokuyo_navigation_pkg_path)/config/obstacle_monitor.yaml"/>
 
   <arg name="map_dir" default="$(var hokuyo_navigation_pkg_path)/map"/>
   <arg name="map_file" default="test"/>
@@ -43,6 +45,15 @@
   </group>
   
   <group if="$(var use_navigation)">
+    <!-- 障害物の静止/移動を判定するノード.
+         静止物のみ global_costmap に渡してグローバルプランで回避させ、
+         移動物が経路を塞いでいる間は cmdvel_stopper 経由で停止させる. -->
+    <group if="$(var use_obstacle_monitor)">
+      <node pkg="hokuyo_navigation2" exec="obstacle_monitor" name="obstacle_monitor" output="screen">
+        <param from="$(var obstacle_monitor_params)"/>
+      </node>
+    </group>
+
     <group if="$(var use_lio)">
       <group if="$(var use_gnss_switch)">
         <node pkg="fix2xyz" exec="fix_odom_to_fix_orient" name="fix_odom_to_fix_orient">
