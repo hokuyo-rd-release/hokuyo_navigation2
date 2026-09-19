@@ -40,7 +40,7 @@
   <group if="$(var launch_for_demo)">
 
     <!-- tf作成と点群座標変換 -->
-    <node pkg="hokuyo_navigation2" exec="odom_to_tf" name="rsf_tf">
+    <!-- <node pkg="hokuyo_navigation2" exec="odom_to_tf" name="rsf_tf">
       <param name="sub_topic_name" value="/rsf/rsf_odom"/>
       <param name="frame_id" value="lio_odom"/>
       <param name="child_frame_id" value="rsf"/>
@@ -49,17 +49,17 @@
       <param name="sub_topic_name" value="/rsf/lio_imu_rate_odom"/>
       <param name="frame_id" value="lio_odom"/>
       <param name="child_frame_id" value="lio"/>
-    </node>
-    <node pkg="hokuyo_navigation2" exec="pointcloud_transform_for_loc" name="rsf_cloud" output="log">
+    </node> -->
+    <!-- <node pkg="hokuyo_navigation2" exec="pointcloud_transform_for_loc" name="rsf_cloud" output="log">
       <param name="sub_topic" value="/hokuyo3d/hokuyo_cloud2"/>
       <param name="sub_odom_topic" value="/rsf/rsf_odom"/>
       <param name="pub_topic" value="gnss_lio_switch/hokuyo_cloud2"/>
-    </node>
-    <node pkg="hokuyo_navigation2" exec="pointcloud_transform_for_loc" name="lio_cloud" output="log">
+    </node> -->
+    <!-- <node pkg="hokuyo_navigation2" exec="pointcloud_transform_for_loc" name="lio_cloud" output="log">
       <param name="sub_topic" value="/hokuyo3d/hokuyo_cloud2"/>
       <param name="sub_odom_topic" value="/rsf/lio_imu_rate_odom"/>
       <param name="pub_topic" value="hokuyo_lio/hokuyo_cloud2"/>
-    </node>
+    </node> -->
 
     <!-- gnss緯度経度をオドメトリ座標に映す -->
     <node pkg="fix2xyz" exec="fix2utm_node" name="fix2utm_for_demo" output="log">
@@ -75,10 +75,10 @@
       <param name="child_frame_id" value="fix_on_odom" />
     </node>
     <!-- rsf_state_debugger -->
-    <node pkg="rsf_debugger" exec="rsf_state_debugger" name="sensor_status_display_node" output="screen">
+    <!-- <node pkg="rsf_debugger" exec="rsf_state_debugger" name="sensor_status_display_node" output="screen">
       <param from="$(var rsf_debugger_param)"/>
     </node>
-    <node pkg="rsf_debugger" exec="audio_warning_player.py" name="audio_warning_player" output="screen"/>
+    <node pkg="rsf_debugger" exec="audio_warning_player.py" name="audio_warning_player" output="screen"/> -->
 
     <!-- vizantiでの地図表示のため、方位に合わせたtfを作る. -->
     <node pkg="hokuyo_navigation2" exec="odom_to_tf" name="rsf_gnss_tf">
@@ -151,6 +151,6 @@
     </group>
   </group>
 
-  <node pkg="rviz2" exec="rviz2" name="demo_rviz" output="log" args="-d $(find-pkg-share hokuyo_navigation2)/rviz/demo.rviz" if="$(var launch_for_demo)" />
+  <!-- <node pkg="rviz2" exec="rviz2" name="demo_rviz" output="log" args="-d $(find-pkg-share hokuyo_navigation2)/rviz/demo.rviz" if="$(var launch_for_demo)" /> -->
 
 </launch>
