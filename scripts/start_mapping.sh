@@ -14,27 +14,60 @@ MAPPING_OPTION="$1"
 echo "Mapping Option: ${MAPPING_OPTION}"
 
 # --------------------------------------------------------------------------
+# 実行ログの出力先 (ブラウザGUIから渡される)
+# --------------------------------------------------------------------------
+# hokuyo_navigation2_gui の server.py が環境変数 HOKUYO_GUI_LOG_FILE に
+# ログファイルのパスを入れて起動する。実処理は別ターミナルで動くため、
+# ここで tee を挟んでおかないとブラウザ側に何も表示できない。
+GUI_LOG_FILE="${HOKUYO_GUI_LOG_FILE:-}"
+
+# 実処理コマンドを、ログ記録付きで実行する。
+# $1: bash に渡すコマンド文字列
+run_mapping_command() {
+    local inner_command="$1"
+    # 終了コードを目印付きで残す。GUI はこの行で成功・失敗を判定する。
+    # 本処理はサブシェル () で囲む。{} だと処理側の exit が
+    # 終了コードを書き出す前にシェルごと終了させてしまう。
+    local wrapped="( ${inner_command} ) 2>&1 ; echo \"[HOKUYO_GUI] exit_code=\$?\""
+
+    if [ -n "${GUI_LOG_FILE}" ]; then
+        # 本処理と終了コードの両方をログに残すため、全体を { } でまとめてから
+        # tee に渡す。まとめないと最後の echo だけがログに書かれてしまう。
+        wrapped="{ ${wrapped} ; } | tee -a \"${GUI_LOG_FILE}\""
+    fi
+
+    # 画面のないサーバやコンテナでは端末を開けないため、
+    # gnome-terminal が使えるかどうかで実行方法を切り替える。
+    # (この関数は server.py がバックグラウンドスレッドで起動しているため、
+    #  端末なしでその場で実行しても GUI の応答は止まらない)
+    if command -v gnome-terminal >/dev/null 2>&1 \
+       && { [ -n "${DISPLAY}" ] || [ -n "${WAYLAND_DISPLAY}" ]; }; then
+        # 従来どおり別ターミナルを開き、処理後もターミナルを残す。
+        if gnome-terminal -- bash -c "${wrapped}; bash"; then
+            return 0
+        fi
+        echo "WARNING: ターミナルを開けなかったため、ターミナルなしで実行します。"
+    else
+        echo "NOTE: 画面が利用できないため、ターミナルを開かずに実行します。"
+    fi
+
+    # ターミナルを使わない場合、tee の出力がこのスクリプトの標準出力にも流れる。
+    # server.py はその標準出力も同じログファイルに書き写すため、
+    # 捨てておかないとログが二重に記録されてしまう。
+    if [ -n "${GUI_LOG_FILE}" ]; then
+        bash -c "${wrapped}" >/dev/null
+    else
+        bash -c "${wrapped}"
+    fi
+}
+
+# --------------------------------------------------------------------------
 # 処理の分岐
 # --------------------------------------------------------------------------
 
 case "${MAPPING_OPTION}" in
-    "sync")
-        echo "--> [1] トピック同期処理を開始します。"
-        # $2: 入力ROS Bag名 (ディレクトリ名/ファイル名)
-        # $3: 出力ROS Bag名 (ディレクトリ名)
-        
-        # NOTE: get_rosbag.bash がフルパスを期待する場合があるため、/rosbag/ を付けて渡す
-        inbagname="${HOKUYO_NAV2_PKG_PATH}/rosbag/$2" 
-        outbagname="$3"                   
-        config_file="$4"
-
-        # scripts/get_rosbag.bash を gnome-terminal で実行
-        gnome-terminal -- bash -c "cd ${HOKUYO_NAV2_PKG_PATH}; scripts/mapping/sync_topic.bash ${inbagname} ${outbagname} ${config_file} ; bash"; exit
-        
-        ;;
-
     "p2o")
-        echo "--> [2] p2o でマッピングを開始します。"
+        echo "--> [1] p2o でマッピングを開始します。"
         # $2: 入力ROS Bag名 (ディレクトリ名)
         # $3: 出力マップ名 (pcd名)
         # $4: MAP_DIR (完了フラグとPCDの出力先ディレクトリ)
@@ -50,18 +83,18 @@ case "${MAPPING_OPTION}" in
         
         # scripts/hokuyo_slam.bash に引数を渡して実行
         # NOTE: scripts/hokuyo_slam.bash の引数の順番も確認し、適切に渡すこと
-        gnome-terminal -- bash -c "cd ${HOKUYO_NAV2_PKG_PATH}; scripts/mapping/hokuyo_slam.bash \
+        run_mapping_command "cd ${HOKUYO_NAV2_PKG_PATH}; scripts/mapping/hokuyo_slam.bash \
             \"${inbagname}\" \
             \"${p2omapname}\" \
             \"${pcd_output_dir}\" \
             \"${flag_file_name}\" \
             \"${wp_output_dir}\" \
-            \"${config_file}\" ; bash"; exit
+            \"${config_file}\""; exit
         
         ;;
 
     "lio_raw")
-        echo "--> [3] LIO-RAW マッピングを開始します。"
+        echo "--> [2] LIO-RAW マッピングを開始します。"
         # $2: 入力ROS Bag名 (ディレクトリ名)
         # $3: 出力マップ名 (pcd名)
         # $4: MAP_DIR (完了フラグとPCDの出力先ディレクトリ)
@@ -76,18 +109,18 @@ case "${MAPPING_OPTION}" in
         config_file="$7"
         
         # scripts/lio_raw.bash に引数を渡して実行
-        gnome-terminal -- bash -c "cd ${HOKUYO_NAV2_PKG_PATH}; scripts/mapping/lio_raw.bash \
+        run_mapping_command "cd ${HOKUYO_NAV2_PKG_PATH}; scripts/mapping/lio_raw.bash \
             \"${inbagname}\" \
             \"${liomapname}\" \
             \"${pcd_output_dir}\" \
             \"${wp_output_dir}\" \
             \"${flag_file_name}\" \
-            \"${config_file}\" ; bash"; exit
+            \"${config_file}\""; exit
         
         ;;
     
     "pcd2pgm")
-        echo "--> [4] PCDファイルからPGMマップへの変換を開始します。"
+        echo "--> [3] PCDファイルからPGMマップへの変換を開始します。"
         
         # Webインターフェースからの引数を取得
         # $2: 入力PCDファイル名 (例: my_map.pcd)
@@ -108,21 +141,21 @@ case "${MAPPING_OPTION}" in
         
         # scripts/pcd2pgm.bash に引数を渡して実行
         # pcd2pgm.bash の引数順: $1(PCD_FILE), $2(MAP_NAME), $3(MAP_DIR), $4(WP_FILE), $5(LOOP_FLAG), $6(FLAG_FILE)
-        gnome-terminal -- bash -c "cd ${HOKUYO_NAV2_PKG_PATH}; scripts/mapping/pcd2pgm.bash \
+        run_mapping_command "cd ${HOKUYO_NAV2_PKG_PATH}; scripts/mapping/pcd2pgm.bash \
             \"${input_pcd_filename}\" \
             \"${output_pgm_name}\" \
             \"${pgm_output_dir}\" \
             \"${waypoint_filename}\" \
             \"${loop_waypoints_flag}\" \
             \"${flag_file_name}\" \
-            \"${config_file}\" ; bash"; exit
+            \"${config_file}\""; exit
         
         ;;
 
     *)
         # 引数が指定されない、または上記以外の場合のデフォルト処理
         echo "--> [X] 無効なマッピングオプションです: ${MAPPING_OPTION}"
-        echo "    使用可能なオプション: sync, p2o, lio_raw, pcd2pgm"
+        echo "    使用可能なオプション: p2o, lio_raw, pcd2pgm"
         exit 1
         ;;
 esac

@@ -84,6 +84,22 @@ def stamp_to_nsec(msg, bag_time_ns: int) -> int:
     return int(bag_time_ns)
 
 
+def detect_storage_id(bag_path: str) -> str:
+    """rosbag2 の storage_id (mcap / sqlite3) を判定する。
+    metadata.yaml の storage_identifier を優先し、無ければファイル拡張子で判定。"""
+    p = Path(bag_path)
+    if p.is_file():
+        return "mcap" if p.suffix == ".mcap" else "sqlite3"
+    metadata = p / "metadata.yaml"
+    if metadata.exists():
+        for line in metadata.read_text(encoding="utf-8").splitlines():
+            if "storage_identifier:" in line:
+                return line.split(":", 1)[1].strip()
+    if any(p.glob("*.mcap")):
+        return "mcap"
+    return "sqlite3"
+
+
 def info_upper_triangular_6x6(diag: float) -> list[float]:
     """Return 21 numbers (upper triangle) of 6x6 information matrix with diag filled."""
     I = np.zeros((6, 6), dtype=float)
@@ -147,7 +163,9 @@ def main():
     pcd_ts_ns, pcd_names = load_pcd_index(index_path)
 
     # Open bag
-    storage_options = rosbag2_py.StorageOptions(uri=args.bag, storage_id="sqlite3")
+    storage_id = detect_storage_id(args.bag)
+    print(f"Opening bag: {args.bag} (storage_id={storage_id})")
+    storage_options = rosbag2_py.StorageOptions(uri=args.bag, storage_id=storage_id)
     converter_options = rosbag2_py.ConverterOptions("cdr", "cdr")
     reader = rosbag2_py.SequentialReader()
     reader.open(storage_options, converter_options)
