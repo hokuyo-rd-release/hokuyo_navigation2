@@ -1,9 +1,6 @@
 #!/bin/bash
 
 # このスクリプトは nav_single_map.sh と nav_multi_map.sh から source されることを想定しています。
-# =========================================================================
-# オプション読み込み関連
-# =========================================================================
 
 load_options() {
     local wizurg_opt="$1"
@@ -133,28 +130,6 @@ launch_navigation_system() {
         initial_pose:=\"${pose1},${pose2},${pose3},${pose4},${pose5},${pose6},${pose7}\" \
         latlon_pose:=\"${latlon1},${latlon2},${latlon3}\"; \
         bash"
-    # ノードが検出されるまで待機
-    echo "map_server の起動を待っています..."
-    while ! ros2 node list | grep -q "^/map_server$"; do sleep 0.5; done
-
-    # 現在の状態を取得
-    CURRENT_STATE=$(ros2 lifecycle get /map_server)
-    echo "現在の状態: $CURRENT_STATE"
-
-    # 状態名、または状態番号[2]（Inactive）を判定してアクティブ化
-    if echo "$CURRENT_STATE" | grep -E -q "unconfigured|\[1\]"; then
-        echo "未設定のため、configure と activate を実行します。"
-        ros2 lifecycle set /map_server configure && sleep 0.5 && ros2 lifecycle set /map_server activate
-    elif echo "$CURRENT_STATE" | grep -E -q "Inactive|inactive|\[2\]"; then
-        echo "Inactive 状態を検出しました。activate を実行します。"
-        ros2 lifecycle set /map_server activate
-    elif echo "$CURRENT_STATE" | grep -E -q "Active|active|\[3\]"; then
-        echo "すでに Active（有効化済み）です。"
-    else
-        echo "想定外の状態ですが、強制的に activate を試みます。"
-        ros2 lifecycle set /map_server activate
-    fi
-
 }
 
 # モータドライバを起動する関数
