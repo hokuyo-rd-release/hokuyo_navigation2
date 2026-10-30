@@ -34,3 +34,9 @@ hokuyo_rsf:
     imu_frame: "imu"
     gnss_frame: "rsf_gnss"
     utm_frame: "rsf_utm/utm"
+
+    # 受信状況のログ出力
+    diag_period: 1.0     # 受信状況の要約を出す間隔 [s]
+    # データ種別ごとの途絶とみなす時間 [s]. 通常の受信間隔の 5 倍の方が長ければそちらを使うので、
+    # 1Hz の GNSS 系データは自動的に約 5 秒になる. 全データの途絶 (点群・IMU を含めて何も来ない) はこの値で判定する
+    stall_timeout: 1.0

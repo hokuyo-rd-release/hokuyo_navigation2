@@ -88,6 +88,7 @@ target_include_directories(pointcloud_transform_for_loc PUBLIC
   ${pcl_conversions_INCLUDE_DIRS}
 )
 target_include_directories( odom_to_tf PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
 install(TARGETS
@@ -102,7 +103,13 @@ install(TARGETS
 install(DIRECTORY urdf config launch rviz src scripts map waypoints
   DESTINATION share/${PROJECT_NAME})
 
-install(PROGRAMS scripts/coordinator.sh
+install(PROGRAMS
+  scripts/coordinator.sh
+  scripts/rsf_check.py
+  scripts/rsf_bag_record.sh
+  scripts/loc_eval.py
+  scripts/loc_eval_record.sh
+  scripts/loc_eval_report.py
   DESTINATION lib/${PROJECT_NAME})
 
 

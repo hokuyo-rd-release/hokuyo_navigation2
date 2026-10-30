@@ -110,9 +110,18 @@ load_initial_poses() {
 }
 
 # ナビゲーションシステムを起動する関数
+# 検証用ノードなど launch 引数を足すときは config/nav_extra_launch_args.txt に書く
+# (例: use_loc_eval:=true record_loc_bag:=true. # 以降はコメント). 環境変数 NAV_EXTRA_LAUNCH_ARGS でも渡せる
 launch_navigation_system() {
     local map_name="$1"
     local current_use_gnss_switch="$2"
+    local extra_args_file="${HOKUYO_NAV2_PKG_PATH}/config/nav_extra_launch_args.txt"
+    if [ -z "${NAV_EXTRA_LAUNCH_ARGS:-}" ] && [ -f "${extra_args_file}" ]; then
+        NAV_EXTRA_LAUNCH_ARGS="$(sed 's/#.*//' "${extra_args_file}" | tr '\n' ' ')"
+    fi
+    if [ -n "${NAV_EXTRA_LAUNCH_ARGS// /}" ]; then
+        echo "追加の launch 引数: ${NAV_EXTRA_LAUNCH_ARGS}"
+    fi
 
     echo "ナビゲーションシステムを起動します... (マップ: ${map_name}, GNSS: ${current_use_gnss_switch})"
     gnome-terminal -- bash -c "ros2 launch hokuyo_navigation2 hokuyo_nav2_bringup_launch.xml \
@@ -128,7 +137,8 @@ launch_navigation_system() {
         use_gnss_switch:=${current_use_gnss_switch} \
         map_file:=${map_name} \
         initial_pose:=\"${pose1},${pose2},${pose3},${pose4},${pose5},${pose6},${pose7}\" \
-        latlon_pose:=\"${latlon1},${latlon2},${latlon3}\"; \
+        latlon_pose:=\"${latlon1},${latlon2},${latlon3}\" \
+        ${NAV_EXTRA_LAUNCH_ARGS:-}; \
         bash"
 }
 

@@ -22,6 +22,11 @@
   <depend>pcl_conversions</depend>
   <depend>tf-transformations</depend>
   <depend>xacro</depend>
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>tf2_msgs</exec_depend>
+  <exec_depend>diagnostic_msgs</exec_depend>
+  <exec_depend>fix_msgs</exec_depend>
+  <exec_depend>ros2bag</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

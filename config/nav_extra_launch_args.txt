@@ -1,0 +1,4 @@
+# ナビゲーション起動時に hokuyo_nav2_bringup_launch.xml へ足す launch 引数 (nav_common.sh が読む).
+# 不要になったら行頭に # を付けるか、このファイルを消す.
+# loc モードの往復精度の検証用: 照合ごとの一致率・補正量を CSV に (rosbag/loc_eval_csv), 入出力を rosbag に (rosbag/loc_eval)
+use_loc_eval:=true record_loc_bag:=true

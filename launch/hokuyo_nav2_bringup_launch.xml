@@ -8,7 +8,21 @@
   <arg name="use_rsf" default="true" />
   <arg name="enable_uam" default="false"/>
   <arg name="use_gnss_switch" default="false"/>
+  <arg name="use_lio" default="true"/>
+  <!-- GNSS モードの位置系統 (rsf_fix → TF) の調査用 -->
+  <!-- 位置系統の途絶とみなす時間 [s]. 最も遅い GNSS 系のトピックが 1Hz なので 3 秒 -->
+  <arg name="rsf_stall_timeout" default="3.0"/>
+  <arg name="use_rsf_check" default="true"/>
+  <arg name="rsf_check_report_period" default="5.0"/>
+  <arg name="rsf_check_csv_dir" default="$(var hokuyo_navigation_pkg_path)/rosbag/rsf_check_csv"/>
+  <arg name="record_rsf_bag" default="false"/>
+  <arg name="rsf_bag_dir" default="$(var hokuyo_navigation_pkg_path)/rosbag/rsf_chain"/>
   <arg name="use_localization" default="true"/>
+  <!-- loc モードの自己位置推定の検証用. 照合ごとの一致率・補正量を CSV に出す -->
+  <arg name="use_loc_eval" default="false"/>
+  <arg name="loc_eval_csv_dir" default="$(var hokuyo_navigation_pkg_path)/rosbag/loc_eval_csv"/>
+  <arg name="record_loc_bag" default="false"/>
+  <arg name="loc_bag_dir" default="$(var hokuyo_navigation_pkg_path)/rosbag/loc_eval"/>
   <arg name="use_obstacle_monitor" default="true"/>
   <arg name="obstacle_monitor_params" default="$(var hokuyo_navigation_pkg_path)/config/obstacle_monitor.yaml"/>
 
@@ -19,7 +33,7 @@
   <arg name="sub_cloud_name" default="/rsf/aligned" />
   <arg name="fix2xyz_params_" default="$(var hokuyo_navigation_pkg_path)/config/fix2xyz.yaml"/>
   <arg name="xyz2fix_params_" default="$(var hokuyo_navigation_pkg_path)/config/xyz2fix.yaml"/>
-  <arg name="rsf_param" default="$(var hokuyo_navigation_pkg_path)/config/rsf_node_config.yaml"/>
+  <arg name="rsf_param" default="$(var hokuyo_navigation_pkg_path)/config/rsf_node2_config.yaml"/>
   <arg name="initial_pose" default="0.0 0.0 0.0 0.0 0.0 0.0 0.0"/>
   <arg name="latlon_pose" default="35.0 135.0 40.0"/>
 
@@ -27,6 +41,7 @@
   <node pkg="fix2xyz" exec="fix2xyz_node" name="fix2xyz_out" output="log">
     <param from="$(var fix2xyz_params_)" />
     <param name="origin_pose" value="$(var latlon_pose)" />
+    <param name="stall_timeout" value="$(var rsf_stall_timeout)" />
   </node>
   <node pkg="fix2xyz" exec="xyz2fix_node" name="xyz2fix_out" output="log">
     <param from="$(var xyz2fix_params_)" />
@@ -39,7 +54,8 @@
 
   <!-- RSF_NODE -->
   <group if="$(var use_rsf)">
-    <node pkg="hokuyo_rsf" exec="hokuyo_rsf" name="hokuyo_rsf" output="screen">
+    <!-- 受信状況を 1 秒ごとにログへ出すので画面には出さない (~/.ros/log の hokuyo_rsf_*.log と launch のログに残る) -->
+    <node pkg="rsf_node2" exec="rsf_node" name="rsf_node2" output="log">
       <param from="$(var rsf_param)"/>
     </node>
   </group>
@@ -56,21 +72,36 @@
 
     <group if="$(var use_lio)">
       <group if="$(var use_gnss_switch)">
-        <node pkg="fix2xyz" exec="fix_odom_to_fix_orient" name="fix_odom_to_fix_orient">
+        <node pkg="fix2xyz" exec="fix_odom_to_fix_orient" name="fix_odom_to_fix_orient" output="log">
           <param name="utm_odom_topic" value="rsf/utm_coord_odom" />
           <param name="fix_topic" value="rsf/rsf_fix" />
           <param name="fix_with_orient_topic" value="rsf/rsf_fix_with_orient" />
+          <param name="stall_timeout" value="$(var rsf_stall_timeout)" />
         </node>
-        <node pkg="hokuyo_navigation2" exec="odom_to_tf" name="rsf_odom_tf">
+        <node pkg="hokuyo_navigation2" exec="odom_to_tf" name="rsf_odom_tf" output="log">
           <param name="sub_topic_name" value="rsf/rsf_odom_on_map" />
           <param name="frame_id" value="map" />
           <param name="child_frame_id" value="base_link" />
+          <param name="stall_timeout" value="$(var rsf_stall_timeout)" />
         </node>
         <include file="$(find-pkg-share lio_nav2_bringup)/launch/navigation_launch.py">
           <arg name="map" value="$(var map_dir)/$(var map_file).yaml"/>
           <arg name="cmd_vel_topic" value="wizurg/cmd_vel"/>
           <arg name="params_file" value="$(var hokuyo_navigation_pkg_path)/config/nav2/nav2_gnss_switch_params.yaml"/>
         </include>
+
+        <!-- 位置系統の監視. 途絶や RSF の状態変化を画面とログ、CSV に出す -->
+        <group if="$(var use_rsf_check)">
+          <node pkg="hokuyo_navigation2" exec="rsf_check.py" name="rsf_check" output="screen">
+            <param name="report_period" value="$(var rsf_check_report_period)"/>
+            <param name="csv_dir" value="$(var rsf_check_csv_dir)"/>
+            <param name="stall_timeout" value="$(var rsf_stall_timeout)"/>
+          </node>
+        </group>
+        <!-- 位置系統と点群・IMU を rosbag に記録 (5 分ごとに分割). 容量に注意 -->
+        <group if="$(var record_rsf_bag)">
+          <executable cmd="$(find-pkg-prefix hokuyo_navigation2)/lib/hokuyo_navigation2/rsf_bag_record.sh $(var rsf_bag_dir)" name="rsf_bag_record" output="log"/>
+        </group>
       </group>
 
       <group unless="$(var use_gnss_switch)">
@@ -97,6 +128,17 @@
               <param name="sub_odom_topic" value="/rsf/lio_imu_rate_odom"/>
               <param name="pub_topic" value="/rsf/aligned"/>
             </node>
+            <!-- 自己位置推定の検証. 一致率の低下や大きな補正を画面とログ、CSV に出す -->
+            <group if="$(var use_loc_eval)">
+              <node pkg="hokuyo_navigation2" exec="loc_eval.py" name="loc_eval" output="screen">
+                <param name="map_pcd" value="$(var map_dir)/$(var map_file).pcd"/>
+                <param name="csv_dir" value="$(var loc_eval_csv_dir)"/>
+              </node>
+            </group>
+            <!-- 自己位置推定の入出力と点群・IMU を rosbag に記録 (5 分ごとに分割). 容量に注意 -->
+            <group if="$(var record_loc_bag)">
+              <executable cmd="$(find-pkg-prefix hokuyo_navigation2)/lib/hokuyo_navigation2/loc_eval_record.sh $(var loc_bag_dir)" name="loc_eval_record" output="log"/>
+            </group>
           </group>
           <include file="$(find-pkg-share lio_nav2_bringup)/launch/navigation_launch.py">
             <arg name="map" value="$(var map_dir)/$(var map_file).yaml"/>

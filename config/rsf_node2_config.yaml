@@ -1,0 +1,256 @@
+# Parameters for the rsf_node executable of the rsf_node2 package.
+# The top-level key has to match the node name set in the launch file.
+rsf_node2:
+  ros__parameters:
+    # ---- Connection ----
+    ip_address: "192.168.0.100"
+    port: 10940
+
+    # Commands issued once the connection comes up (section 3.4 state diagram).
+    # Streaming has to be started before position estimation.
+    start_streaming_on_connect: true
+    start_rsf_on_connect: true
+
+    # Wire dialect: "auto" detects it from the incoming frames, "spec" and
+    # "legacy" pin it. See rsf_library/README.md for why both exist.
+    wire_layout: "legacy"
+
+    # Which clock stamps the published messages.
+    #
+    # "sensor"  the timestamp the sensor put on the wire - the true acquisition
+    #           instant, correct when the sensor clock is synchronised here.
+    #
+    # "receive" the ROS clock: the sensor's timestamps moved onto it by one
+    #           continuously measured offset. Use this when the sensor clock is
+    #           not disciplined - without a GNSS fix this unit ran about 0.7 s
+    #           behind the PC, which no Nav2 costmap (expected_update_rate 0.08)
+    #           or transform_tolerance (0.1-0.2) accepts.
+    #
+    #           The offset is shared by every stream on purpose, so the timing
+    #           between them is left exactly as the sensor reported it, and the
+    #           per-point timestamps inside the cloud move with the header.
+    stamp_source: "receive"
+
+    # Cap on how long publishing waits for the sensor to re-initialise its
+    # origin at startup. 0 means no cap, and is safe.
+    #
+    # START_RSF re-initialises position estimation - the sensor keeps reporting
+    # the previous session's pose for about a second, then resets its origin -
+    # but only when estimation was stopped. Sent while it is already running it
+    # is a complete no-op, measured twice on this unit. Publishing before the
+    # reset lands puts data in an origin about to be thrown away, which is what
+    # made the point cloud appear displaced for a moment after every launch.
+    #
+    # Which of the two is about to happen is not guessed at. The SWITCH_ODOM
+    # rate says it plainly before START_RSF is sent - measured, about 1000
+    # samples a second while estimation runs against nought to one while it does
+    # not - so the driver looks first and then decides:
+    #
+    #   already running  START_RSF changes nothing, so publishing starts at once
+    #                    (about 20 ms, the time to count the samples)
+    #   stopped          a reset is certain, so wait for it however long it
+    #                    takes; that cannot hang, because it is known to be
+    #                    coming
+    #
+    # The rate has to be read beforehand: it reaches its full value the instant
+    # the command goes out and the origin resets 1.04 s later, so afterwards it
+    # says nothing about whether the reset is still pending. This is why the
+    # driver sends START_RSF itself instead of letting the client library send
+    # it on connect.
+    #
+    # This value therefore is not load bearing. It still caps the two cases
+    # where a reset was assumed rather than established - a START_RSF sent by
+    # hand on /rsf/cmd_to_spel, and a configuration with nothing streaming to
+    # measure - and there a cap is always applied whatever this says, so 0 can
+    # never leave the driver silent forever.
+    startup_settle_seconds: 0.0
+
+    # Send STOP_RSF / STOP_STREAMING when the driver exits. Set false to leave
+    # position estimation running, which avoids the re-initialisation above
+    # entirely - verified on hardware - at the cost of the sensor continuing to
+    # estimate after the driver is gone, and the origin carrying over between
+    # runs instead of restarting at the sensor's current position.
+    stop_on_disconnect: true
+
+    # Publisher queue depth. The 1 kHz streams need more than the usual 10.
+    queue_size: 100
+
+    # Depth of the hand-off queue between the sensor receive thread and the
+    # thread that calls publish(). publish() can block when a subscriber falls
+    # behind; this keeps that from stopping the sensor link and every other
+    # topic with it. Overflow discards the oldest samples and is logged.
+    publish_queue_size: 2000
+
+    # The state/type strings arrive at 1 kHz but change every few seconds.
+    # Publishing them only on change, plus a slow keepalive so a late
+    # subscriber still gets the current value, removes about 4000 messages a
+    # second. Set to false to forward every one.
+    publish_text_on_change_only: true
+    text_keepalive_hz: 1.0
+
+    # One odometry message is published per this many received, per source.
+    # 1 publishes every sample (the sensor's full 1 kHz); 10 gives about 100 Hz.
+    #
+    # Counted rather than timed on purpose: the sensor delivers the 1 kHz
+    # streams in bursts of about fifty, so a wall-clock rate limiter discards
+    # most of each burst and lands near 180 Hz whatever rate is asked for.
+    # Applies to lio_odom, switch_odom and utm_odom; TF has tf_decimation and
+    # IMU is left alone.
+    odom_decimation: 10
+
+    # ---- TF ----
+    #
+    # 送出される TF は 1 メッセージにまとめられます。センサはオドメトリをバーストで
+    # 送ってくるので、1件ずつ publish すると起動直後にレーンが追いつきません。
+    #
+    # 点群は、それを覆う TF を publish し終えるまで保留されます。バーストの谷では
+    # 最新姿勢が最大 68 ms 古くなり、60 ms 過去に打刻された点群がそれを追い越すため
+    # です。詳細は README の「点群と TF の順序」を参照してください。
+    broadcast_tf: false
+    # One transform per this many odometry messages, so 2 gives 500 Hz out of
+    # the 1 kHz stream. Bounded from both sides, both measured on hardware with
+    # the sample launch running:
+    #
+    #   too slow  tf2 interpolates but never extrapolates, so anything stamped
+    #             after the newest transform cannot be looked up, and the window
+    #             for that is one TF period. At 20 Hz (50), 6.4 % of point cloud
+    #             lookups failed with the clouds genuinely ahead of the newest
+    #             transform.
+    #
+    #   too fast  /tf has RELIABLE subscribers - RViz, and vizanti here - and
+    #             past what they absorb two things go wrong: the publish lane
+    #             discards transforms, and each subscriber's own tf2 listener
+    #             falls behind so its buffer lags what was actually published.
+    #             At 1000 Hz (1) the tf lane overflowed, the largest gap grew
+    #             from 0.004 s to 0.155 s, and failures rose to 10.9 %.
+    #
+    # Between those, 100 Hz (10) and 500 Hz (2) measured the same: 0.1 % on a
+    # quiet machine, ~2 % when CPU is contended, with the difference between
+    # runs larger than the difference between settings. 2 is chosen for the
+    # headroom - it also covers a consumer doing timestamped lookups at any rate
+    # up to 500 Hz. Use 10 instead if nothing needs more than 100 Hz and the
+    # machine is CPU bound; it costs a little less. Do not set 1.
+    #
+    # Crossing the upper bound announces itself: the node logs
+    # "topic 'tf': N samples discarded".
+    tf_decimation: 2
+
+    # ---- Frames ----
+    #
+    # Publish the fixed geometry between the sensor's own frames.
+    #
+    # The IMU is rotated with respect to the LiDAR - section 3.8.7 maps IMU
+    # (x, y, z) onto LiDAR (y, z, x), and standing still this unit reports
+    # gravity on IMU +y, which that rotation puts on LiDAR +z - and the driver
+    # publishes IMU samples under their own frame_id. The protocol never puts
+    # that frame in the TF tree, so without this the frame is named in every
+    # /rsf/imu message and connected to nothing: every lookup against it fails
+    # and the IMU cannot be fused at all. The same applies to rsf_gnss.
+    publish_static_tf: false
+
+    # Translation from the LiDAR frame origin to the IMU and to the GNSS
+    # antenna, in metres, [x, y, z]. The protocol does not carry either, so both
+    # default to zero. The rotation is the part that makes the IMU interpretable
+    # and it is exact; the lever arm is an approximation worth entering once
+    # GNSS is fused or the robot rotates quickly enough for it to matter.
+    imu_translation: [0.0, 0.0, 0.0]
+    gnss_translation: [0.0, 0.0, 0.0]
+
+    # When set, the odometry transform is published as rsf_odom -> base_frame
+    # instead of rsf_odom -> rsf_hokuyo3d.
+    #
+    # A robot's URDF almost always makes the sensor a child of base_link.
+    # Publish rsf_odom -> rsf_hokuyo3d as well and the sensor frame has two
+    # parents, which is not a tree: tf2 reports competing authorities and
+    # lookups through it become undefined. Nav2 also asks for odom -> base_link
+    # by name. Setting this moves the driver's transform to the top of the
+    # robot's chain, where it belongs.
+    #
+    # The rsf_hokuyo3d -> base_frame extrinsic is read from the TF tree the URDF
+    # already publishes, not restated here, so there are never two descriptions
+    # to drift apart. Nothing is broadcast until it has been found, and the
+    # driver says so in the log and in the diagnostics while it waits.
+    #
+    # Leave empty when nothing else claims the sensor frame.
+    base_frame: ""
+
+    odom_frame: "lio_odom"
+    utm_frame: "rsf_utm/utm"
+    lidar_frame: "yvt"
+    imu_frame: "imu"
+    gnss_frame: "rsf_gnss"
+
+    # ---- Published topics ----
+    # Sensor data
+    fix_topic: "/fix"
+    gga_topic: "/gga"
+    rmc_topic: "/rmc"
+    zda_topic: "/zda"
+    point_cloud_topic: "/hokuyo3d/hokuyo_cloud2"
+    imu_topic: "/hokuyo3d/imu"
+
+    # Position estimation data
+    lio_odom_topic: "/rsf/lio_imu_rate_odom"
+    switch_fix_topic: "/rsf/rsf_fix"
+    utm_odom_topic: "/rsf/utm_coord_odom"
+    switch_odom_topic: "/rsf/rsf_odom"
+    switch_odom_state_topic: "/rsf/rsf_odom_state"
+    switch_odom_type_topic: "/rsf/rsf_odom_type"
+    switch_fix_state_topic: "/rsf/rsf_fix_state"
+    switch_fix_type_topic: "/rsf/rsf_fix_type"
+
+    # Announces that the sensor re-initialised its origin mid-run. Every pose
+    # published before such an event belongs to a frame that no longer exists,
+    # and a consumer integrating the odometry cannot detect it on its own -
+    # a jump back to the origin is a perfectly legal pose. Anything that builds
+    # on rsf_odom (SLAM, or a filter estimating map -> rsf_odom) should
+    # re-initialise when a std_msgs/Header arrives here.
+    odom_reset_topic: "/rsf/odom_reset"
+
+    # Diagnostics
+    diagnostics_topic: "/rsf/diagnostics"
+    diagnostic_status_name: "rsf_device"
+
+    # The driver's own health, published on the same topic under its own status
+    # name: link state, reconnect count, origin resets, seconds since the last
+    # cloud and odometry, the stamp age a costmap will judge, the clock offset,
+    # and how many samples the publish lanes have discarded. This is what makes
+    # a stall or a reconnect visible to a navigation supervisor at run time
+    # rather than only in the log. 0 disables it.
+    driver_diagnostics_hz: 1.0
+    driver_diagnostic_status_name: "rsf_driver"
+
+    # ---- Covariance ----
+    #
+    # The specification declares several covariance blocks unsupported and the
+    # sensor transmits them as all zeros. sensor_msgs reads all-zero as
+    # "unknown", but a fusion filter that takes the matrix at face value inverts
+    # a singular one, so the driver substitutes a variance on the diagonal of
+    # exactly those blocks. Anything the sensor does report - the odometry pose
+    # covariance, and the linear half of the twist covariance - passes through
+    # untouched, as does the IMU orientation_covariance, whose leading -1 is the
+    # sensor correctly saying it has no orientation estimate.
+    #
+    # The values are the noise measured on this unit standing still for 30 s,
+    # taken from the noisiest axis and rounded up:
+    #   IMU angular velocity     worst 2.1e-02 (rad/s)^2
+    #   IMU linear acceleration  worst 1.1e+00 (m/s^2)^2
+    #   odometry angular rate    worst 2.2e-02 (rad/s)^2
+    # A quieter mount justifies smaller numbers. Setting one to 0 forwards the
+    # zeros unchanged.
+    twist_angular_variance: 0.025
+    imu_angular_velocity_variance: 0.025
+    imu_linear_acceleration_variance: 1.2
+
+    # The latest LIO odometry, re-published at point cloud rate so that a
+    # consumer of the cloud has a pose sampled at the same moment.
+    publish_lidar_rate_odom: true
+    lidar_rate_odom_topic: "/rsf/lio_lidar_rate_odom"
+
+    # ---- Subscribed topics ----
+    command_topic: "/rsf/cmd_to_spel"
+
+    # SET_IP_ADDRESS is not part of C-42-04636 and is only accepted by some
+    # firmware builds. Leave this off unless the sensor is known to support it.
+    enable_set_ip_address: false
+    set_ip_address_topic: "/rsf/ip_address"
