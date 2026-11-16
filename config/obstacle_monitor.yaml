@@ -11,7 +11,7 @@ obstacle_monitor:
     slow_topic: /wizurg/obstacle_slow_cmd_vel
 
     # --- 検出範囲 [m] ---
-    min_detection_range: 0.3
+    min_detection_range: 0.1
     max_detection_range: 8.0
     # 消去用レイの長さ。global_costmap の raytrace_max_range 以下にしておく.
     clearing_range: 8.0
@@ -53,6 +53,57 @@ obstacle_monitor:
     # static_slow_speed を 0 以下にすると減速しない。
     static_slow_lookahead: 5.0   # この距離以内に静止障害物があれば減速する [m]
     static_slow_speed: 0.4       # 減速時の上限速度 [m/s]
+
+    # --- 草むら(揺れる障害物)の除外 ---
+    # 「一度点が見えた場所をその後のレーザーが素通りする」ことを地図座標のセル単位で数え、
+    # 当たる/素通りが短時間に何度も入れ替わる(= 揺れている、隙間がある)場所を草むらとみなす。
+    # 草むらは global_costmap (static_cloud) にも local_costmap (filtered_scan) にも入れない。
+    # 移動障害物と判定されたものには適用しない。
+    # 注意: 風が無く全く揺れていない密な草は固体と区別できないため、従来どおり障害物になる。
+    # 2026-11 checkarea2 の茂み (WP9〜13 付近) の rosbag では、この判定は一度も働かなかった
+    # (茂みは揺れとして検出されず、むしろ移動障害物と判定されて停止していた)。
+    # 茂みが決まった場所にあるなら、ウェイポイントの pass_through 属性で対処する。
+    vegetation_filter_enabled: false
+    vegetation_cell_size: 0.1        # 判定セルの大きさ [m]
+    vegetation_range: 6.0            # これより遠い点は判定しない [m]
+    vegetation_window: 2.0           # 統計の時定数 [s] (この程度の時間の揺れを見る)
+    # 計測点の手前この距離以内の素通りは数えない。自己位置・計測のノイズで
+    # 壁などを「素通りされた」と誤判定しないため [m]
+    vegetation_ray_margin: 0.2
+    # 過去の点とレーザーがこの距離以内を通れば素通りとみなす [m] (ビーム間隔の半分が上限)
+    vegetation_perp_tolerance: 0.03
+    # 過去の点からこの距離以内に今回も点が見えていれば素通りとしない [m] (物体の端・計測ばらつきの保護)
+    vegetation_presence_radius: 0.03
+    # 細い柱・人の脚などの小さな物は、ビーム間隔より細いと実際に見えたり見えなかったりして
+    # 揺れと区別できないため、草むら判定の対象外にする (安全側)。
+    vegetation_min_cluster_points: 3   # これ未満の点数のクラスタは揺れの検出に使わない
+    vegetation_min_cluster_size: 0.2   # これ未満の大きさ (直径) のクラスタは揺れの検出に使わない [m]
+    # 反射なしビームも「素通り」として数えるか。/hokuyo3d/scan は 3D 点群からの切り出しで
+    # 1 フレームに値があるのは全ビームの 2 割程度しかなく、反射なし = データ無し の場合が大半なので false にする。
+    vegetation_use_no_return: false
+    # 表面とレーザーのなす角がこれ未満 (壁を斜めにかすめる場合) は素通りとして数えない [deg]
+    vegetation_min_incidence_deg: 25.0
+    vegetation_min_flips: 3.0        # 当たる/素通りの入れ替わりがこれ以上のセルを「揺れている」とする
+    vegetation_max_hit_ratio: 0.8    # 当たる割合がこれを超えるセルは揺れていない (細い柱など) とする
+    vegetation_min_observations: 4.0 # 観測回数がこれ未満のセルは判定しない
+    # 揺れを確認した場所をこの時間「草むら領域」として覚えておく [s]
+    # (草は瞬間ごとには一部の点しか揺れとして捉えられないため)
+    vegetation_hold_time: 3.0
+    vegetation_cluster_ratio: 0.4    # クラスタ内で揺れている点の割合がこれ以上なら草むら
+    # 草むらクラスタ内でも、安定して当たり続ける点 (太い幹・草の奥の壁など) は障害物として残す
+    vegetation_solid_hit_ratio: 0.95
+    vegetation_solid_min_observations: 10.0
+    vegetation_clear_extend: 0.3     # 草むらのビームは計測点よりこの距離先まで global_costmap を消去する [m]
+    filtered_scan_topic: obstacle_monitor/filtered_scan       # local_costmap 用 (草むらのビームを除去)
+    vegetation_cloud_topic: obstacle_monitor/vegetation_cloud # デバッグ用 (除外した点)
+
+    # --- 通過モード (ウェイポイントの pass_through 属性) ---
+    # 区間内は停止・減速指令を出さず、グローバルプランからこの距離以内の点を
+    # global_costmap / local_costmap に入れない。区間内の経路上の障害物は見えなくなる。
+    pass_through_topic: /wizurg/pass_through
+    pass_through_corridor: 0.6     # 無視する範囲 (プラン中心線からの距離) [m]。車体半幅 0.29 + padding 0.1 + 余裕
+    pass_through_lookahead: 6.0    # 前方何 m のプランまで対象にするか [m]
+    pass_through_timeout: 1.0      # 指令が途絶えたら通過モードを終了する [s]
 
     publish_rate: 10.0
     publish_markers: true

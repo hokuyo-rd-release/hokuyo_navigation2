@@ -163,7 +163,9 @@ local_costmap:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         observation_sources: scan
         scan:
-          topic: /hokuyo3d/scan
+          # obstacle_monitor が草むら(揺れる障害物)のビームを除去したスキャン.
+          # obstacle_monitor を使わない場合は /hokuyo3d/scan に戻すこと.
+          topic: /obstacle_monitor/filtered_scan
           sensor_frame: yvt
           data_type: LaserScan
           marking: true

@@ -1,3 +1,4 @@
 map_file,waypoint_file,nav_type,interval
-hokuyo_rsf_map_sw1,hokuyo_rsf_map_sw1,gnss,1
-hokuyo_rsf_map_sw2,hokuyo_rsf_map_sw2,gnss,1
+tsukuba_checkarea,tsukuba_checkarea,gnss,1
+tsukuba_checkarea2,tsukuba_checkarea2,loc,1
+tsukuba_checkarea3,tsukuba_checkarea3,loc,1
