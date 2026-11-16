@@ -4,7 +4,7 @@
 
   <arg name="hokuyo_navigation_pkg_path" default="$(find-pkg-share hokuyo_navigation2)"/>
   <arg name="icart_mini_driver_pkg_path" default="$(find-pkg-share icart_mini_driver)"/>
-  <arg name="urdf_path" default="$(var hokuyo_navigation_pkg_path)/urdf/arno.xacro"/>
+  <arg name="urdf_path" default="$(var hokuyo_navigation_pkg_path)/urdf/wizurg.xacro"/>
   <arg name="robot_description" default="$(command 'xacro $(var urdf_path)')"/>
 
 

@@ -14,7 +14,7 @@ from rosbag2_py import SequentialReader, StorageFilter, ConverterOptions, Storag
 
 # parameters
 def judge_utm_zone(longitude: float) -> int:
-    zone = int((longitude + 180.0 + 5) / 6)
+    zone = int((longitude + 180.0 ) / 6.0) + 1
     return zone
 
 def utm_zone_to_epsg(utm_zone: int) -> str:

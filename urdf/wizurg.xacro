@@ -3,10 +3,13 @@
 <robot name="icart_mini" xmlns:xacro="http://www.ros.org/wiki/xacro">
   <!-- Constants for robot dimensions -->
   <xacro:property name="PI" value="3.1415926535897931"/>
+  <!-- Wizurg mesh - exported from Blender (Wizurg.blend), base_footprint origin = floor under drive axle.
+       base_link is 0.068 m above the floor (drive axle 0.143 m - 0.075 m), so the mesh is shifted down. -->
+  <xacro:property name="mesh_z" value="-0.068"/>
 
   <!-- Import Rviz colors -->
   <xacro:include filename="$(find hokuyo_navigation2)/urdf/materials.xacro" />
-  <xacro:include filename="$(find hokuyo_navigation2)/urdf/arno.gazebo"/>
+  <xacro:include filename="$(find hokuyo_navigation2)/urdf/wizurg.gazebo"/>
 
   <!-- Base Link -->
   <link name="base_link">
@@ -18,11 +21,10 @@
     </collision>
 
     <visual>
-      <origin xyz="-0.17 0 0.1" rpy="0 0 0"/>
+      <origin xyz="0 0 ${mesh_z}" rpy="0 0 0"/>
       <geometry>
-	    <box size=".73 .58 .15"/>
+        <mesh filename="package://hokuyo_navigation2/urdf/meshes/wizurg_visual.obj" scale="1 1 1"/>
       </geometry>
-      <material name="orange"/>
     </visual>
 
     <collision name="collision">
@@ -31,17 +33,14 @@
         <cylinder  length="0.03" radius="0.04625"/>
       </geometry>
     </collision>
-    <visual name="visual">
-      <origin xyz="-0.325 0.0 0.05" rpy="0 ${PI*0.5} ${PI*0.5}"/>
-      <geometry>
-        <cylinder  length="0.03" radius="0.04625"/>
-      </geometry>
-    </visual>
 
     <inertial>
-       <mass value="20" />
-       <origin xyz="-0.08 0 0" rpy="0 0 0"/>
-       <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1" />
+       <!-- total robot 70 kg = base 68 + wheels 1 + 1. Same CoM / inertia as the Unity WizURG prefab -
+            CoM 0.30 m above the floor (batteries low in the base), between drive axle and casters;
+            inertia of the body volume about the CoM (from the Wizurg model). -->
+       <mass value="68" />
+       <origin xyz="-0.170 0 0.232" rpy="0 0 0"/>
+       <inertia ixx="4.4191" ixy="0" ixz="0" iyy="5.1824" iyz="0" izz="3.2912" />
     </inertial>
   </link>
 
@@ -134,7 +133,7 @@
   <joint name="laser_joint1" type="fixed">
     <parent link="base_link"/>
     <child  link="ust"/>
-    <origin xyz="0 0.25 0.670" rpy="3.141592653589793 0 1.3"/>
+    <origin xyz="0.002 0.2815 0.706" rpy="3.141592653589793 0 1.3"/>
   </joint>
   <link name="ust">
     <visual>
@@ -155,7 +154,7 @@
   <joint name="laser_joint2" type="fixed">
     <parent link="base_link"/>
     <child  link="ust2"/>
-    <origin xyz="0 -0.25 0.67" rpy="3.141592653589793 0 -1.3"/>
+    <origin xyz="0.002 -0.2815 0.706" rpy="3.141592653589793 0 -1.3"/>
   </joint>
   <link name="ust2">
     <visual>
@@ -176,7 +175,8 @@
   <joint name="laser_joint3" type="fixed">
     <parent link="base_link"/>
     <child  link="yvt"/>
-    <origin xyz="0.15 0 0.50" rpy="0 0 0"/>
+    <!-- RSF-X001 frame (YVT window centre) -->
+    <origin xyz="0.286 0 0.572" rpy="0 0 0"/>
   </joint>
   <link name="yvt">
     <visual>
@@ -197,7 +197,7 @@
   <joint name="laser_joint4" type="fixed">
     <parent link="base_link"/>
     <child  link="ylm"/>
-    <origin rpy="0 0 0" xyz="0.25 0 0.3"/>
+    <origin rpy="0 0 0" xyz="0.247 0 0.354"/>
   </joint>
   <link name="ylm">
     <visual>
@@ -240,7 +240,8 @@
   <joint name="gnss_joint" type="fixed">
     <parent link="base_link"/>
     <child  link="gnss"/>
-    <origin xyz="0.15 0.0 0.55" rpy="0 0 0"/>
+    <!-- top centre of the GNSS antenna on the head -->
+    <origin xyz="-0.100 0.0 0.880" rpy="0 0 0"/>
   </joint>
   <link name="gnss">
     <visual>
