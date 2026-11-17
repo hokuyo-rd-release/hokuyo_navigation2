@@ -29,7 +29,8 @@ load_options() {
     sensor="${option_arr[3]}"
     icart="${option_arr[4]}"
     use_lio="${option_arr[5]}"
-    use_unity="${option_arr[6]}"
+    # GUI のトグルから USE_UNITY_SIM が渡されたらそちらを優先し、無ければ CSV の値を使う
+    use_unity="${USE_UNITY_SIM:-${option_arr[6]}}"
     use_motor_driver="${option_arr[7]}"
     multi_map="${option_arr[8]}"
     default_mapfile="${option_arr[9]}"
@@ -130,6 +131,21 @@ launch_navigation_system() {
         initial_pose:=\"${pose1},${pose2},${pose3},${pose4},${pose5},${pose6},${pose7}\" \
         latlon_pose:=\"${latlon1},${latlon2},${latlon3}\"; \
         bash"
+}
+
+# Unity シミュレータのロボットを停止し、LIO をリセットする関数
+# 実機では hokuyo_rsf の再起動で LIO が原点から始まるが、Unity 側の LIO は Play 中ずっと動き続けるため、
+# マップ切替のたびに /rsf_reset を送って原点を現在位置に戻す。ROS-TCP-Endpoint と Play はそのままでよい。
+reset_unity_sim() {
+    if [ "${use_unity}" != "true" ]; then
+        return 0
+    fi
+    echo "Unity: ロボットを停止し、LIO をリセットします..."
+    # cmdvel_stopper を止めると Unity のロボットは最後の速度指令で動き続けるため、0 を送る
+    timeout 10 ros2 topic pub --once -w 1 /cmd_vel geometry_msgs/msg/Twist "{}" > /dev/null \
+        || echo "警告: /cmd_vel を購読している Unity のロボットが見つかりません。"
+    timeout 10 ros2 topic pub --once -w 1 /rsf_reset std_msgs/msg/Empty "{}" > /dev/null \
+        || echo "警告: /rsf_reset を購読している Unity のノードが見つかりません。"
 }
 
 # モータドライバを起動する関数

@@ -93,6 +93,7 @@ while true; do
                 cd -
                 # 関連ノードを全て終了
                 "${HOKUYO_NAV2_PKG_PATH}/scripts/ctrl/multi_map_kill.sh"
+                reset_unity_sim
                 echo "ノードの終了を待っています..."
                 for ((j=15; j>0; j--)); do
                     echo -ne "再起動待機中: ${j} 秒...  \r"
@@ -119,6 +120,7 @@ while true; do
         # gnome-terminalを使わずに直接実行し、終了を待つ
 
         "${HOKUYO_NAV2_PKG_PATH}/scripts/ctrl/multi_map_kill.sh"
+        reset_unity_sim
         echo "ノードの終了を待っています..."
         for ((j=15; j>0; j--)); do
             echo -ne "次のマップの起動待機中: ${j} 秒...  \r"

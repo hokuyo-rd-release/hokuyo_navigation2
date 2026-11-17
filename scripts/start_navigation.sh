@@ -13,6 +13,11 @@ source "$(dirname "$0")/setup_ros_env.sh"
 NAV_OPTION="$1"
 echo "Navigation Option: ${NAV_OPTION}"
 
+# シミュレータ使用フラグ (GUI のトグルから環境変数で渡される)。
+# 空のときは各ナビスクリプトがオプション CSV の use_unity_sim を使う。
+USE_UNITY_SIM="${USE_UNITY_SIM:-}"
+echo "Use Unity Sim: ${USE_UNITY_SIM:-(オプション CSV に従う)}"
+
 # --------------------------------------------------------------------------
 # 処理の分岐
 # --------------------------------------------------------------------------
@@ -24,7 +29,7 @@ case "${NAV_OPTION}" in
         # $3: wpfile
         mapfile="$2"
         wpfile="$3"
-        gnome-terminal -- bash -c "cd ${HOKUYO_NAV2_PKG_PATH}; scripts/navigation/nav_single_map.sh ${mapfile} ${wpfile} gnss; bash"; exit
+        gnome-terminal -- bash -c "export USE_UNITY_SIM=${USE_UNITY_SIM}; cd ${HOKUYO_NAV2_PKG_PATH}; scripts/navigation/nav_single_map.sh ${mapfile} ${wpfile} gnss; bash"; exit
         ;;
 
     "single_map_loc")
@@ -33,14 +38,14 @@ case "${NAV_OPTION}" in
         # $3: wpfile
         mapfile="$2"
         wpfile="$3"
-        gnome-terminal -- bash -c "cd ${HOKUYO_NAV2_PKG_PATH}; scripts/navigation/nav_single_map.sh ${mapfile} ${wpfile} loc; bash"; exit
+        gnome-terminal -- bash -c "export USE_UNITY_SIM=${USE_UNITY_SIM}; cd ${HOKUYO_NAV2_PKG_PATH}; scripts/navigation/nav_single_map.sh ${mapfile} ${wpfile} loc; bash"; exit
         ;;
 
     "multi_map")
         echo "--> [3] multi_map でNavigationを開始します。"
         # $2: csv_file
         csv_file="$2"
-        gnome-terminal -- bash -c "cd ${HOKUYO_NAV2_PKG_PATH}; scripts/navigation/nav_multi_map.sh config/${csv_file}; bash"; exit
+        gnome-terminal -- bash -c "export USE_UNITY_SIM=${USE_UNITY_SIM}; cd ${HOKUYO_NAV2_PKG_PATH}; scripts/navigation/nav_multi_map.sh config/${csv_file}; bash"; exit
         ;;
 
     *)
