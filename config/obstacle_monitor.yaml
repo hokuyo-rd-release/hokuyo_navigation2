@@ -3,107 +3,66 @@ obstacle_monitor:
     global_frame: map
     robot_base_frame: base_link
 
-    scan_topic: /hokuyo3d/scan
+    cloud_topic: /hokuyo3d/hokuyo_cloud2
     plan_topic: /plan
-    static_cloud_topic: obstacle_monitor/static_cloud
-    clearing_cloud_topic: obstacle_monitor/clearing_cloud
     stop_topic: /wizurg/obstacle_stop_cmd_vel
-    slow_topic: /wizurg/obstacle_slow_cmd_vel
 
-    # --- 検出範囲 [m] ---
-    min_detection_range: 0.1
-    max_detection_range: 8.0
-    # 消去用レイの長さ。global_costmap の raytrace_max_range 以下にしておく.
-    clearing_range: 8.0
-    # 消去レイを計測距離より手前で止める量 [m]。
-    # 0 にすると障害物が自分自身の反射でマーキングを毎スキャン消してしまい、
-    # グローバルプランが点滅して迂回経路に追従できなくなる。
-    clearing_shrink: 0.25
+    # --- 障害物点の抽出 ---
+    min_range: 0.3   # センサからの水平距離 [m]
+    max_range: 8.0
+    # 床の高さ (robot_base_frame 基準) [m]。wizurg は base_link が床から 0.068 m 上
+    ground_z: -0.068
+    # 床からこの高さの範囲の点を障害物とする [m]。
+    # 下限を下げすぎると上り坂の路面を障害物と誤検出する。
+    min_obstacle_height: 0.10
+    max_obstacle_height: 1.5
+    # 自車体の点を除く範囲 (robot_base_frame 基準, nav2 の footprint と同じ) [m]
+    footprint_min_x: -0.535
+    footprint_max_x: 0.195
+    footprint_half_width: 0.29
+    self_filter_margin: 0.05
 
-    # --- クラスタリング ---
-    cluster_tolerance: 0.35   # 隣接点がこの距離以内なら同一障害物とみなす [m]
-    min_cluster_points: 2     # これ未満の点数のクラスタは無視する
-    max_beam_gap: 2           # 何ビームまでの欠測を同一クラスタとして許容するか
+    # --- 障害物メモリ (地図座標のセル) ---
+    cell_size: 0.1
+    # 視野内にあるのにこの時間点が出なければ「居なくなった」として消す [s]。
+    # 点群は 1 フレームではまばらなので、数フレーム分の余裕を持たせる。
+    observed_clear_time: 1.0
+    # 視野外 (近くの低い物が -5° より下に外れた死角など) のセルはこの時間で忘れる [s]。
+    # 短すぎると目の前の低いロボットを忘れて発進する。
+    memory_timeout: 8.0
+    # センサの視野 (YVT-35LX: 垂直 -5°〜+35°, 水平 210°)
+    sensor_min_elevation_deg: -5.0
+    sensor_horizontal_fov_deg: 210.0
+    visibility_margin_deg: 1.0
 
-    # --- 追跡と移動判定 ---
-    association_distance: 0.7     # 前フレームのトラックと対応付ける最大距離 [m]
-    velocity_filter_alpha: 0.4    # 速度の一次遅れフィルタ係数 (大きいほど追従が速い)
-    dynamic_speed_threshold: 0.25 # これ以上の速度なら移動中とみなす [m/s]
-    dynamic_confirm_count: 3      # 連続で何回移動と判定したら「移動障害物」に確定するか
-    dynamic_hold_time: 2.0        # 移動障害物が止まって見えてもこの時間は移動扱いを維持 [s]
-    # 瞬間速度だけで判定すると、接近中に見える面が増えて重心がずれるだけの静止物を
-    # 移動物と誤判定し、障害物の手前で不要な停止をしてしまう。
-    # 「窓内の正味移動量」も条件に加えることで、見かけ上の重心ずれを除外する。
-    dynamic_window: 1.0           # 移動量を評価する時間窓 [s]
-    dynamic_min_displacement: 0.4 # 窓内でこれ以上動いていなければ移動物としない [m]
-    static_confirm_time: 0.6      # この時間静止し続けた点のみ global_costmap に書き込む [s]
-    # クラスタの分裂・結合でトラックが作り直されても静止判定をやり直さないための記憶時間 [s]
-    static_memory_time: 2.0
-    max_dynamic_cluster_radius: 1.2  # これより大きいクラスタ (壁や柵) は常に静止物扱い [m]
-    track_timeout: 0.6            # この時間見えないトラックは破棄する [s]
-
-    # --- グローバルプランとの干渉判定 ---
-    path_lookahead: 6.0        # 前方何 m のプランを監視するか
-    # プラン中心線からこの距離以内に障害物があれば「経路上」と判定する [m].
-    # 車体半幅 0.29 m + マージン.
-    path_clearance: 0.45
-    dynamic_stop_lookahead: 4.0  # 移動障害物がこの距離以内で経路を塞いだら停止する [m]
-    resume_delay: 1.5            # 障害物が経路から外れてから再開するまでの保持時間 [s]
-    # 静止障害物が経路上にある間は減速し、迂回プランへ乗り移る余裕を作る。
-    # static_slow_speed を 0 以下にすると減速しない。
-    static_slow_lookahead: 5.0   # この距離以内に静止障害物があれば減速する [m]
-    static_slow_speed: 0.4       # 減速時の上限速度 [m/s]
-
-    # --- 草むら(揺れる障害物)の除外 ---
-    # 「一度点が見えた場所をその後のレーザーが素通りする」ことを地図座標のセル単位で数え、
-    # 当たる/素通りが短時間に何度も入れ替わる(= 揺れている、隙間がある)場所を草むらとみなす。
-    # 草むらは global_costmap (static_cloud) にも local_costmap (filtered_scan) にも入れない。
-    # 移動障害物と判定されたものには適用しない。
-    # 注意: 風が無く全く揺れていない密な草は固体と区別できないため、従来どおり障害物になる。
-    # 2026-11 checkarea2 の茂み (WP9〜13 付近) の rosbag では、この判定は一度も働かなかった
-    # (茂みは揺れとして検出されず、むしろ移動障害物と判定されて停止していた)。
-    # 茂みが決まった場所にあるなら、ウェイポイントの pass_through 属性で対処する。
-    vegetation_filter_enabled: false
-    vegetation_cell_size: 0.1        # 判定セルの大きさ [m]
-    vegetation_range: 6.0            # これより遠い点は判定しない [m]
-    vegetation_window: 2.0           # 統計の時定数 [s] (この程度の時間の揺れを見る)
-    # 計測点の手前この距離以内の素通りは数えない。自己位置・計測のノイズで
-    # 壁などを「素通りされた」と誤判定しないため [m]
-    vegetation_ray_margin: 0.2
-    # 過去の点とレーザーがこの距離以内を通れば素通りとみなす [m] (ビーム間隔の半分が上限)
-    vegetation_perp_tolerance: 0.03
-    # 過去の点からこの距離以内に今回も点が見えていれば素通りとしない [m] (物体の端・計測ばらつきの保護)
-    vegetation_presence_radius: 0.03
-    # 細い柱・人の脚などの小さな物は、ビーム間隔より細いと実際に見えたり見えなかったりして
-    # 揺れと区別できないため、草むら判定の対象外にする (安全側)。
-    vegetation_min_cluster_points: 3   # これ未満の点数のクラスタは揺れの検出に使わない
-    vegetation_min_cluster_size: 0.2   # これ未満の大きさ (直径) のクラスタは揺れの検出に使わない [m]
-    # 反射なしビームも「素通り」として数えるか。/hokuyo3d/scan は 3D 点群からの切り出しで
-    # 1 フレームに値があるのは全ビームの 2 割程度しかなく、反射なし = データ無し の場合が大半なので false にする。
-    vegetation_use_no_return: false
-    # 表面とレーザーのなす角がこれ未満 (壁を斜めにかすめる場合) は素通りとして数えない [deg]
-    vegetation_min_incidence_deg: 25.0
-    vegetation_min_flips: 3.0        # 当たる/素通りの入れ替わりがこれ以上のセルを「揺れている」とする
-    vegetation_max_hit_ratio: 0.8    # 当たる割合がこれを超えるセルは揺れていない (細い柱など) とする
-    vegetation_min_observations: 4.0 # 観測回数がこれ未満のセルは判定しない
-    # 揺れを確認した場所をこの時間「草むら領域」として覚えておく [s]
-    # (草は瞬間ごとには一部の点しか揺れとして捉えられないため)
-    vegetation_hold_time: 3.0
-    vegetation_cluster_ratio: 0.4    # クラスタ内で揺れている点の割合がこれ以上なら草むら
-    # 草むらクラスタ内でも、安定して当たり続ける点 (太い幹・草の奥の壁など) は障害物として残す
-    vegetation_solid_hit_ratio: 0.95
-    vegetation_solid_min_observations: 10.0
-    vegetation_clear_extend: 0.3     # 草むらのビームは計測点よりこの距離先まで global_costmap を消去する [m]
-    filtered_scan_topic: obstacle_monitor/filtered_scan       # local_costmap 用 (草むらのビームを除去)
-    vegetation_cloud_topic: obstacle_monitor/vegetation_cloud # デバッグ用 (除外した点)
+    # --- 停止判定 ---
+    stop_distance: 2.0        # プラン前方この経路長以内に障害物があれば停止 [m]
+    path_clearance: 0.45      # プラン中心線からこの距離以内を経路上とみなす [m] (車体半幅 0.29 + 余裕)
+    min_blocking_cells: 2     # 経路上のセルがこの数以上で「塞がれている」とする (ノイズ除け)
+    block_confirm_count: 2    # 連続でこのフレーム数塞がれていたら停止する
+    resume_delay: 0.1         # 経路が空いてからこの時間待って再開する [s]
+    sensor_timeout: 0.5       # 点群がこの時間届かなければ停止する [s] (プランがある間のみ)
 
     # --- 通過モード (ウェイポイントの pass_through 属性) ---
-    # 区間内は停止・減速指令を出さず、グローバルプランからこの距離以内の点を
-    # global_costmap / local_costmap に入れない。区間内の経路上の障害物は見えなくなる。
+    # 通路に張り出した枝葉など、障害物として扱いたくない物がある区間で使う。
+    # waypoint_manager が区間中 pass_through_topic に true を出し続け、その間は停止せず、
+    # グローバルプランから pass_through_corridor 以内の障害物を無視する (local_costmap からも消える)。
+    # 区間内では経路上の人も見えなくなるため、使う区間は最小限にすること。
     pass_through_topic: /wizurg/pass_through
-    pass_through_corridor: 0.6     # 無視する範囲 (プラン中心線からの距離) [m]。車体半幅 0.29 + padding 0.1 + 余裕
-    pass_through_lookahead: 6.0    # 前方何 m のプランまで対象にするか [m]
-    pass_through_timeout: 1.0      # 指令が途絶えたら通過モードを終了する [s]
+    pass_through_corridor: 0.6   # 無視する範囲 (プラン中心線からの距離) [m]。車体半幅 0.29 + padding 0.1 + 余裕
+    pass_through_lookahead: 6.0  # 前方何 m のプランまで対象にするか [m]
+    pass_through_timeout: 1.0    # 指令がこの時間途絶えたら通過モードを終了する [s]
 
-    publish_rate: 10.0
+    # --- costmap 用の出力 ---
+    # local_costmap は memory_cloud (記憶している障害物セル) で障害物を書き込み、
+    # costmap_scan_topic (全ビーム +inf) で消去する。
+    # global_costmap には障害物を入れない (marking/clearing とも空の点群)。観測ソースが途絶えると
+    # Nav2 がプランニングを止めるため、空でも出し続ける。
+    # トピック名は nav2_params.yaml の obstacle_layer と合わせること。
+    costmap_marking_topic: /obstacle_monitor/static_cloud
+    costmap_clearing_topic: /obstacle_monitor/clearing_cloud
+    costmap_scan_topic: /obstacle_monitor/filtered_scan
+
+    # RViz 用マーカー (obstacle_monitor/markers) を出すか
     publish_markers: true
+    publish_rate: 10.0

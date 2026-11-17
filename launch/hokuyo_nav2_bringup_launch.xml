@@ -45,9 +45,9 @@
   </group>
   
   <group if="$(var use_navigation)">
-    <!-- 障害物の静止/移動を判定するノード.
-         静止物のみ global_costmap に渡してグローバルプランで回避させ、
-         移動物が経路を塞いでいる間は cmdvel_stopper 経由で停止させる. -->
+    <!-- 3D 点群で障害物を検出するノード.
+         グローバルプラン上を障害物が塞いでいる間は cmdvel_stopper 経由で停止して待つ.
+         (現段階では costmap に障害物を入れないため、迂回はしない) -->
     <group if="$(var use_obstacle_monitor)">
       <node pkg="hokuyo_navigation2" exec="obstacle_monitor" name="obstacle_monitor" output="screen">
         <param from="$(var obstacle_monitor_params)"/>

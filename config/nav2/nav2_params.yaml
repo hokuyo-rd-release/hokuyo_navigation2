@@ -161,28 +161,46 @@ local_costmap:
       obstacle_layer:
         enabled: true
         plugin: "nav2_costmap_2d::ObstacleLayer"
-        observation_sources: scan
-        scan:
-          # obstacle_monitor が草むら(揺れる障害物)のビームを除去したスキャン.
-          # obstacle_monitor を使わない場合は /hokuyo3d/scan に戻すこと.
+        # clearing_scan: obstacle_monitor が出す全ビーム +inf のスキャン. 消去専用 (marking しない).
+        #                センサ周囲 raytrace_max_range 以内を毎周期まっさらにする.
+        # obstacles    : obstacle_monitor が記憶している障害物セル (3D 点群から検出, 地図座標). 書き込み専用.
+        #                死角に入った低い障害物も含む. 消去 -> 書き込みの順に処理されるため、
+        #                local_costmap には「いま記憶している障害物」だけが残る (移動物の跡が残らない).
+        # 経路上の障害物での停止は obstacle_monitor -> cmdvel_stopper が担い、
+        # DWB はこの costmap で障害物を避ける (二重の安全).
+        # obstacle_monitor を使わない場合は scan 1 つ (/hokuyo3d/scan, marking/clearing とも true) に戻すこと.
+        observation_sources: clearing_scan obstacles
+        clearing_scan:
           topic: /obstacle_monitor/filtered_scan
           sensor_frame: yvt
           data_type: LaserScan
-          marking: true
+          marking: false
           clearing: true
           inf_is_valid: true
-          obstacle_max_range: 4.5     # 6.0 -> 4.5 に短縮
-          obstacle_min_range: 0.3
-          raytrace_max_range: 5.0     # 6.5 -> 5.0 に短縮
+          raytrace_min_range: 0.0
+          raytrace_max_range: 6.0   # rolling window の角まで届く長さ
           min_obstacle_height: -0.5
           max_obstacle_height: 1.5
           observation_persistence: 0.0
-          expected_update_rate: 0.2   # 0.05 -> 0.2
+          expected_update_rate: 0.2
+        obstacles:
+          topic: /obstacle_monitor/memory_cloud
+          sensor_frame: yvt
+          data_type: PointCloud2
+          marking: true
+          clearing: false
+          obstacle_min_range: 0.0
+          obstacle_max_range: 6.0
+          # 高さの判定は obstacle_monitor 側 (床からの高さ) で済んでいる.
+          # costmap では地図座標の z で判定されるため、起伏のある地図でも落とさないよう広く取る.
+          min_obstacle_height: -100.0
+          max_obstacle_height: 100.0
+          observation_persistence: 0.0
+          expected_update_rate: 0.2
 
 # グローバルコストマップ
-# 静的地図 (static_layer) に加えて、obstacle_monitor が「静止物」と確定した点だけを
-# obstacle_layer に書き込む。移動物 (歩行者など) は書き込まれないため、
-# 人が横切ってもグローバルプランは変化せず、停止 -> 通過待ち -> 元の経路で再開になる。
+# obstacle_layer の入力は obstacle_monitor が出す。現段階は障害物を書き込まない (空の点群) ため、
+# グローバルプランは静的地図のみで決まる。経路上の障害物は停止 -> 空くのを待つ -> 元の経路で再開になる。
 global_costmap:
   global_costmap:
     ros__parameters:
@@ -206,10 +224,8 @@ global_costmap:
       obstacle_layer:
         enabled: true
         plugin: "nav2_costmap_2d::ObstacleLayer"
-        # clearing_cloud  : 消去専用 (marking しない). 移動物のセルを毎スキャン消す.
-        # static_obstacles: 書き込み専用 (clearing しない). 静止と確定した点のみ.
-        # obstacle_layer は全ての clearing を処理した後に marking するため、この組み合わせで
-        # 「静止物は残り、移動物と消えた障害物は残らない」コストマップになる.
+        # clearing_cloud  : 消去専用 (marking しない).
+        # static_obstacles: 書き込み専用 (clearing しない). 現段階は空.
         observation_sources: clearing_cloud static_obstacles
         clearing_cloud:
           topic: /obstacle_monitor/clearing_cloud

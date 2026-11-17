@@ -45,8 +45,11 @@ public:
 
 
         if (initial_tf_en_) {
+            // スタンプは 0 にする。now() (壁時計) にすると、オドメトリのスタンプが
+            // 壁時計より小さい場合 (Unity シミュレータの起動からの時刻など)、これを受け取った
+            // TF リスナーはそれ以降の map->base_link をすべて TF_OLD_DATA として捨ててしまう。
             geometry_msgs::msg::TransformStamped transform_stamped;
-            transform_stamped.header.stamp = this->now();
+            transform_stamped.header.stamp = rclcpp::Time(0, 0, this->get_clock()->get_clock_type());
             transform_stamped.header.frame_id = frame_id_;
             transform_stamped.child_frame_id = child_frame_id_;
             transform_stamped.transform.translation.x = 0.0;

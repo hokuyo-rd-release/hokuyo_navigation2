@@ -223,8 +223,8 @@ ros2 run hokuyo_navigation2 coordinator.sh
 - **`src/cmdvel_stopper.cpp`**: 特定の条件下でロボットの速度指令(`cmd_vel`)を遮断し、停止させる安全機能ノード。
   - **処理の流れ**: 上位からの `cmd_vel` を監視しつつ、停止/開始/減速の制御トピックをサブスクライブします。停止指令時はゼロ速度を出力し、減速指令時は速度を制限して、下位のモータドライバへ `cmd_vel` を中継します。
   - **障害物停止チャンネル**: `waypoint_manager` が使う `/wizurg/stop_cmd_vel` (`Empty`) とは別に、`obstacle_monitor` 用の `/wizurg/obstacle_stop_cmd_vel` (`Bool`) を持ちます。両者は OR で合成されるため、片方の再開指令がもう片方の停止を打ち消すことはありません。障害物停止はレベル方式で、指令が `obstacle_stop_timeout`（既定 1.0 秒）途絶えると自動的に解除されます。
-- **`src/obstacle_monitor.cpp`**: 障害物を静止物／移動物に判別し、グローバルプランの回避と一時停止を使い分けるノード。
-  - **処理の流れ**: `LaserScan` を隣接点距離でクラスタリングし、クラスタを最近傍で対応付けて速度を推定します。速度がしきい値を超えた状態が続いたクラスタを「移動障害物」、一定時間静止し続けたクラスタを「静止障害物」と判定します。静止物のみを `static_cloud` として出力し、グローバルコストマップに書き込みます。移動障害物がグローバルプラン上を塞いでいる間は `cmdvel_stopper` に停止指令を出します。
+- **`src/obstacle_monitor.cpp`**: 3D 点群で障害物を検出し、グローバルプラン上を塞いでいる間は停止して待つノード。
+  - **処理の流れ**: `/hokuyo3d/hokuyo_cloud2` から床と自車体の点を除いて障害物点を取り出し、地図座標のセルに記録します。グローバルプラン前方の一定範囲に障害物セルがあれば `cmdvel_stopper` に停止指令を出し、空いてから一定時間後に再開します。近づくとセンサの視野から外れる低い障害物も、記録を残して止まり続けます。
 - **`src/pointcloud_transform_for_loc.cpp`**: 自己位置推定用に点群を座標変換するノード。
   - **処理の流れ**: 点群トピックとオドメトリトピックをサブスクライブし、オドメトリの姿勢情報を用いて点群を座標変換して再パブリッシュします。`simple_fastlio_localization` で、入力点群をオドメトリフレームに位置合わせするために使用されます。
 
@@ -325,46 +325,48 @@ ros2 run hokuyo_navigation2 coordinator.sh
     ```
 
 
-### 障害物回避の動作
+### 障害物での停止
 
-走行中にローカルの計測に障害物が現れたとき、`obstacle_monitor` が静止物と移動物を判別し、
-次のように挙動を分けます。
-
-| 種別 | 判定条件 | 挙動 |
-| --- | --- | --- |
-| 静止障害物 | 速度がしきい値未満の状態が `static_confirm_time` 継続（または `max_dynamic_cluster_radius` を超える大きなクラスタ） | `global_costmap` に書き込まれ、グローバルプランナが footprint と inflation を考慮した迂回経路を再生成する。経路上 `static_slow_lookahead` 以内にある間は `static_slow_speed` まで減速して、迂回経路へ乗り移る余裕を作る |
-| 移動障害物 | 速度が `dynamic_speed_threshold` 以上、かつ `dynamic_window` 内の正味移動量が `dynamic_min_displacement` 以上の状態が `dynamic_confirm_count` 回継続 | `global_costmap` には書き込まない。グローバルプラン上 `dynamic_stop_lookahead` 以内を塞いでいる間だけ停止し、通過後 `resume_delay` で元のプランのまま再開する |
+走行中にグローバルプラン上を障害物が塞いだとき、`obstacle_monitor` が停止指令を出し、
+空くのを待ってから元のプランのまま走行を再開します（渋滞待ち）。
+現段階では障害物を costmap に入れないため、迂回経路は作りません。
 
 **データの流れ**
 
 ```
-/hokuyo3d/scan ─┬─> obstacle_monitor ─┬─> /obstacle_monitor/static_cloud   ─> global_costmap (marking 専用)
-                │                     ├─> /obstacle_monitor/clearing_cloud ─> global_costmap (clearing 専用)
-                │                     ├─> /wizurg/obstacle_stop_cmd_vel    ─> cmdvel_stopper ─> /cmd_vel
-                │                     └─> /wizurg/obstacle_slow_cmd_vel    ─> cmdvel_stopper ─> /cmd_vel
-                └─> local_costmap (従来どおり全障害物。衝突回避の最終防壁)
+/hokuyo3d/hokuyo_cloud2 ─> obstacle_monitor ─┬─> /wizurg/obstacle_stop_cmd_vel ─> cmdvel_stopper ─> /cmd_vel
+                                              ├─> /obstacle_monitor/static_cloud   ─> global_costmap (現段階は空)
+                                              ├─> /obstacle_monitor/clearing_cloud ─> global_costmap (現段階は空)
+                                              └─> /obstacle_monitor/filtered_scan  ─> local_costmap  (全ビーム +inf)
 ```
 
-- `global_costmap` の `obstacle_layer` は clearing を全て処理してから marking するため、
-  「移動物のセルは毎スキャン消え、静止物だけが残る」コストマップになります。
-- `clearing_cloud` は反射が無いビームにも `clearing_range` の位置に点を置きます。
-  生スキャンをそのまま使うと `range_max` 超のビームが捨てられてレイが消去されず、
-  一度書き込まれた障害物が消えなくなるためです。
-- 移動障害物は `global_costmap` に入らないので、停止中もグローバルプランは変化しません。
-  そのため通過後は元の経路のまま走行を再開します。
+- 速度指令は実機・シミュレータとも `Nav2 → /wizurg/cmd_vel → cmdvel_stopper → /cmd_vel` の順に流れます。
+  シミュレータ (Unity) のロボットも `/cmd_vel` を読む設定にしてください（読まないと停止が効きません）。
+- costmap 用のトピックに空のデータを出しているのは、観測ソースが途絶えると Nav2 が costmap を
+  not current とみなしてプランニングを止めてしまうためです。
 - 停止中に Nav2 の recovery（spin/backup）に入らないよう、`progress_checker` の
   `movement_time_allowance` と `controller_server` の `failure_tolerance` を緩めてあります。
 
-**グローバルプランが点滅しないための要点**
+**停止の判定**
 
-- `clearing_shrink`（既定 0.25 m）で消去レイを計測距離より手前で止めています。
-  0 にすると障害物が自分自身の反射でマーキングを毎スキャン消してしまい、
-  `global_costmap` 上の障害物が点滅して迂回プランが出たり消えたりします。
-- クラスタが分裂・結合してトラックが作り直されても静止判定をやり直さないよう、
-  `static_memory_time` の間は同じ位置の静止判定を引き継ぎます。
-- 移動判定は瞬間速度だけでなく `dynamic_window` 内の正味移動量も条件にしています。
-  接近中は見える面が増えて重心がずれるため、瞬間速度だけだと静止物を移動物と誤判定し、
-  障害物の手前で不要な停止をしてしまいます。
+1. 点群から、床から `min_obstacle_height`〜`max_obstacle_height` の高さの点を障害物とします（自車体の範囲は除外）。
+2. 障害物点を地図座標の `cell_size` のセルに記録します。
+3. グローバルプランの前方 `stop_distance` 以内・中心線から `path_clearance` 以内にセルが
+   `min_blocking_cells` 個以上あり、それが `block_confirm_count` フレーム続いたら停止します。
+4. 該当するセルが無くなってから `resume_delay` 経過したら再開します。
+5. 点群が `sensor_timeout` 以上届かない場合も、プランがある間は停止します。
+
+**センサの死角の扱い**
+
+YVT-35LX の垂直視野は -5°〜+35° のため、背の低い物は近づくと視野の下に外れて見えなくなります
+（例: 高さ 0.4 m の物は約 2.9 m 以内で見えない）。見えなくなっただけでセルを消すと、目の前の障害物を
+忘れて発進してしまうため、セルは次のときだけ消します。
+
+- その位置がセンサの視野内にあるのに `observed_clear_time` 以上点が出ない（居なくなったことを確認できた）
+- 視野外（死角）のまま `memory_timeout` が経過した
+
+`memory_timeout` が短いと、目の前に居座る低い障害物を忘れて発進します。長いと、障害物が去っても
+しばらく止まったままになります。
 
 **ロボットサイズの設定（重要）**
 
@@ -380,27 +382,47 @@ ros2 run hokuyo_navigation2 coordinator.sh
 - 車体が前後に長い（後方 0.535 m）ため、DWB には車体形状を検査する
   `ObstacleFootprint` critic を追加しています。保守的すぎて動けない場合はこの critic を外します。
 
+**通過モード（枝葉が張り出した区間）**
+
+通路に張り出して揺れる葉や枝は障害物として扱いたくありませんが、センサからは人や物と区別できません。
+そこで、該当する区間だけウェイポイントの属性で強制通過させます。
+
+- GUI のウェイポイント編集で、区間の**手前のウェイポイント**に `pass_through` 属性を付け、`value` に徐行速度 [m/s] を入れます。
+  そのウェイポイントに到達してから次のウェイポイントに到達するまでが通過区間です（`value` が 0 以下なら速度制限なし）。
+- 区間中は `waypoint_manager` が `/wizurg/pass_through` に `true` を出し続け、`obstacle_monitor` は
+  - 停止指令を出しません。
+  - グローバルプランから `pass_through_corridor`（既定 0.6 m）以内の障害物を無視します（local_costmap からも消えるため DWB も避けません）。
+- 指令が `pass_through_timeout`（既定 1.0 秒）途絶えると通過モードは自動で終了します。
+- **区間内では経路上の人も無視されます。** 使う区間は最小限にしてください。
+- RViz では無視する範囲が黄色の帯、ロボット上の表示が `PASS_THROUGH` になります。
+
 **設定ファイル**
 
 - 判定パラメータ: `config/obstacle_monitor.yaml`
-- コストマップ設定: `config/nav2/nav2_params.yaml`（GNSS切替時は `config/nav2/nav2_gnss_switch_params.yaml`）の `global_costmap`
+- コストマップ設定: `config/nav2/nav2_params.yaml`（GNSS切替時は `config/nav2/nav2_gnss_switch_params.yaml`）
 - 無効化する場合: `hokuyo_nav2_bringup_launch.xml` の引数 `use_obstacle_monitor:=false`
-  （このとき `global_costmap` は静的地図のみを使う従来の挙動になります）
+  （このときは costmap の obstacle_layer のトピックを `/hokuyo3d/scan` などに戻すこと）
 
 **確認方法**
 
 ```bash
-# 判定結果 (CLEAR / REPLAN_STATIC / REPLAN_STATIC_SLOW / WAIT_DYNAMIC)
+# 判定結果 (CLEAR / WAIT_BLOCKED / PASS_THROUGH / NO_SENSOR)
 ros2 topic echo /obstacle_monitor/status
 # 停止指令
 ros2 topic echo /wizurg/obstacle_stop_cmd_vel
-# 減速指令 (0 以下は制限なし)
-ros2 topic echo /wizurg/obstacle_slow_cmd_vel
-# グローバルコストマップ上の障害物が点滅していないかの確認
-ros2 topic hz /obstacle_monitor/static_cloud
+# 障害物点が出ているか
+ros2 topic hz /obstacle_monitor/obstacle_cloud
 ```
 
-RViz では `/obstacle_monitor/markers` を表示すると、静止物が青、移動物が赤の円柱で可視化されます。
+RViz（`rviz/nav2_view.rviz` の「Obstacle Monitor」グループ）では `/obstacle_monitor/markers` で次のように表示されます。
+
+| 表示 | 意味 |
+| --- | --- |
+| 橙の柱 | 直近に見えている障害物セル |
+| 紫の柱 | 見えなくなったが記憶している障害物セル（死角など） |
+| 赤の柱 | 経路を塞いで停止の原因になっているセル |
+| 経路沿いの帯 | 停止判定の範囲。緑 = 空き、赤 = 停止中、黄 = 通過モードで無視している範囲 |
+| ロボット上の文字 | `CLEAR` / `WAIT_BLOCKED (N cells)` |
 
 ### Launch ファイル
 
