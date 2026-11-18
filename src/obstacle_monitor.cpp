@@ -27,20 +27,30 @@
 //  waypoint_manager は pass_through 属性のウェイポイントから次のウェイポイントまでの間、
 //  pass_through_topic (std_msgs/Bool) に true を出し続ける (速度は waypoint_manager が slow_cmd_vel で制限)。
 //  その間は
-//    - 停止指令を出さない
-//    - グローバルプランから pass_through_corridor 以内のセルをメモリから消す
-//      (local_costmap にも入らなくなり、DWB も避けない)
+//    - グローバルプランの不感帯にあるセルをメモリから消す
+//      (停止判定にも local_costmap にも入らなくなり、DWB も避けない)。
+//      不感帯は、ロボットの進行方向から見て経路の中心線から
+//        左へ path_clearance × pass_through_deadband_left_ratio
+//        右へ path_clearance × pass_through_deadband_right_ratio
+//      の範囲 (前方 pass_through_lookahead まで)。
+//    - 不感帯の外側 pass_through_costmap_margin までのセルも local_costmap には入れない
+//      (経路のすぐ脇のセルで DWB の軌道がすべて弾かれて動けなくなるのを防ぐ。停止判定には使う)
+//    - 不感帯の外に残ったセルで通常どおり停止判定する (範囲は stop_distance × 左右 path_clearance)。
+//      ただし「塞がれている」とするセル数は pass_through_min_blocking_cells を使う。
+//      割合が 1.0 の側は、停止判定の範囲がなくなる。
 //  pass_through_timeout 以上指令が途絶えたら通過モードを終了する。
-//  区間内では経路上の人も見えなくなるため、使う区間は最小限にすること。
+//  不感帯の中では経路上の人も見えなくなるため、使う区間・不感帯は最小限にすること。
 //
 // 可視化 (RViz):
 //  obstacle_monitor/markers (MarkerArray)
 //    - cells     : 障害物セル (床から最も高い点までの柱)。
-//                  橙 = 最近見えている, 紫 = 記憶のみ (死角など), 赤 = 経路を塞いでいる
+//                  橙 = 最近見えている, 紫 = 記憶のみ (死角など), 赤 = 停止判定の範囲 (検出帯) で検出,
+//                  薄い黄 = 通過モードの不感帯で無視 (今回のフレームで消したセル)
 //    - stop_zone : 停止判定の範囲 (プラン前方 stop_distance × 左右 path_clearance)。緑 = 空き, 赤 = 停止中
-//                  通過モード中は無視する範囲 (左右 pass_through_corridor) を黄色で表示
+//                  通過モード中は不感帯を除いた左右の部分だけを描く
+//    - pass_through_deadband : 通過モード中の不感帯 (黄色)
 //    - status    : ロボット上の状態表示
-//  obstacle_monitor/markers_2d (MarkerArray): vizanti 用。stop_zone を LINE_STRIP で表したものと status
+//  obstacle_monitor/markers_2d (MarkerArray): vizanti 用。stop_zone・pass_through_deadband を LINE_STRIP で表したものと status
 //  obstacle_monitor/cells_seen, cells_memory, cells_blocking (GridCells): vizanti 用の障害物セル。
 //    markers の cells と同じ分類 (互いに重ならない)。vizanti の PointCloud は compression: none だと
 //    data (base64 文字列) を読めないため GridCells で出す
@@ -56,6 +66,7 @@
 //                  プランニングが止まるため、空の点群を出し続ける。
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstdint>
 #include <limits>
@@ -201,9 +212,17 @@ public:
     // --- 通過モード ---
     const auto pass_through_topic =
       declare_parameter<std::string>("pass_through_topic", "/wizurg/pass_through");
-    pass_through_corridor_ = declare_parameter<double>("pass_through_corridor", 0.6);
     pass_through_lookahead_ = declare_parameter<double>("pass_through_lookahead", 6.0);
     pass_through_timeout_ = declare_parameter<double>("pass_through_timeout", 1.0);
+    deadband_left_ratio_ = std::clamp(
+      declare_parameter<double>("pass_through_deadband_left_ratio", 1.0), 0.0, 1.0);
+    deadband_right_ratio_ = std::clamp(
+      declare_parameter<double>("pass_through_deadband_right_ratio", 1.0), 0.0, 1.0);
+    updateDeadband();
+    pass_through_costmap_margin_ =
+      std::max(0.0, declare_parameter<double>("pass_through_costmap_margin", 0.15));
+    pass_through_min_blocking_cells_ =
+      declare_parameter<int>("pass_through_min_blocking_cells", min_blocking_cells_);
 
     // --- costmap 用の出力 (現段階は中身なし) ---
     const auto costmap_marking_topic =
@@ -212,6 +231,10 @@ public:
       declare_parameter<std::string>("costmap_clearing_topic", "obstacle_monitor/clearing_cloud");
     const auto costmap_scan_topic =
       declare_parameter<std::string>("costmap_scan_topic", "obstacle_monitor/filtered_scan");
+
+    // 停止判定・通過モードのパラメータは実行中にも変更できる (GUI の通過モード設定から ros2 param で送る)
+    param_cb_ = add_on_set_parameters_callback(
+      std::bind(&ObstacleMonitor::onSetParameters, this, std::placeholders::_1));
 
     publish_markers_ = declare_parameter<bool>("publish_markers", true);
     const double publish_rate = declare_parameter<double>("publish_rate", 10.0);
@@ -225,7 +248,7 @@ public:
         if (msg->data != pass_through_) {
           RCLCPP_WARN(
             get_logger(), msg->data ?
-            "通過モード開始: 経路付近の障害物を無視します" : "通過モード終了");
+            "通過モード開始: 経路付近の不感帯の障害物を無視します" : "通過モード終了");
         }
         pass_through_ = msg->data;
         pass_through_stamp_ = steady_clock_.now();
@@ -271,6 +294,78 @@ public:
 
 private:
   // ---------------------------------------------------------------- callbacks
+
+  void updateDeadband()
+  {
+    pass_through_deadband_left_ = path_clearance_ * deadband_left_ratio_;
+    pass_through_deadband_right_ = path_clearance_ * deadband_right_ratio_;
+  }
+
+  // 実行中のパラメータ変更。対象外のパラメータは値の保存だけ行い、動作には反映しない (起動時のみ有効)
+  rcl_interfaces::msg::SetParametersResult onSetParameters(
+    const std::vector<rclcpp::Parameter> & params)
+  {
+    rcl_interfaces::msg::SetParametersResult result;
+    result.successful = true;
+    auto as_double = [](const rclcpp::Parameter & p) {
+        return p.get_type() == rclcpp::ParameterType::PARAMETER_INTEGER ?
+               static_cast<double>(p.as_int()) : p.as_double();
+      };
+    // 先に全部検査してから反映する (一部だけ反映されるのを防ぐ)
+    for (const auto & p : params) {
+      const auto & n = p.get_name();
+      const auto type = p.get_type();
+      const bool numeric = type == rclcpp::ParameterType::PARAMETER_DOUBLE ||
+        type == rclcpp::ParameterType::PARAMETER_INTEGER;
+      if (n == "stop_distance" || n == "path_clearance" || n == "pass_through_lookahead" ||
+        n == "pass_through_timeout" || n == "pass_through_costmap_margin" ||
+        n == "pass_through_deadband_left_ratio" || n == "pass_through_deadband_right_ratio")
+      {
+        if (!numeric || as_double(p) < 0.0) {
+          result.successful = false;
+          result.reason = n + " は 0 以上の数値にしてください";
+          return result;
+        }
+      } else if (n == "min_blocking_cells" || n == "pass_through_min_blocking_cells") {
+        if (type != rclcpp::ParameterType::PARAMETER_INTEGER || p.as_int() < 1) {
+          result.successful = false;
+          result.reason = n + " は 1 以上の整数にしてください";
+          return result;
+        }
+      }
+    }
+    for (const auto & p : params) {
+      const auto & n = p.get_name();
+      bool applied = true;
+      if (n == "stop_distance") {
+        stop_distance_ = as_double(p);
+      } else if (n == "path_clearance") {
+        path_clearance_ = as_double(p);
+      } else if (n == "min_blocking_cells") {
+        min_blocking_cells_ = static_cast<int>(p.as_int());
+      } else if (n == "pass_through_lookahead") {
+        pass_through_lookahead_ = as_double(p);
+      } else if (n == "pass_through_timeout") {
+        pass_through_timeout_ = as_double(p);
+      } else if (n == "pass_through_costmap_margin") {
+        pass_through_costmap_margin_ = as_double(p);
+      } else if (n == "pass_through_deadband_left_ratio") {
+        deadband_left_ratio_ = std::clamp(as_double(p), 0.0, 1.0);
+      } else if (n == "pass_through_deadband_right_ratio") {
+        deadband_right_ratio_ = std::clamp(as_double(p), 0.0, 1.0);
+      } else if (n == "pass_through_min_blocking_cells") {
+        pass_through_min_blocking_cells_ = static_cast<int>(p.as_int());
+      } else {
+        applied = false;
+      }
+      if (applied) {
+        RCLCPP_INFO(get_logger(), "パラメータを変更しました: %s = %s",
+          n.c_str(), p.value_to_string().c_str());
+      }
+    }
+    updateDeadband();
+    return result;
+  }
 
   void planCallback(const nav_msgs::msg::Path::SharedPtr msg)
   {
@@ -325,21 +420,20 @@ private:
     const tf2::Transform base_to_global = sensor_to_global * sensor_to_base.inverse();
     const tf2::Vector3 robot = base_to_global.getOrigin();
     std::vector<int64_t> blocking_keys;
-    std::vector<std::pair<double, double>> zone;
+    std::vector<std::pair<double, double>> deadband_zone;
+    std::vector<Point3> ignored_cells;  // 不感帯で消したセル (可視化用)
     pass_through_now_ = passThroughActive();
     if (pass_through_now_) {
-      // 通過モード: 経路付近のセルを消し、停止判定もしない
-      zone = pathAround(robot.x(), robot.y(), 1.0, pass_through_lookahead_);
-      eraseCellsNearPath(zone, pass_through_corridor_);
-      if (stop_) {
-        RCLCPP_INFO(get_logger(), "通過モード: 停止を解除します");
-      }
-      stop_ = false;
-      block_streak_ = 0;
-    } else {
-      const bool blocked = findBlockingCells(robot.x(), robot.y(), blocking_keys, zone);
-      updateStopState(blocked, stamp);
+      // 通過モード: 不感帯のセルを消す。残ったセルで停止判定する
+      deadband_zone = pathAround(robot.x(), robot.y(), 1.0, pass_through_lookahead_);
+      ignored_cells = eraseCellsNearPath(
+        deadband_zone, pass_through_deadband_left_, pass_through_deadband_right_);
     }
+    std::vector<std::pair<double, double>> zone;
+    const bool blocked = findBlockingCells(
+      robot.x(), robot.y(), pass_through_now_ ? pass_through_min_blocking_cells_ : min_blocking_cells_,
+      blocking_keys, zone);
+    updateStopState(blocked, stamp);
 
     std_msgs::msg::Header global_header;
     global_header.stamp = cloud->header.stamp;
@@ -354,12 +448,21 @@ private:
     std::vector<Point3> memory_points;
     memory_points.reserve(memory_.size());
     for (const auto & kv : memory_) {
+      // 通過モード中は、不感帯の外側 pass_through_costmap_margin までのセルも local_costmap に入れない
+      // (経路のすぐ脇に残ったセルで DWB の軌道がすべて弾かれて動けなくなるのを防ぐ)
+      if (pass_through_now_ && inPathBand(
+          kv.second.x, kv.second.y, deadband_zone,
+          pass_through_deadband_left_ + pass_through_costmap_margin_,
+          pass_through_deadband_right_ + pass_through_costmap_margin_))
+      {
+        continue;
+      }
       memory_points.push_back(Point3{kv.second.x, kv.second.y, kv.second.z_top});
     }
     pub_memory_cloud_->publish(makeCloud(global_header, memory_points));
 
     if (publish_markers_) {
-      publishMarkers(global_header, stamp, robot, blocking_keys, zone);
+      publishMarkers(global_header, stamp, robot, blocking_keys, zone, deadband_zone, ignored_cells);
       publishGridCells(global_header, stamp, blocking_keys);
     }
     publishCostmapPlaceholders(cloud->header);
@@ -503,28 +606,51 @@ private:
     return segs;
   }
 
-  // プラン区間 segs から half_width 以内にあるメモリのセルを消す
-  void eraseCellsNearPath(const std::vector<std::pair<double, double>> & segs, double half_width)
+  // 点 (px, py) が、プラン区間 segs の中心線から進行方向に向かって左 left_width・右 right_width
+  // 以内にあるか。左右は最も近い区間の向きで決める
+  static bool inPathBand(
+    double px, double py, const std::vector<std::pair<double, double>> & segs,
+    double left_width, double right_width)
   {
     if (segs.size() < 2) {
-      return;
+      return false;
     }
-    for (auto it = memory_.begin(); it != memory_.end(); ) {
-      bool near = false;
-      for (size_t i = 0; i + 1 < segs.size() && !near; ++i) {
-        double t = 0.0;
-        near = distancePointToSegment(
-          it->second.x, it->second.y, segs[i].first, segs[i].second,
-          segs[i + 1].first, segs[i + 1].second, t) <= half_width;
+    double best = std::numeric_limits<double>::max();
+    double cross = 0.0;  // > 0 なら進行方向の左
+    for (size_t i = 0; i + 1 < segs.size(); ++i) {
+      const auto & a = segs[i];
+      const auto & b = segs[i + 1];
+      double t = 0.0;
+      const double d = distancePointToSegment(px, py, a.first, a.second, b.first, b.second, t);
+      if (d < best) {
+        best = d;
+        cross = (b.first - a.first) * (py - a.second) - (b.second - a.second) * (px - a.first);
       }
-      it = near ? memory_.erase(it) : std::next(it);
     }
+    return best <= (cross >= 0.0 ? left_width : right_width);
   }
 
-  // プラン前方 stop_distance 以内・中心線から path_clearance 以内にあるメモリのセルを集める。
-  // zone には判定に使ったプランの区間を返す (可視化用)
+  // プラン区間 segs の中心線から、進行方向に向かって左 left_width・右 right_width 以内にある
+  // メモリのセルを消し、消したセルを返す (可視化用)
+  std::vector<Point3> eraseCellsNearPath(
+    const std::vector<std::pair<double, double>> & segs, double left_width, double right_width)
+  {
+    std::vector<Point3> erased;
+    for (auto it = memory_.begin(); it != memory_.end(); ) {
+      if (inPathBand(it->second.x, it->second.y, segs, left_width, right_width)) {
+        erased.push_back(Point3{it->second.x, it->second.y, it->second.z_top});
+        it = memory_.erase(it);
+      } else {
+        ++it;
+      }
+    }
+    return erased;
+  }
+
+  // プラン前方 stop_distance 以内・中心線から path_clearance 以内にあるメモリのセルを集め、
+  // min_cells 個以上あれば true を返す。zone には判定に使ったプランの区間を返す (可視化用)
   bool findBlockingCells(
-    double rx, double ry, std::vector<int64_t> & blocking,
+    double rx, double ry, int min_cells, std::vector<int64_t> & blocking,
     std::vector<std::pair<double, double>> & zone) const
   {
     blocking.clear();
@@ -573,7 +699,7 @@ private:
         }
       }
     }
-    return static_cast<int>(blocking.size()) >= min_blocking_cells_;
+    return static_cast<int>(blocking.size()) >= min_cells;
   }
 
   void updateStopState(bool blocked, const rclcpp::Time & stamp)
@@ -596,9 +722,27 @@ private:
     }
   }
 
+  // 床から高さ z_top までの柱を 0.05 m 刻みで積む (高さが分かるように)
+  void addColumn(
+    visualization_msgs::msg::Marker & cells, double x, double y, double z_top, double floor_z,
+    const std_msgs::msg::ColorRGBA & col) const
+  {
+    const int layers = std::max(1, static_cast<int>(std::ceil((z_top - floor_z) / 0.05)));
+    for (int k = 0; k < std::min(layers, 40); ++k) {
+      geometry_msgs::msg::Point p;
+      p.x = cellIndex(x) * cell_size_ + 0.5 * cell_size_;
+      p.y = cellIndex(y) * cell_size_ + 0.5 * cell_size_;
+      p.z = floor_z + 0.025 + 0.05 * k;
+      cells.points.push_back(p);
+      cells.colors.push_back(col);
+    }
+  }
+
   void publishMarkers(
     const std_msgs::msg::Header & header, const rclcpp::Time & stamp, const tf2::Vector3 & robot,
-    const std::vector<int64_t> & blocking_keys, const std::vector<std::pair<double, double>> & zone)
+    const std::vector<int64_t> & blocking_keys, const std::vector<std::pair<double, double>> & zone,
+    const std::vector<std::pair<double, double>> & deadband_zone,
+    const std::vector<Point3> & ignored_cells)
   {
     const auto lifetime = rclcpp::Duration::from_seconds(0.5);
     const std::set<int64_t> blocking(blocking_keys.begin(), blocking_keys.end());
@@ -635,59 +779,84 @@ private:
       } else {
         col = color(0.7f, 0.3f, 1.0f, 0.8f);  // 記憶のみ (死角など)
       }
-      // 高さが分かるよう、床から最も高い点まで 0.05 m 刻みで積む
-      const int layers = std::max(1, static_cast<int>(std::ceil((c.z_top - floor_z) / 0.05)));
-      for (int k = 0; k < std::min(layers, 40); ++k) {
-        geometry_msgs::msg::Point p;
-        p.x = cellIndex(c.x) * cell_size_ + 0.5 * cell_size_;
-        p.y = cellIndex(c.y) * cell_size_ + 0.5 * cell_size_;
-        p.z = floor_z + 0.025 + 0.05 * k;
-        cells.points.push_back(p);
-        cells.colors.push_back(col);
-      }
+      addColumn(cells, c.x, c.y, c.z_top, floor_z, col);
+    }
+    for (const auto & c : ignored_cells) {
+      addColumn(cells, c.x, c.y, c.z, floor_z, color(1.0f, 0.95f, 0.3f, 0.5f));  // 不感帯で無視
     }
     if (cells.points.empty()) {
       cells.action = visualization_msgs::msg::Marker::DELETE;
     }
     arr.markers.push_back(cells);
 
-    // 停止判定の範囲: プラン区間を左右に path_clearance だけ広げた帯
-    visualization_msgs::msg::Marker band;
-    band.header = header;
-    band.ns = "stop_zone";
-    band.id = 0;
-    band.type = visualization_msgs::msg::Marker::TRIANGLE_LIST;
-    band.action = visualization_msgs::msg::Marker::ADD;
-    band.pose.orientation.w = 1.0;
-    band.scale.x = band.scale.y = band.scale.z = 1.0;
-    band.color = pass_through_now_ ? color(1.0f, 0.85f, 0.0f, 0.3f) :
-      (stop_ ? color(1.0f, 0.1f, 0.1f, 0.35f) : color(0.1f, 0.9f, 0.3f, 0.25f));
-    const double band_half_width = pass_through_now_ ? pass_through_corridor_ : path_clearance_;
-    band.lifetime = lifetime;
-    for (size_t i = 0; i + 1 < zone.size(); ++i) {
-      const double dx = zone[i + 1].first - zone[i].first;
-      const double dy = zone[i + 1].second - zone[i].second;
-      const double len = std::hypot(dx, dy);
-      if (len < 1e-6) {
-        continue;
-      }
-      const double nx = -dy / len * band_half_width;
-      const double ny = dx / len * band_half_width;
-      auto pt = [&](double x, double y) {
-          geometry_msgs::msg::Point p;
-          p.x = x; p.y = y; p.z = floor_z + 0.02;
-          return p;
-        };
-      const auto al = pt(zone[i].first + nx, zone[i].second + ny);
-      const auto ar = pt(zone[i].first - nx, zone[i].second - ny);
-      const auto bl = pt(zone[i + 1].first + nx, zone[i + 1].second + ny);
-      const auto br = pt(zone[i + 1].first - nx, zone[i + 1].second - ny);
-      band.points.insert(band.points.end(), {al, ar, bl, ar, br, bl});
+    // プラン区間 segs の中心線から、進行方向の左を正とした横方向の距離 lo〜hi の帯
+    auto make_band = [&](
+      const std::vector<std::pair<double, double>> & segs, double lo, double hi,
+      const std::string & ns, int id, const std_msgs::msg::ColorRGBA & col) {
+        visualization_msgs::msg::Marker band;
+        band.header = header;
+        band.ns = ns;
+        band.id = id;
+        band.type = visualization_msgs::msg::Marker::TRIANGLE_LIST;
+        band.action = visualization_msgs::msg::Marker::ADD;
+        band.pose.orientation.w = 1.0;
+        band.scale.x = band.scale.y = band.scale.z = 1.0;
+        band.color = col;
+        band.lifetime = lifetime;
+        for (size_t i = 0; hi > lo && i + 1 < segs.size(); ++i) {
+          const double dx = segs[i + 1].first - segs[i].first;
+          const double dy = segs[i + 1].second - segs[i].second;
+          const double len = std::hypot(dx, dy);
+          if (len < 1e-6) {
+            continue;
+          }
+          const double nx = -dy / len;  // 進行方向の左向きの単位ベクトル
+          const double ny = dx / len;
+          auto pt = [&](size_t k, double w) {
+              geometry_msgs::msg::Point p;
+              p.x = segs[k].first + nx * w;
+              p.y = segs[k].second + ny * w;
+              p.z = floor_z + 0.02;
+              return p;
+            };
+          const auto al = pt(i, hi);
+          const auto ar = pt(i, lo);
+          const auto bl = pt(i + 1, hi);
+          const auto br = pt(i + 1, lo);
+          band.points.insert(band.points.end(), {al, ar, bl, ar, br, bl});
+        }
+        if (band.points.empty()) {
+          band.action = visualization_msgs::msg::Marker::DELETE;
+        }
+        return band;
+      };
+
+    // 停止判定の範囲 (検出帯): プラン区間を左右に path_clearance だけ広げた帯。
+    // 通過モード中は不感帯を除いた左右の部分だけを描く
+    const auto zone_color =
+      stop_ ? color(1.0f, 0.1f, 0.1f, 0.35f) : color(0.1f, 0.9f, 0.3f, 0.25f);
+    const double pc = path_clearance_;
+    std::vector<std::array<double, 2>> detect_ranges;  // 検出帯の横方向の範囲 {lo, hi}
+    if (pass_through_now_) {
+      detect_ranges.push_back({std::min(pass_through_deadband_left_, pc), pc});
+      detect_ranges.push_back({-pc, -std::min(pass_through_deadband_right_, pc)});
+    } else {
+      detect_ranges.push_back({-pc, pc});
+      detect_ranges.push_back({0.0, 0.0});  // 通過モードで使う id 1 を消す
     }
-    if (band.points.empty()) {
-      band.action = visualization_msgs::msg::Marker::DELETE;
+    std::vector<visualization_msgs::msg::Marker> zone_bands;
+    for (size_t k = 0; k < detect_ranges.size(); ++k) {
+      zone_bands.push_back(make_band(
+          zone, detect_ranges[k][0], detect_ranges[k][1], "stop_zone", static_cast<int>(k),
+          zone_color));
+      arr.markers.push_back(zone_bands.back());
     }
-    arr.markers.push_back(band);
+    // 通過モードの不感帯
+    const auto deadband = make_band(
+      pass_through_now_ ? deadband_zone : std::vector<std::pair<double, double>>{},
+      -pass_through_deadband_right_, pass_through_deadband_left_, "pass_through_deadband", 0,
+      color(1.0f, 0.85f, 0.0f, 0.3f));
+    arr.markers.push_back(deadband);
 
     // 状態表示 (RViz は日本語を描けないため英語)
     visualization_msgs::msg::Marker text;
@@ -701,10 +870,10 @@ private:
     text.pose.position.z = floor_z + 1.6;
     text.pose.orientation.w = 1.0;
     text.scale.z = 0.3;
-    text.color = pass_through_now_ ? color(1.0f, 0.85f, 0.0f, 1.0f) :
-      (stop_ ? color(1.0f, 0.2f, 0.2f, 1.0f) : color(0.3f, 1.0f, 0.4f, 1.0f));
-    text.text = pass_through_now_ ? "PASS_THROUGH" : stop_ ?
-      "WAIT_BLOCKED (" + std::to_string(blocking_keys.size()) + " cells)" : "CLEAR";
+    text.color = stop_ ? color(1.0f, 0.2f, 0.2f, 1.0f) :
+      (pass_through_now_ ? color(1.0f, 0.85f, 0.0f, 1.0f) : color(0.3f, 1.0f, 0.4f, 1.0f));
+    text.text = std::string(pass_through_now_ ? "PASS_THROUGH: " : "") + (stop_ ?
+      "WAIT_BLOCKED (" + std::to_string(blocking_keys.size()) + " cells)" : "CLEAR");
     text.lifetime = lifetime;
     arr.markers.push_back(text);
 
@@ -716,20 +885,38 @@ private:
     // 購読者がいないときは送らない。
     if (pub_markers_2d_->get_subscription_count() > 0) {
       visualization_msgs::msg::MarkerArray arr2d;
-      visualization_msgs::msg::Marker zone_line = band;  // header, ns, 色, lifetime を引き継ぐ
-      zone_line.type = visualization_msgs::msg::Marker::LINE_STRIP;
-      zone_line.action = visualization_msgs::msg::Marker::ADD;
-      zone_line.scale.x = 2.0 * band_half_width;
-      zone_line.points.clear();
-      for (const auto & z : zone) {
-        geometry_msgs::msg::Point p;
-        p.x = z.first; p.y = z.second; p.z = floor_z + 0.02;
-        zone_line.points.push_back(p);
+      // 帯 (横方向 lo〜hi) を、中心線を左へ (lo + hi) / 2 ずらした線幅 hi - lo の線で表す
+      auto make_line = [&](
+        const visualization_msgs::msg::Marker & band_marker,
+        const std::vector<std::pair<double, double>> & segs, double lo, double hi) {
+          visualization_msgs::msg::Marker line = band_marker;  // header, ns, id, 色, lifetime を引き継ぐ
+          line.type = visualization_msgs::msg::Marker::LINE_STRIP;
+          line.scale.x = hi - lo;
+          line.points.clear();
+          const double offset = 0.5 * (lo + hi);
+          for (size_t k = 0; k < segs.size() && segs.size() >= 2; ++k) {
+            const size_t a = k + 1 < segs.size() ? k : k - 1;
+            const double dx = segs[a + 1].first - segs[a].first;
+            const double dy = segs[a + 1].second - segs[a].second;
+            const double len = std::max(1e-6, std::hypot(dx, dy));
+            geometry_msgs::msg::Point p;
+            p.x = segs[k].first - dy / len * offset;
+            p.y = segs[k].second + dx / len * offset;
+            p.z = floor_z + 0.02;
+            line.points.push_back(p);
+          }
+          if (line.points.size() < 2 || band_marker.action == visualization_msgs::msg::Marker::DELETE) {
+            line.action = visualization_msgs::msg::Marker::DELETE;
+          }
+          return line;
+        };
+      for (size_t k = 0; k < zone_bands.size(); ++k) {
+        arr2d.markers.push_back(
+          make_line(zone_bands[k], zone, detect_ranges[k][0], detect_ranges[k][1]));
       }
-      if (zone_line.points.size() < 2) {
-        zone_line.action = visualization_msgs::msg::Marker::DELETE;
-      }
-      arr2d.markers.push_back(zone_line);
+      arr2d.markers.push_back(make_line(
+          deadband, pass_through_now_ ? deadband_zone : std::vector<std::pair<double, double>>{},
+          -pass_through_deadband_right_, pass_through_deadband_left_));
       arr2d.markers.push_back(text);
       pub_markers_2d_->publish(arr2d);
     }
@@ -806,7 +993,7 @@ private:
 
     std_msgs::msg::String status;
     status.data = sensor_lost ? "NO_SENSOR" :
-      (passThroughActive() ? "PASS_THROUGH" : (stop_ ? "WAIT_BLOCKED" : "CLEAR"));
+      (stop_ ? "WAIT_BLOCKED" : (passThroughActive() ? "PASS_THROUGH" : "CLEAR"));
     pub_status_->publish(status);
   }
 
@@ -833,6 +1020,7 @@ private:
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_costmap_clearing_;
   rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr pub_costmap_scan_;
   rclcpp::TimerBase::SharedPtr timer_;
+  OnSetParametersCallbackHandle::SharedPtr param_cb_;
 
   std::string global_frame_;
   std::string robot_base_frame_;
@@ -858,9 +1046,14 @@ private:
   int block_confirm_count_;
   double resume_delay_;
   double sensor_timeout_;
-  double pass_through_corridor_;
   double pass_through_lookahead_;
   double pass_through_timeout_;
+  double deadband_left_ratio_;   // 不感帯の割合 (path_clearance に対する)
+  double deadband_right_ratio_;
+  double pass_through_deadband_left_;   // 不感帯の幅 (進行方向の左) [m]
+  double pass_through_deadband_right_;  // 不感帯の幅 (進行方向の右) [m]
+  int pass_through_min_blocking_cells_;
+  double pass_through_costmap_margin_;  // 不感帯の外側で local_costmap に入れない幅 [m]
   bool pass_through_{false};
   bool pass_through_now_{false};  // 直近の点群処理時に通過モードだったか (可視化用)
   rclcpp::Time pass_through_stamp_{0, 0, RCL_STEADY_TIME};

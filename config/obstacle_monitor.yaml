@@ -45,13 +45,23 @@ obstacle_monitor:
 
     # --- 通過モード (ウェイポイントの pass_through 属性) ---
     # 通路に張り出した枝葉など、障害物として扱いたくない物がある区間で使う。
-    # waypoint_manager が区間中 pass_through_topic に true を出し続け、その間は停止せず、
-    # グローバルプランから pass_through_corridor 以内の障害物を無視する (local_costmap からも消える)。
-    # 区間内では経路上の人も見えなくなるため、使う区間は最小限にすること。
+    # waypoint_manager が区間中 pass_through_topic に true を出し続け、その間は
+    # グローバルプランの不感帯にある障害物を無視する (停止判定にも local_costmap にも使わない)。
+    # 不感帯の外に残った障害物では通常どおり停止判定する (範囲は stop_distance × 左右 path_clearance)。
+    # 不感帯の中では経路上の人も見えなくなるため、使う区間・不感帯は最小限にすること。
     pass_through_topic: /wizurg/pass_through
-    pass_through_corridor: 0.6   # 無視する範囲 (プラン中心線からの距離) [m]。車体半幅 0.29 + padding 0.1 + 余裕
     pass_through_lookahead: 6.0  # 前方何 m のプランまで対象にするか [m]
     pass_through_timeout: 1.0    # 指令がこの時間途絶えたら通過モードを終了する [s]
+    # 不感帯: ロボットの進行方向から見て、経路の中心線から左右それぞれ path_clearance × 割合 (0.0〜1.0)
+    # 例) 左 1.0・右 0.0 なら中心線から左 path_clearance (0.45 m) が不感帯、右側は通常どおり停止判定する。
+    # 割合が 1.0 の側は停止判定しない。左右とも 1.0 なら停止判定の範囲がすべて不感帯になる (強制通過)
+    pass_through_deadband_left_ratio: 1.0
+    pass_through_deadband_right_ratio: 0.5
+    # 不感帯の外側この幅までの障害物も local_costmap に入れない [m] (停止判定には使う)。
+    # 経路のすぐ脇に残った枝葉で DWB の軌道がすべて弾かれ (No valid trajectories) 動けなくなるのを防ぐ。
+    # 割合 1.0 の側は path_clearance 0.45 + 0.15 = 0.6 m まで消える
+    pass_through_costmap_margin: 0.35
+    pass_through_min_blocking_cells: 30  # 通過モード中に「塞がれている」とするセル数 (通常時は min_blocking_cells)
 
     # --- costmap 用の出力 ---
     # local_costmap は memory_cloud (記憶している障害物セル) で障害物を書き込み、

@@ -390,11 +390,23 @@ YVT-35LX の垂直視野は -5°〜+35° のため、背の低い物は近づく
 - GUI のウェイポイント編集で、区間の**手前のウェイポイント**に `pass_through` 属性を付け、`value` に徐行速度 [m/s] を入れます。
   そのウェイポイントに到達してから次のウェイポイントに到達するまでが通過区間です（`value` が 0 以下なら速度制限なし）。
 - 区間中は `waypoint_manager` が `/wizurg/pass_through` に `true` を出し続け、`obstacle_monitor` は
-  - 停止指令を出しません。
-  - グローバルプランから `pass_through_corridor`（既定 0.6 m）以内の障害物を無視します（local_costmap からも消えるため DWB も避けません）。
+  - グローバルプランの**不感帯**にある障害物を無視します（local_costmap からも消えるため DWB も避けません）。
+  - 不感帯の外に残った障害物では通常どおり停止判定します（範囲は `stop_distance` × 左右 `path_clearance`）。
+    「塞がれている」とするセル数は `pass_through_min_blocking_cells`（既定 2）です。
+- 不感帯は、ロボットの進行方向から見て経路の中心線から
+  左へ `path_clearance` × `pass_through_deadband_left_ratio`、右へ `path_clearance` × `pass_through_deadband_right_ratio`
+  の範囲です（割合は 0.0〜1.0、前方 `pass_through_lookahead` まで）。
+  - 例: `path_clearance` 0.45 m、左 1.0・右 0.0 → 左側に張り出した枝葉は無視し、右側から来る人では止まります。
+  - 割合が 1.0 の側は停止判定しません。左右とも 1.0 なら強制通過です。
+  - 不感帯の外側 `pass_through_costmap_margin`（既定 0.15 m）までの障害物も local_costmap には入れません（停止判定には使います）。
+    経路のすぐ脇に残った枝葉で DWB の軌道がすべて弾かれ（`No valid trajectories`）、動けなくなるのを防ぐためです。
 - 指令が `pass_through_timeout`（既定 1.0 秒）途絶えると通過モードは自動で終了します。
-- **区間内では経路上の人も無視されます。** 使う区間は最小限にしてください。
-- RViz では無視する範囲が黄色の帯、ロボット上の表示が `PASS_THROUGH` になります。
+- これらの値は hokuyo_navigation2_gui の「通過モード設定」で、ロボットのモデル上に帯を描きながら変更できます。
+  `stop_distance`・`path_clearance`・`min_blocking_cells`・`pass_through_*`（`pass_through_topic` 以外）は
+  走行中にも `ros2 param set /obstacle_monitor ...` で変更できます。
+- **不感帯の中では経路上の人も無視されます。** 使う区間・不感帯は最小限にしてください。
+- RViz では不感帯が黄色の帯、不感帯を除いた検出帯が緑 / 赤の帯、検出帯で検出したセルが赤、不感帯で無視したセルが薄い黄で表示され、ロボット上の表示が
+  `PASS_THROUGH: CLEAR` / `PASS_THROUGH: WAIT_BLOCKED (N cells)` になります。
 
 **設定ファイル**
 
@@ -420,8 +432,9 @@ RViz（`rviz/nav2_view.rviz` の「Obstacle Monitor」グループ）では `/ob
 | --- | --- |
 | 橙の柱 | 直近に見えている障害物セル |
 | 紫の柱 | 見えなくなったが記憶している障害物セル（死角など） |
-| 赤の柱 | 経路を塞いで停止の原因になっているセル |
-| 経路沿いの帯 | 停止判定の範囲。緑 = 空き、赤 = 停止中、黄 = 通過モードで無視している範囲 |
+| 赤の柱 | 停止判定の範囲（検出帯）で検出したセル（通過モード中も同じ） |
+| 薄い黄の柱 | 通過モードの不感帯で無視しているセル |
+| 経路沿いの帯 | 停止判定の範囲（検出帯）。緑 = 空き、赤 = 停止中。黄 = 通過モードの不感帯（通過モード中の検出帯は不感帯を除いた左右の部分だけを表示） |
 | ロボット上の文字 | `CLEAR` / `WAIT_BLOCKED (N cells)` |
 
 ### Launch ファイル
