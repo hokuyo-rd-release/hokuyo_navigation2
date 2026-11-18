@@ -40,6 +40,11 @@
 //    - stop_zone : 停止判定の範囲 (プラン前方 stop_distance × 左右 path_clearance)。緑 = 空き, 赤 = 停止中
 //                  通過モード中は無視する範囲 (左右 pass_through_corridor) を黄色で表示
 //    - status    : ロボット上の状態表示
+//  obstacle_monitor/markers_2d (MarkerArray): vizanti 用。stop_zone を LINE_STRIP で表したものと status
+//  obstacle_monitor/cells_seen, cells_memory, cells_blocking (GridCells): vizanti 用の障害物セル。
+//    markers の cells と同じ分類 (互いに重ならない)。vizanti の PointCloud は compression: none だと
+//    data (base64 文字列) を読めないため GridCells で出す
+//  vizanti 用のトピックは購読者がいるときだけ出す
 //  obstacle_monitor/obstacle_cloud (PointCloud2): 今回のフレームで障害物とした点
 //
 // costmap について:
@@ -62,6 +67,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+#include <nav_msgs/msg/grid_cells.hpp>
 #include <nav_msgs/msg/path.hpp>
 #include <sensor_msgs/msg/laser_scan.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
@@ -239,6 +245,14 @@ public:
       "obstacle_monitor/blocking_cloud", rclcpp::SensorDataQoS());
     pub_markers_ = create_publisher<visualization_msgs::msg::MarkerArray>(
       "obstacle_monitor/markers", rclcpp::QoS(1));
+    pub_markers_2d_ = create_publisher<visualization_msgs::msg::MarkerArray>(
+      "obstacle_monitor/markers_2d", rclcpp::QoS(1));
+    pub_cells_seen_ =
+      create_publisher<nav_msgs::msg::GridCells>("obstacle_monitor/cells_seen", rclcpp::QoS(1));
+    pub_cells_memory_ =
+      create_publisher<nav_msgs::msg::GridCells>("obstacle_monitor/cells_memory", rclcpp::QoS(1));
+    pub_cells_blocking_ =
+      create_publisher<nav_msgs::msg::GridCells>("obstacle_monitor/cells_blocking", rclcpp::QoS(1));
     pub_costmap_marking_ = create_publisher<sensor_msgs::msg::PointCloud2>(
       costmap_marking_topic, rclcpp::SensorDataQoS());
     pub_costmap_clearing_ = create_publisher<sensor_msgs::msg::PointCloud2>(
@@ -346,6 +360,7 @@ private:
 
     if (publish_markers_) {
       publishMarkers(global_header, stamp, robot, blocking_keys, zone);
+      publishGridCells(global_header, stamp, blocking_keys);
     }
     publishCostmapPlaceholders(cloud->header);
   }
@@ -694,6 +709,66 @@ private:
     arr.markers.push_back(text);
 
     pub_markers_->publish(arr);
+
+    // vizanti 用 (2D)。vizanti は TRIANGLE_LIST を描けず CUBE_LIST も位置がずれるため、
+    // 停止判定の範囲は線幅 (scale.x) つきの LINE_STRIP で表し、状態表示と合わせて送る。
+    // 障害物セルは obstacle_monitor/memory_cloud, blocking_cloud を vizanti の PointCloud で表示する。
+    // 購読者がいないときは送らない。
+    if (pub_markers_2d_->get_subscription_count() > 0) {
+      visualization_msgs::msg::MarkerArray arr2d;
+      visualization_msgs::msg::Marker zone_line = band;  // header, ns, 色, lifetime を引き継ぐ
+      zone_line.type = visualization_msgs::msg::Marker::LINE_STRIP;
+      zone_line.action = visualization_msgs::msg::Marker::ADD;
+      zone_line.scale.x = 2.0 * band_half_width;
+      zone_line.points.clear();
+      for (const auto & z : zone) {
+        geometry_msgs::msg::Point p;
+        p.x = z.first; p.y = z.second; p.z = floor_z + 0.02;
+        zone_line.points.push_back(p);
+      }
+      if (zone_line.points.size() < 2) {
+        zone_line.action = visualization_msgs::msg::Marker::DELETE;
+      }
+      arr2d.markers.push_back(zone_line);
+      arr2d.markers.push_back(text);
+      pub_markers_2d_->publish(arr2d);
+    }
+  }
+
+  // vizanti 用の障害物セル (markers の cells と同じ色分けを 3 トピックに分ける)
+  void publishGridCells(
+    const std_msgs::msg::Header & header, const rclcpp::Time & stamp,
+    const std::vector<int64_t> & blocking_keys)
+  {
+    const bool want_seen = pub_cells_seen_->get_subscription_count() > 0;
+    const bool want_memory = pub_cells_memory_->get_subscription_count() > 0;
+    const bool want_blocking = pub_cells_blocking_->get_subscription_count() > 0;
+    if (!want_seen && !want_memory && !want_blocking) {
+      return;
+    }
+    const std::set<int64_t> blocking(blocking_keys.begin(), blocking_keys.end());
+    nav_msgs::msg::GridCells seen, memory, blocked;
+    for (auto * g : {&seen, &memory, &blocked}) {
+      g->header = header;
+      g->cell_width = cell_size_;
+      g->cell_height = cell_size_;
+    }
+    for (const auto & kv : memory_) {
+      const MemCell & c = kv.second;
+      geometry_msgs::msg::Point p;
+      p.x = cellIndex(c.x) * cell_size_ + 0.5 * cell_size_;
+      p.y = cellIndex(c.y) * cell_size_ + 0.5 * cell_size_;
+      if (blocking.count(kv.first)) {
+        blocked.cells.push_back(p);
+      } else if ((stamp - c.last_seen).seconds() <= observed_clear_time_) {
+        seen.cells.push_back(p);
+      } else {
+        memory.cells.push_back(p);
+      }
+    }
+    if (want_seen) {pub_cells_seen_->publish(seen);}
+    if (want_memory) {pub_cells_memory_->publish(memory);}
+    if (want_blocking) {pub_cells_blocking_->publish(blocked);}
   }
 
   // global_costmap 用の空の点群と、local_costmap 消去用の全ビーム +inf スキャン
@@ -750,6 +825,10 @@ private:
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_memory_cloud_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_blocking_cloud_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_markers_;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_markers_2d_;
+  rclcpp::Publisher<nav_msgs::msg::GridCells>::SharedPtr pub_cells_seen_;
+  rclcpp::Publisher<nav_msgs::msg::GridCells>::SharedPtr pub_cells_memory_;
+  rclcpp::Publisher<nav_msgs::msg::GridCells>::SharedPtr pub_cells_blocking_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_costmap_marking_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_costmap_clearing_;
   rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr pub_costmap_scan_;

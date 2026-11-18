@@ -385,7 +385,7 @@ Visualization Manager:
         {}
       Topic:
         Depth: 5
-        Durability Policy: Volatile
+        Durability Policy: Transient Local
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /waypoint_marker_array
@@ -468,15 +468,14 @@ Visualization Manager:
       text size: 20
       top: 30
       width: 500
-    - Class: rviz_default_plugins/Marker
+    - Class: rviz_default_plugins/MarkerArray
       Enabled: true
       Name: Marker
       Namespaces:
         {}
       Topic:
         Depth: 5
-        Durability Policy: Volatile
-        Filter size: 10
+        Durability Policy: Transient Local
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /current_goal_marker

@@ -19,6 +19,9 @@ find_package(tf2_sensor_msgs REQUIRED)
 find_package(visualization_msgs REQUIRED)
 find_package(pcl_conversions REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(pluginlib REQUIRED)
+find_package(rviz_common REQUIRED)
+find_package(Qt5 REQUIRED COMPONENTS Widgets)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -88,6 +91,31 @@ target_include_directories(pointcloud_transform_for_loc PUBLIC
   ${pcl_conversions_INCLUDE_DIRS}
 )
 target_include_directories( odom_to_tf PUBLIC
+)
+
+# RViz パネル (wait 属性の開始ボタン)
+add_library(hokuyo_navigation2_rviz_plugins SHARED
+  src/waypoint_start_panel.cpp
+  include/hokuyo_navigation2/waypoint_start_panel.hpp
+)
+set_target_properties(hokuyo_navigation2_rviz_plugins PROPERTIES AUTOMOC ON)
+target_include_directories(hokuyo_navigation2_rviz_plugins PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
+ament_target_dependencies(hokuyo_navigation2_rviz_plugins
+  pluginlib
+  rclcpp
+  rviz_common
+  std_msgs
+)
+target_link_libraries(hokuyo_navigation2_rviz_plugins Qt5::Widgets)
+pluginlib_export_plugin_description_file(rviz_common rviz_plugins.xml)
+
+install(TARGETS hokuyo_navigation2_rviz_plugins
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
 )
 
 install(TARGETS

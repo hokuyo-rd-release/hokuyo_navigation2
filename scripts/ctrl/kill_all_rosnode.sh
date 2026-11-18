@@ -32,6 +32,10 @@ while true; do
         sleep 1s
         echo "kill all ros2 nodes!"
         ps aux | grep ros2 | grep -v grep | grep -v vizanti | grep -v rosapi | grep -v rosbridge_websocket | grep -v server | awk '{ print "kill -9", $2 }' | sh
+        # kill -9 で止めたノードは共有メモリを後始末できないので、残ったものを掃除する (使用中のものは消さない)
+        echo "Cleaning stale shared memory..."
+        sleep 1s
+        "/opt/ros/${ROS_DISTRO:-humble}/bin/fastdds" shm clean || echo "Warning: fastdds shm clean failed."
         exit 0
     fi
 done

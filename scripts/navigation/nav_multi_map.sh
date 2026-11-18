@@ -23,6 +23,12 @@ cd ${HOKUYO_NAV2_PKG_PATH}
 
 load_options "plural_opt_lio"
 
+# Unity では前回の走行の LIO 座標が残っていることがあるので、最初のマップの前にもリセットする
+reset_unity_sim
+
+# 前回の走行が異常終了して残った共有メモリを掃除する
+clean_stale_shm
+
 # --- CSVファイルのパスを決定 ---
 if [ -n "$csv_file_arg" ]; then
     csv_file_path="$csv_file_arg"
@@ -89,18 +95,10 @@ while true; do
                 cd -
                 break # 成功したのでリトライループを抜ける
             else
-                echo "エラー: waypoint_managerが異常終了しました。15秒後に同じマップの処理を再試行します..."
+                echo "エラー: waypoint_managerが異常終了しました。ノードの終了後に同じマップの処理を再試行します..."
                 cd -
-                # 関連ノードを全て終了
-                "${HOKUYO_NAV2_PKG_PATH}/scripts/ctrl/multi_map_kill.sh"
-                reset_unity_sim
-                echo "ノードの終了を待っています..."
-                for ((j=15; j>0; j--)); do
-                    echo -ne "再起動待機中: ${j} 秒...  \r"
-                    sleep 1
-                done
-                echo "" # カウントダウン表示をクリアするための改行
-                # sleep 15 # ノードが完全に終了するのを待つ
+                # 関連ノードを全て終了し、終了を確認する
+                shutdown_nodes_for_next_map
             fi
             cd -
         done # リトライ用の内部ループ
@@ -117,17 +115,8 @@ while true; do
 
         echo "マップ ${map_name} の処理が完了しました。"
         echo "次のマップの準備のため、ROSノードを終了します..."
-        # gnome-terminalを使わずに直接実行し、終了を待つ
-
-        "${HOKUYO_NAV2_PKG_PATH}/scripts/ctrl/multi_map_kill.sh"
-        reset_unity_sim
-        echo "ノードの終了を待っています..."
-        for ((j=15; j>0; j--)); do
-            echo -ne "次のマップの起動待機中: ${j} 秒...  \r"
-            sleep 1
-        done
-        echo "" # カウントダウン表示をクリアするための改行
-        # sleep 15 # ノードが完全に終了するのを待つ
+        # gnome-terminalを使わずに直接実行し、終了を確認してから次へ進む
+        shutdown_nodes_for_next_map
     done
     echo "=== CSVファイルの最後まで処理しました。ループを再開します。 ==="
     # sleep 3 # 次のループを開始する前に少し待機

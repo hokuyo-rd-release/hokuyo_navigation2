@@ -32,7 +32,14 @@ echo "Closing Navigation & Waypoint process!"
 pkill -f "waypoint_manager"
 sleep 1s
 echo "kill all ros2 nodes!"
-pkill -f "kill_all_rosnode.sh"
+# "kill_all_rosnode.sh" だとこのスクリプト自身 (web_kill_all_rosnode.sh) にも一致して止まるので、ディレクトリ名から指定する
+pkill -f "ctrl/kill_all_rosnode.sh"
 sleep 1s
+
+# 終了したノードが残した Fast DDS の共有メモリを掃除する (使用中のものは消さない)。
+# ros2 launch は子ノードを SIGINT から最大 10 秒かけて止めるので、少し待ってから実行する
+echo "Cleaning stale shared memory..."
+sleep 5s
+"/opt/ros/${ROS_DISTRO:-humble}/bin/fastdds" shm clean || echo "Warning: fastdds shm clean failed."
 echo "--- All navigation processes have been requested to terminate. ---"
 exit 0

@@ -1,0 +1,9 @@
+<library path="hokuyo_navigation2_rviz_plugins">
+  <class name="hokuyo_navigation2/WaypointStart"
+         type="hokuyo_navigation2::WaypointStartPanel"
+         base_class_type="rviz_common::Panel">
+    <description>
+      wait 属性のウェイポイントで待機中のロボットを再開させる (/start_waypoint に std_msgs/Empty を送る) ボタン
+    </description>
+  </class>
+</library>
