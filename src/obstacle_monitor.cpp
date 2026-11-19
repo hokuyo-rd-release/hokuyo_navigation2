@@ -6,8 +6,12 @@
 // 処理の流れ:
 //  1. 点群から地面 (base_link 基準の高さ) と自車体を除き、障害物点を得る。
 //  2. 障害物点を地図座標のセル (メモリ) に記録する。
-//  3. プラン前方 stop_distance [m] 以内・中心線から path_clearance [m] 以内のセルが
+//  3. 停止判定の範囲 (プランに沿って 前方 stop_distance・後方 stop_distance_back、
+//     中心線から 左 path_clearance_left・右 path_clearance_right) にあるセルが
 //     min_blocking_cells 個以上あれば「塞がれている」とし、停止指令を出す。
+//     左右はロボットの進行方向から見た向き。後方はプランをさかのぼり、プランが足りなければ
+//     最初の区間の向きのまま後ろへ延ばす (Nav2 のプランはロボットの位置から始まるため)。
+//     横・斜め後ろから追い抜いてくるものを、車体の横に並んだ時点で止まれるようにするのに使う。
 //  4. 塞いでいるものが無くなってから resume_delay [s] 経過したら再開する。
 //
 // 死角の扱い:
@@ -22,34 +26,32 @@
 // 停止指令は cmdvel_stopper の /wizurg/obstacle_stop_cmd_vel (std_msgs/Bool) に一定周期で
 // 出し続けるレベル方式。
 //
-// 通過モード (pass_through):
-//  通路に張り出した枝葉など、障害物として扱いたくない物がある区間のための強制通過。
-//  waypoint_manager は pass_through 属性のウェイポイントから次のウェイポイントまでの間、
-//  pass_through_topic (std_msgs/Bool) に true を出し続ける (速度は waypoint_manager が slow_cmd_vel で制限)。
-//  その間は
-//    - グローバルプランの不感帯にあるセルをメモリから消す
-//      (停止判定にも local_costmap にも入らなくなり、DWB も避けない)。
-//      不感帯は、ロボットの進行方向から見て経路の中心線から
-//        左へ path_clearance × pass_through_deadband_left_ratio
-//        右へ path_clearance × pass_through_deadband_right_ratio
-//      の範囲 (前方 pass_through_lookahead まで)。
-//    - 不感帯の外側 pass_through_costmap_margin までのセルも local_costmap には入れない
-//      (経路のすぐ脇のセルで DWB の軌道がすべて弾かれて動けなくなるのを防ぐ。停止判定には使う)
-//    - 不感帯の外に残ったセルで通常どおり停止判定する (範囲は stop_distance × 左右 path_clearance)。
-//      ただし「塞がれている」とするセル数は pass_through_min_blocking_cells を使う。
-//      割合が 1.0 の側は、停止判定の範囲がなくなる。
-//  pass_through_timeout 以上指令が途絶えたら通過モードを終了する。
-//  不感帯の中では経路上の人も見えなくなるため、使う区間・不感帯は最小限にすること。
+// 検出範囲の設定 (ウェイポイントの属性ごと):
+//  停止判定の範囲・不感帯・costmap 除外は、ウェイポイントの属性 (normal / slow / stop / wait /
+//  pass_through) ごとに zone.<属性>.<項目> のパラメータで持つ。項目は
+//    stop_distance, stop_distance_back, path_clearance_left, path_clearance_right : 停止判定の範囲 (検出帯)
+//    min_blocking_cells                       : 「塞がれている」とするセル数
+//    deadband_left_ratio, deadband_right_ratio : 不感帯 (中心線から 左 path_clearance_left × 割合、
+//                                                右 path_clearance_right × 割合)。割合 1.0 の側は停止判定しない
+//    costmap_margin                           : 不感帯の外側で local_costmap に入れない幅
+//    lookahead, lookbehind                    : 不感帯・costmap 除外の前後の長さ (プランに沿って)
+//  waypoint_manager は、いま走っている区間 (最後に到着したウェイポイントから次まで) の属性と、
+//  そのウェイポイント個別の上書き値を zone_topic (std_msgs/String) に出し続ける。書式は
+//    "<属性>" または "<属性>;<項目>=<値>;<項目>=<値>..."
+//  obstacle_monitor は 属性の設定 → 個別の上書き の順に重ねた範囲を使う。zone_timeout 以上指令が
+//  途絶えたとき (ウェイポイント走行していないときなど) は normal の設定を使う。
+//  不感帯にあるセルはメモリから消す (停止判定にも local_costmap にも入らず、DWB も避けない)。
+//  不感帯の中では経路上の人も見えなくなるため、不感帯を付ける区間は最小限にすること。
 //
 // 可視化 (RViz):
 //  obstacle_monitor/markers (MarkerArray)
 //    - cells     : 障害物セル (床から最も高い点までの柱)。
 //                  橙 = 最近見えている, 紫 = 記憶のみ (死角など), 赤 = 停止判定の範囲 (検出帯) で検出,
-//                  薄い黄 = 通過モードの不感帯で無視 (今回のフレームで消したセル)
-//    - stop_zone : 停止判定の範囲 (プラン前方 stop_distance × 左右 path_clearance)。緑 = 空き, 赤 = 停止中
-//                  通過モード中は不感帯を除いた左右の部分だけを描く
-//    - pass_through_deadband : 通過モード中の不感帯 (黄色)
-//    - status    : ロボット上の状態表示
+//                  薄い黄 = 不感帯で無視 (今回のフレームで消したセル)
+//    - stop_zone : 停止判定の範囲 (前方 stop_distance・後方 stop_distance_back × 左右の幅)。緑 = 空き, 赤 = 停止中
+//                  不感帯があるときは不感帯を除いた左右の部分だけを描く
+//    - pass_through_deadband : 不感帯 (黄色)
+//    - status    : ロボット上の状態表示 (いまの区間の属性も出す)
 //  obstacle_monitor/markers_2d (MarkerArray): vizanti 用。stop_zone・pass_through_deadband を LINE_STRIP で表したものと status
 //  obstacle_monitor/cells_seen, cells_memory, cells_blocking (GridCells): vizanti 用の障害物セル。
 //    markers の cells と同じ分類 (互いに重ならない)。vizanti の PointCloud は compression: none だと
@@ -71,7 +73,9 @@
 #include <cstdint>
 #include <limits>
 #include <memory>
+#include <map>
 #include <set>
+#include <sstream>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -104,6 +108,41 @@ struct MemCell
   double z_top{0.0};  // セル内で見えた最も高い点の z (global frame)。視野内判定に使う
   rclcpp::Time last_seen{0, 0, RCL_ROS_TIME};
 };
+
+// 検出範囲の設定 (ウェイポイントの属性ごと)
+struct ZoneProfile
+{
+  double stop_distance{2.0};
+  double stop_distance_back{0.0};
+  double path_clearance_left{0.45};
+  double path_clearance_right{0.45};
+  int min_blocking_cells{2};
+  double deadband_left_ratio{0.0};
+  double deadband_right_ratio{0.0};
+  double costmap_margin{0.0};
+  double lookahead{6.0};
+  double lookbehind{1.0};
+};
+
+// 属性の種類 (waypoint_manager の type と同じ)
+const std::vector<std::string> kZoneTypes{"normal", "slow", "stop", "wait", "pass_through"};
+
+// 項目名で ZoneProfile の値を読み書きする。不明な名前なら false
+bool setZoneField(ZoneProfile & z, const std::string & field, double v)
+{
+  if (field == "stop_distance") {z.stop_distance = std::max(0.0, v);}
+  else if (field == "stop_distance_back") {z.stop_distance_back = std::max(0.0, v);}
+  else if (field == "path_clearance_left") {z.path_clearance_left = std::max(0.0, v);}
+  else if (field == "path_clearance_right") {z.path_clearance_right = std::max(0.0, v);}
+  else if (field == "min_blocking_cells") {z.min_blocking_cells = std::max(1, static_cast<int>(std::lround(v)));}
+  else if (field == "deadband_left_ratio") {z.deadband_left_ratio = std::clamp(v, 0.0, 1.0);}
+  else if (field == "deadband_right_ratio") {z.deadband_right_ratio = std::clamp(v, 0.0, 1.0);}
+  else if (field == "costmap_margin") {z.costmap_margin = std::max(0.0, v);}
+  else if (field == "lookahead") {z.lookahead = std::max(0.0, v);}
+  else if (field == "lookbehind") {z.lookbehind = std::max(0.0, v);}
+  else {return false;}
+  return true;
+}
 
 struct Point3
 {
@@ -202,27 +241,47 @@ public:
     visibility_margin_deg_ = declare_parameter<double>("visibility_margin_deg", 1.0);
 
     // --- 停止判定 ---
-    stop_distance_ = declare_parameter<double>("stop_distance", 2.0);
-    path_clearance_ = declare_parameter<double>("path_clearance", 0.45);
-    min_blocking_cells_ = declare_parameter<int>("min_blocking_cells", 2);
     block_confirm_count_ = declare_parameter<int>("block_confirm_count", 2);
     resume_delay_ = declare_parameter<double>("resume_delay", 2.0);
     sensor_timeout_ = declare_parameter<double>("sensor_timeout", 0.5);
 
-    // --- 通過モード ---
-    const auto pass_through_topic =
-      declare_parameter<std::string>("pass_through_topic", "/wizurg/pass_through");
-    pass_through_lookahead_ = declare_parameter<double>("pass_through_lookahead", 6.0);
-    pass_through_timeout_ = declare_parameter<double>("pass_through_timeout", 1.0);
-    deadband_left_ratio_ = std::clamp(
-      declare_parameter<double>("pass_through_deadband_left_ratio", 1.0), 0.0, 1.0);
-    deadband_right_ratio_ = std::clamp(
-      declare_parameter<double>("pass_through_deadband_right_ratio", 1.0), 0.0, 1.0);
-    updateDeadband();
-    pass_through_costmap_margin_ =
-      std::max(0.0, declare_parameter<double>("pass_through_costmap_margin", 0.15));
-    pass_through_min_blocking_cells_ =
-      declare_parameter<int>("pass_through_min_blocking_cells", min_blocking_cells_);
+    // --- 検出範囲の設定 (ウェイポイントの属性ごと) ---
+    // 既定: pass_through は不感帯 左 1.0・右 0.0、costmap 除外 0.35 m。他の属性は不感帯・costmap 除外なし。
+    // 検出帯はどれも 前方 2.0 m・後方 0 m・左右 0.45 m、セル数 2
+    const auto zone_topic = declare_parameter<std::string>("zone_topic", "/wizurg/obstacle_zone");
+    zone_timeout_ = declare_parameter<double>("zone_timeout", 1.0);
+    for (const auto & type : kZoneTypes) {
+      ZoneProfile d;
+      if (type == "pass_through") {
+        d.deadband_left_ratio = 1.0;
+        d.deadband_right_ratio = 0.0;
+        d.costmap_margin = 0.35;
+      }
+      ZoneProfile z;
+      const std::string pre = "zone." + type + ".";
+      z.stop_distance = declare_parameter<double>(pre + "stop_distance", d.stop_distance);
+      z.stop_distance_back = declare_parameter<double>(pre + "stop_distance_back", d.stop_distance_back);
+      z.path_clearance_left = declare_parameter<double>(pre + "path_clearance_left", d.path_clearance_left);
+      z.path_clearance_right = declare_parameter<double>(pre + "path_clearance_right", d.path_clearance_right);
+      z.min_blocking_cells = static_cast<int>(
+        declare_parameter<int>(pre + "min_blocking_cells", d.min_blocking_cells));
+      z.deadband_left_ratio = declare_parameter<double>(pre + "deadband_left_ratio", d.deadband_left_ratio);
+      z.deadband_right_ratio = declare_parameter<double>(pre + "deadband_right_ratio", d.deadband_right_ratio);
+      z.costmap_margin = declare_parameter<double>(pre + "costmap_margin", d.costmap_margin);
+      z.lookahead = declare_parameter<double>(pre + "lookahead", d.lookahead);
+      z.lookbehind = declare_parameter<double>(pre + "lookbehind", d.lookbehind);
+      // 範囲外の値を丸める
+      ZoneProfile c;
+      for (const auto & f : {"stop_distance", "stop_distance_back", "path_clearance_left",
+          "path_clearance_right", "deadband_left_ratio", "deadband_right_ratio", "costmap_margin",
+          "lookahead", "lookbehind"})
+      {
+        setZoneField(c, f, zoneField(z, f));
+      }
+      c.min_blocking_cells = std::max(1, z.min_blocking_cells);
+      profiles_[type] = c;
+    }
+    applyZone(profiles_["normal"], "normal", 0);
 
     // --- costmap 用の出力 (現段階は中身なし) ---
     const auto costmap_marking_topic =
@@ -232,7 +291,7 @@ public:
     const auto costmap_scan_topic =
       declare_parameter<std::string>("costmap_scan_topic", "obstacle_monitor/filtered_scan");
 
-    // 停止判定・通過モードのパラメータは実行中にも変更できる (GUI の通過モード設定から ros2 param で送る)
+    // 検出範囲の設定 (zone.*) は実行中にも変更できる (GUI の障害物検出設定から ros2 param で送る)
     param_cb_ = add_on_set_parameters_callback(
       std::bind(&ObstacleMonitor::onSetParameters, this, std::placeholders::_1));
 
@@ -242,16 +301,12 @@ public:
     sub_cloud_ = create_subscription<sensor_msgs::msg::PointCloud2>(
       cloud_topic, rclcpp::SensorDataQoS(),
       std::bind(&ObstacleMonitor::cloudCallback, this, std::placeholders::_1));
-    sub_pass_through_ = create_subscription<std_msgs::msg::Bool>(
-      pass_through_topic, rclcpp::QoS(10),
-      [this](const std_msgs::msg::Bool::SharedPtr msg) {
-        if (msg->data != pass_through_) {
-          RCLCPP_WARN(
-            get_logger(), msg->data ?
-            "通過モード開始: 経路付近の不感帯の障害物を無視します" : "通過モード終了");
-        }
-        pass_through_ = msg->data;
-        pass_through_stamp_ = steady_clock_.now();
+    sub_zone_ = create_subscription<std_msgs::msg::String>(
+      zone_topic, rclcpp::QoS(10),
+      [this](const std_msgs::msg::String::SharedPtr msg) {
+        zone_request_ = msg->data;
+        zone_stamp_ = steady_clock_.now();
+        has_zone_request_ = true;
       });
     sub_plan_ = create_subscription<nav_msgs::msg::Path>(
       plan_topic, rclcpp::QoS(1),
@@ -295,13 +350,103 @@ public:
 private:
   // ---------------------------------------------------------------- callbacks
 
-  void updateDeadband()
+  static double zoneField(const ZoneProfile & z, const std::string & f)
   {
-    pass_through_deadband_left_ = path_clearance_ * deadband_left_ratio_;
-    pass_through_deadband_right_ = path_clearance_ * deadband_right_ratio_;
+    if (f == "stop_distance") {return z.stop_distance;}
+    if (f == "stop_distance_back") {return z.stop_distance_back;}
+    if (f == "path_clearance_left") {return z.path_clearance_left;}
+    if (f == "path_clearance_right") {return z.path_clearance_right;}
+    if (f == "min_blocking_cells") {return z.min_blocking_cells;}
+    if (f == "deadband_left_ratio") {return z.deadband_left_ratio;}
+    if (f == "deadband_right_ratio") {return z.deadband_right_ratio;}
+    if (f == "costmap_margin") {return z.costmap_margin;}
+    if (f == "lookahead") {return z.lookahead;}
+    if (f == "lookbehind") {return z.lookbehind;}
+    return 0.0;
   }
 
-  // 実行中のパラメータ変更。対象外のパラメータは値の保存だけ行い、動作には反映しない (起動時のみ有効)
+  // "zone.<属性>.<項目>" を分解する。形式が違えば false
+  static bool splitZoneName(const std::string & name, std::string & type, std::string & field)
+  {
+    if (name.rfind("zone.", 0) != 0) {
+      return false;
+    }
+    const auto dot = name.find('.', 5);
+    if (dot == std::string::npos) {
+      return false;
+    }
+    type = name.substr(5, dot - 5);
+    field = name.substr(dot + 1);
+    return std::find(kZoneTypes.begin(), kZoneTypes.end(), type) != kZoneTypes.end();
+  }
+
+  // いまの区間の設定を、停止判定・不感帯の計算に使うメンバへ反映する
+  void applyZone(const ZoneProfile & z, const std::string & type, int overrides)
+  {
+    stop_distance_ = z.stop_distance;
+    stop_distance_back_ = z.stop_distance_back;
+    path_clearance_left_ = z.path_clearance_left;
+    path_clearance_right_ = z.path_clearance_right;
+    min_blocking_cells_ = z.min_blocking_cells;
+    deadband_left_ = z.path_clearance_left * z.deadband_left_ratio;
+    deadband_right_ = z.path_clearance_right * z.deadband_right_ratio;
+    costmap_margin_ = z.costmap_margin;
+    zone_lookahead_ = z.lookahead;
+    zone_lookbehind_ = z.lookbehind;
+    const std::string label = type + (overrides > 0 ? " (+" + std::to_string(overrides) + ")" : "");
+    if (label != zone_label_) {
+      RCLCPP_INFO(
+        get_logger(), "検出範囲を切り替えました: %s (前方 %.2f / 後方 %.2f / 左 %.2f / 右 %.2f m, "
+        "不感帯 左 %.2f / 右 %.2f m, costmap 除外 %.2f m)", label.c_str(), z.stop_distance,
+        z.stop_distance_back, z.path_clearance_left, z.path_clearance_right, deadband_left_,
+        deadband_right_, z.costmap_margin);
+    }
+    zone_type_ = type;
+    zone_label_ = label;
+  }
+
+  // waypoint_manager からの指令 (属性と個別の上書き) を解釈して、いまの区間の設定を決める
+  void updateZone()
+  {
+    if (!has_zone_request_ || (steady_clock_.now() - zone_stamp_).seconds() > zone_timeout_) {
+      if (has_zone_request_ && zone_type_ != "normal") {
+        RCLCPP_WARN(get_logger(), "検出範囲の指令が途絶えたため normal の設定に戻します");
+      }
+      applyZone(profiles_["normal"], "normal", 0);
+      return;
+    }
+    std::stringstream ss(zone_request_);
+    std::string token;
+    std::getline(ss, token, ';');
+    std::string type = token;
+    auto it = profiles_.find(type);
+    if (it == profiles_.end()) {
+      RCLCPP_WARN_THROTTLE(
+        get_logger(), *get_clock(), 5000, "不明な属性 '%s' のため normal の設定を使います", type.c_str());
+      type = "normal";
+      it = profiles_.find(type);
+    }
+    ZoneProfile z = it->second;
+    int overrides = 0;
+    while (std::getline(ss, token, ';')) {
+      const auto eq = token.find('=');
+      if (eq == std::string::npos) {
+        continue;
+      }
+      try {
+        if (setZoneField(z, token.substr(0, eq), std::stod(token.substr(eq + 1)))) {
+          ++overrides;
+          continue;
+        }
+      } catch (const std::exception &) {
+      }
+      RCLCPP_WARN_THROTTLE(
+        get_logger(), *get_clock(), 5000, "検出範囲の個別設定を読めません: %s", token.c_str());
+    }
+    applyZone(z, type, overrides);
+  }
+
+  // 実行中のパラメータ変更。zone.* 以外は値の保存だけ行い、動作には反映しない (起動時のみ有効)
   rcl_interfaces::msg::SetParametersResult onSetParameters(
     const std::vector<rclcpp::Parameter> & params)
   {
@@ -313,57 +458,38 @@ private:
       };
     // 先に全部検査してから反映する (一部だけ反映されるのを防ぐ)
     for (const auto & p : params) {
-      const auto & n = p.get_name();
-      const auto type = p.get_type();
-      const bool numeric = type == rclcpp::ParameterType::PARAMETER_DOUBLE ||
-        type == rclcpp::ParameterType::PARAMETER_INTEGER;
-      if (n == "stop_distance" || n == "path_clearance" || n == "pass_through_lookahead" ||
-        n == "pass_through_timeout" || n == "pass_through_costmap_margin" ||
-        n == "pass_through_deadband_left_ratio" || n == "pass_through_deadband_right_ratio")
+      std::string type, field;
+      if (!splitZoneName(p.get_name(), type, field)) {
+        continue;
+      }
+      const auto t = p.get_type();
+      const bool numeric = t == rclcpp::ParameterType::PARAMETER_DOUBLE ||
+        t == rclcpp::ParameterType::PARAMETER_INTEGER;
+      ZoneProfile probe;
+      if (!numeric || as_double(p) < 0.0 || !setZoneField(probe, field, as_double(p))) {
+        result.successful = false;
+        result.reason = p.get_name() + " は 0 以上の数値にしてください";
+        return result;
+      }
+      if (field == "min_blocking_cells" &&
+        (t != rclcpp::ParameterType::PARAMETER_INTEGER || p.as_int() < 1))
       {
-        if (!numeric || as_double(p) < 0.0) {
-          result.successful = false;
-          result.reason = n + " は 0 以上の数値にしてください";
-          return result;
-        }
-      } else if (n == "min_blocking_cells" || n == "pass_through_min_blocking_cells") {
-        if (type != rclcpp::ParameterType::PARAMETER_INTEGER || p.as_int() < 1) {
-          result.successful = false;
-          result.reason = n + " は 1 以上の整数にしてください";
-          return result;
-        }
+        result.successful = false;
+        result.reason = p.get_name() + " は 1 以上の整数にしてください";
+        return result;
       }
     }
     for (const auto & p : params) {
-      const auto & n = p.get_name();
-      bool applied = true;
-      if (n == "stop_distance") {
-        stop_distance_ = as_double(p);
-      } else if (n == "path_clearance") {
-        path_clearance_ = as_double(p);
-      } else if (n == "min_blocking_cells") {
-        min_blocking_cells_ = static_cast<int>(p.as_int());
-      } else if (n == "pass_through_lookahead") {
-        pass_through_lookahead_ = as_double(p);
-      } else if (n == "pass_through_timeout") {
-        pass_through_timeout_ = as_double(p);
-      } else if (n == "pass_through_costmap_margin") {
-        pass_through_costmap_margin_ = as_double(p);
-      } else if (n == "pass_through_deadband_left_ratio") {
-        deadband_left_ratio_ = std::clamp(as_double(p), 0.0, 1.0);
-      } else if (n == "pass_through_deadband_right_ratio") {
-        deadband_right_ratio_ = std::clamp(as_double(p), 0.0, 1.0);
-      } else if (n == "pass_through_min_blocking_cells") {
-        pass_through_min_blocking_cells_ = static_cast<int>(p.as_int());
-      } else {
-        applied = false;
-      }
-      if (applied) {
+      std::string type, field;
+      if (splitZoneName(p.get_name(), type, field)) {
+        setZoneField(profiles_[type], field, as_double(p));
+        zone_label_.clear();  // 次の点群で設定を反映し直してログに出す
         RCLCPP_INFO(get_logger(), "パラメータを変更しました: %s = %s",
-          n.c_str(), p.value_to_string().c_str());
+          p.get_name().c_str(), p.value_to_string().c_str());
+      } else if (p.get_name() == "zone_timeout") {
+        zone_timeout_ = as_double(p);
       }
     }
-    updateDeadband();
     return result;
   }
 
@@ -422,17 +548,19 @@ private:
     std::vector<int64_t> blocking_keys;
     std::vector<std::pair<double, double>> deadband_zone;
     std::vector<Point3> ignored_cells;  // 不感帯で消したセル (可視化用)
-    pass_through_now_ = passThroughActive();
-    if (pass_through_now_) {
-      // 通過モード: 不感帯のセルを消す。残ったセルで停止判定する
-      deadband_zone = pathAround(robot.x(), robot.y(), 1.0, pass_through_lookahead_);
-      ignored_cells = eraseCellsNearPath(
-        deadband_zone, pass_through_deadband_left_, pass_through_deadband_right_);
+    updateZone();  // いまの区間の属性に合わせて検出範囲を決める
+    deadband_active_ = deadband_left_ > 0.0 || deadband_right_ > 0.0;
+    const bool exclusion_active = deadband_active_ || costmap_margin_ > 0.0;
+    if (exclusion_active) {
+      deadband_zone = pathAround(robot.x(), robot.y(), zone_lookbehind_, zone_lookahead_);
+    }
+    if (deadband_active_) {
+      // 不感帯のセルを消す。残ったセルで停止判定する
+      ignored_cells = eraseCellsNearPath(deadband_zone, deadband_left_, deadband_right_);
     }
     std::vector<std::pair<double, double>> zone;
     const bool blocked = findBlockingCells(
-      robot.x(), robot.y(), pass_through_now_ ? pass_through_min_blocking_cells_ : min_blocking_cells_,
-      blocking_keys, zone);
+      robot.x(), robot.y(), min_blocking_cells_, blocking_keys, zone);
     updateStopState(blocked, stamp);
 
     std_msgs::msg::Header global_header;
@@ -448,12 +576,11 @@ private:
     std::vector<Point3> memory_points;
     memory_points.reserve(memory_.size());
     for (const auto & kv : memory_) {
-      // 通過モード中は、不感帯の外側 pass_through_costmap_margin までのセルも local_costmap に入れない
+      // 不感帯の外側 costmap_margin までのセルも local_costmap に入れない
       // (経路のすぐ脇に残ったセルで DWB の軌道がすべて弾かれて動けなくなるのを防ぐ)
-      if (pass_through_now_ && inPathBand(
+      if (exclusion_active && inPathBand(
           kv.second.x, kv.second.y, deadband_zone,
-          pass_through_deadband_left_ + pass_through_costmap_margin_,
-          pass_through_deadband_right_ + pass_through_costmap_margin_))
+          deadband_left_ + costmap_margin_, deadband_right_ + costmap_margin_))
       {
         continue;
       }
@@ -562,20 +689,9 @@ private:
     }
   }
 
-  bool passThroughActive()
-  {
-    if (!pass_through_) {
-      return false;
-    }
-    if ((steady_clock_.now() - pass_through_stamp_).seconds() > pass_through_timeout_) {
-      RCLCPP_WARN(get_logger(), "通過モード指令が途絶えたため通過モードを終了します");
-      pass_through_ = false;
-      return false;
-    }
-    return true;
-  }
-
-  // ロボットに最も近いプラン上の点から、後方 back [m]・前方 ahead [m] の区間を切り出す
+  // ロボットに最も近いプラン上の点から、後方 back [m]・前方 ahead [m] の区間を切り出す。
+  // 後方はプランをさかのぼり、足りなければ最初の区間の向きのまま後ろへ延ばす
+  // (Nav2 のプランはロボットの位置から始まるため、さかのぼれる分はほとんど無い)
   std::vector<std::pair<double, double>> pathAround(
     double rx, double ry, double back, double ahead) const
   {
@@ -593,13 +709,27 @@ private:
       }
     }
     size_t first = start;
-    for (double arc = 0.0; first > 0 && arc < back; --first) {
-      arc += std::hypot(
+    double walked = 0.0;
+    while (first > 0 && walked < back) {
+      walked += std::hypot(
         path_[first].first - path_[first - 1].first, path_[first].second - path_[first - 1].second);
+      --first;
     }
-    segs.push_back(path_[first]);
+    if (walked < back) {
+      const size_t a = std::min(first, path_.size() - 2);
+      const double dx = path_[a + 1].first - path_[a].first;
+      const double dy = path_[a + 1].second - path_[a].second;
+      const double len = std::hypot(dx, dy);
+      if (len > 1e-6) {
+        const double rest = back - walked;
+        segs.emplace_back(path_[first].first - dx / len * rest, path_[first].second - dy / len * rest);
+      }
+    }
+    for (size_t i = first; i <= start; ++i) {
+      segs.push_back(path_[i]);
+    }
     double arc = 0.0;
-    for (size_t i = first + 1; i < path_.size() && arc <= back + ahead; ++i) {
+    for (size_t i = start + 1; i < path_.size() && arc <= ahead; ++i) {
       arc += std::hypot(path_[i].first - path_[i - 1].first, path_[i].second - path_[i - 1].second);
       segs.push_back(path_[i]);
     }
@@ -617,6 +747,7 @@ private:
     }
     double best = std::numeric_limits<double>::max();
     double cross = 0.0;  // > 0 なら進行方向の左
+    bool beyond_end = false;  // 区間の両端より外 (端の区間の延長上)
     for (size_t i = 0; i + 1 < segs.size(); ++i) {
       const auto & a = segs[i];
       const auto & b = segs[i + 1];
@@ -624,10 +755,16 @@ private:
       const double d = distancePointToSegment(px, py, a.first, a.second, b.first, b.second, t);
       if (d < best) {
         best = d;
-        cross = (b.first - a.first) * (py - a.second) - (b.second - a.second) * (px - a.first);
+        const double sx = b.first - a.first;
+        const double sy = b.second - a.second;
+        cross = sx * (py - a.second) - sy * (px - a.first);
+        // 端の区間で射影が区間の外に出る点は、帯の端の先 (半円状のはみ出し) なので含めない
+        const double len2 = sx * sx + sy * sy;
+        const double raw_t = len2 > 1e-12 ? ((px - a.first) * sx + (py - a.second) * sy) / len2 : 0.0;
+        beyond_end = (i == 0 && raw_t < 0.0) || (i + 2 == segs.size() && raw_t > 1.0);
       }
     }
-    return best <= (cross >= 0.0 ? left_width : right_width);
+    return !beyond_end && best <= (cross >= 0.0 ? left_width : right_width);
   }
 
   // プラン区間 segs の中心線から、進行方向に向かって左 left_width・右 right_width 以内にある
@@ -647,7 +784,8 @@ private:
     return erased;
   }
 
-  // プラン前方 stop_distance 以内・中心線から path_clearance 以内にあるメモリのセルを集め、
+  // 停止判定の範囲 (プランに沿って後方 stop_distance_back 〜 前方 stop_distance、
+  // 中心線から左 path_clearance_left・右 path_clearance_right) にあるメモリのセルを集め、
   // min_cells 個以上あれば true を返す。zone には判定に使ったプランの区間を返す (可視化用)
   bool findBlockingCells(
     double rx, double ry, int min_cells, std::vector<int64_t> & blocking,
@@ -659,7 +797,7 @@ private:
       return false;
     }
 
-    // ロボットに最も近いプラン上の点から前方のみを対象にする
+    // ロボットに最も近いプラン上の点
     size_t start = 0;
     double best = std::numeric_limits<double>::max();
     for (size_t i = 0; i < path_.size(); ++i) {
@@ -669,34 +807,80 @@ private:
         start = i;
       }
     }
-    std::vector<std::pair<double, double>> segs{path_[start]};
-    std::vector<double> seg_arc{0.0};  // 各点までの経路長
-    for (size_t i = start + 1; i < path_.size() && seg_arc.back() <= stop_distance_; ++i) {
+
+    // 後方: プランをさかのぼる。足りなければ最初の区間の向きのまま後ろへ延ばす
+    std::vector<std::pair<double, double>> back_pts;  // start から後ろ向きの順
+    double back = 0.0;
+    size_t i = start;
+    while (i > 0 && back < stop_distance_back_) {
+      back += std::hypot(path_[i].first - path_[i - 1].first, path_[i].second - path_[i - 1].second);
+      --i;
+      back_pts.push_back(path_[i]);
+    }
+    if (back < stop_distance_back_) {
+      const size_t a = std::min(i, path_.size() - 2);
+      const double dx = path_[a + 1].first - path_[a].first;
+      const double dy = path_[a + 1].second - path_[a].second;
+      const double len = std::hypot(dx, dy);
+      if (len > 1e-6) {
+        const double rest = stop_distance_back_ - back;
+        back_pts.emplace_back(path_[i].first - dx / len * rest, path_[i].second - dy / len * rest);
+        back = stop_distance_back_;
+      }
+    }
+
+    std::vector<std::pair<double, double>> segs(back_pts.rbegin(), back_pts.rend());
+    segs.push_back(path_[start]);
+    std::vector<double> seg_arc;  // 各点の経路長 (ロボットに最も近い点が 0、後方が負)
+    for (size_t k = 0; k < segs.size(); ++k) {
+      seg_arc.push_back(k == 0 ? -back : seg_arc.back() + std::hypot(
+          segs[k].first - segs[k - 1].first, segs[k].second - segs[k - 1].second));
+    }
+    for (size_t k = start + 1; k < path_.size() && seg_arc.back() <= stop_distance_; ++k) {
       seg_arc.push_back(
         seg_arc.back() +
-        std::hypot(path_[i].first - path_[i - 1].first, path_[i].second - path_[i - 1].second));
-      segs.push_back(path_[i]);
+        std::hypot(path_[k].first - path_[k - 1].first, path_[k].second - path_[k - 1].second));
+      segs.push_back(path_[k]);
     }
     if (segs.size() < 2) {
       return false;
     }
     zone = segs;
 
-    const double reach = seg_arc.back() + path_clearance_;
+    const double reach =
+      seg_arc.back() - seg_arc.front() + std::max(path_clearance_left_, path_clearance_right_);
     for (const auto & kv : memory_) {
       const MemCell & c = kv.second;
       if (std::hypot(c.x - segs.front().first, c.y - segs.front().second) > reach) {
         continue;
       }
-      for (size_t i = 0; i + 1 < segs.size(); ++i) {
+      // 最も近い区間で、経路長と左右を決める
+      double best_d = std::numeric_limits<double>::max();
+      double arc = 0.0;
+      double cross = 0.0;  // > 0 なら進行方向の左
+      bool beyond_end = false;  // 範囲の両端より外 (端の区間の延長上)
+      for (size_t k = 0; k + 1 < segs.size(); ++k) {
         double t = 0.0;
         const double d = distancePointToSegment(
-          c.x, c.y, segs[i].first, segs[i].second, segs[i + 1].first, segs[i + 1].second, t);
-        const double arc = seg_arc[i] + t * (seg_arc[i + 1] - seg_arc[i]);
-        if (d <= path_clearance_ && arc <= stop_distance_) {
-          blocking.push_back(kv.first);
-          break;
+          c.x, c.y, segs[k].first, segs[k].second, segs[k + 1].first, segs[k + 1].second, t);
+        if (d < best_d) {
+          best_d = d;
+          arc = seg_arc[k] + t * (seg_arc[k + 1] - seg_arc[k]);
+          const double sx = segs[k + 1].first - segs[k].first;
+          const double sy = segs[k + 1].second - segs[k].second;
+          cross = sx * (c.y - segs[k].second) - sy * (c.x - segs[k].first);
+          // 端の区間で射影が区間の外に出る点は、範囲の端の先 (半円状のはみ出し) なので数えない
+          const double len2 = sx * sx + sy * sy;
+          const double raw_t = len2 > 1e-12 ?
+            ((c.x - segs[k].first) * sx + (c.y - segs[k].second) * sy) / len2 : 0.0;
+          beyond_end = (k == 0 && raw_t < 0.0) || (k + 2 == segs.size() && raw_t > 1.0);
         }
+      }
+      const double width = cross >= 0.0 ? path_clearance_left_ : path_clearance_right_;
+      if (!beyond_end && best_d <= width && arc >= -stop_distance_back_ - 1e-6 &&
+        arc <= stop_distance_)
+      {
+        blocking.push_back(kv.first);
       }
     }
     return static_cast<int>(blocking.size()) >= min_cells;
@@ -832,17 +1016,18 @@ private:
       };
 
     // 停止判定の範囲 (検出帯): プラン区間を左右に path_clearance だけ広げた帯。
-    // 通過モード中は不感帯を除いた左右の部分だけを描く
+    // 不感帯があるときは不感帯を除いた左右の部分だけを描く
     const auto zone_color =
       stop_ ? color(1.0f, 0.1f, 0.1f, 0.35f) : color(0.1f, 0.9f, 0.3f, 0.25f);
-    const double pc = path_clearance_;
+    const double pl = path_clearance_left_;
+    const double pr = path_clearance_right_;
     std::vector<std::array<double, 2>> detect_ranges;  // 検出帯の横方向の範囲 {lo, hi}
-    if (pass_through_now_) {
-      detect_ranges.push_back({std::min(pass_through_deadband_left_, pc), pc});
-      detect_ranges.push_back({-pc, -std::min(pass_through_deadband_right_, pc)});
+    if (deadband_active_) {
+      detect_ranges.push_back({std::min(deadband_left_, pl), pl});
+      detect_ranges.push_back({-pr, -std::min(deadband_right_, pr)});
     } else {
-      detect_ranges.push_back({-pc, pc});
-      detect_ranges.push_back({0.0, 0.0});  // 通過モードで使う id 1 を消す
+      detect_ranges.push_back({-pr, pl});
+      detect_ranges.push_back({0.0, 0.0});  // 不感帯があるときに使う id 1 を消す
     }
     std::vector<visualization_msgs::msg::Marker> zone_bands;
     for (size_t k = 0; k < detect_ranges.size(); ++k) {
@@ -851,10 +1036,10 @@ private:
           zone_color));
       arr.markers.push_back(zone_bands.back());
     }
-    // 通過モードの不感帯
+    // 不感帯
     const auto deadband = make_band(
-      pass_through_now_ ? deadband_zone : std::vector<std::pair<double, double>>{},
-      -pass_through_deadband_right_, pass_through_deadband_left_, "pass_through_deadband", 0,
+      deadband_active_ ? deadband_zone : std::vector<std::pair<double, double>>{},
+      -deadband_right_, deadband_left_, "pass_through_deadband", 0,
       color(1.0f, 0.85f, 0.0f, 0.3f));
     arr.markers.push_back(deadband);
 
@@ -871,8 +1056,8 @@ private:
     text.pose.orientation.w = 1.0;
     text.scale.z = 0.3;
     text.color = stop_ ? color(1.0f, 0.2f, 0.2f, 1.0f) :
-      (pass_through_now_ ? color(1.0f, 0.85f, 0.0f, 1.0f) : color(0.3f, 1.0f, 0.4f, 1.0f));
-    text.text = std::string(pass_through_now_ ? "PASS_THROUGH: " : "") + (stop_ ?
+      (deadband_active_ ? color(1.0f, 0.85f, 0.0f, 1.0f) : color(0.3f, 1.0f, 0.4f, 1.0f));
+    text.text = "[" + zone_label_ + "] " + (stop_ ?
       "WAIT_BLOCKED (" + std::to_string(blocking_keys.size()) + " cells)" : "CLEAR");
     text.lifetime = lifetime;
     arr.markers.push_back(text);
@@ -915,8 +1100,8 @@ private:
           make_line(zone_bands[k], zone, detect_ranges[k][0], detect_ranges[k][1]));
       }
       arr2d.markers.push_back(make_line(
-          deadband, pass_through_now_ ? deadband_zone : std::vector<std::pair<double, double>>{},
-          -pass_through_deadband_right_, pass_through_deadband_left_));
+          deadband, deadband_active_ ? deadband_zone : std::vector<std::pair<double, double>>{},
+          -deadband_right_, deadband_left_));
       arr2d.markers.push_back(text);
       pub_markers_2d_->publish(arr2d);
     }
@@ -993,7 +1178,7 @@ private:
 
     std_msgs::msg::String status;
     status.data = sensor_lost ? "NO_SENSOR" :
-      (stop_ ? "WAIT_BLOCKED" : (passThroughActive() ? "PASS_THROUGH" : "CLEAR"));
+      (stop_ ? "WAIT_BLOCKED" : (zone_type_ == "pass_through" ? "PASS_THROUGH" : "CLEAR"));
     pub_status_->publish(status);
   }
 
@@ -1005,7 +1190,7 @@ private:
 
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_cloud_;
   rclcpp::Subscription<nav_msgs::msg::Path>::SharedPtr sub_plan_;
-  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr sub_pass_through_;
+  rclcpp::Subscription<std_msgs::msg::String>::SharedPtr sub_zone_;
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr pub_stop_;
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr pub_status_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_obstacle_cloud_;
@@ -1040,23 +1225,31 @@ private:
   double sensor_min_elevation_deg_;
   double sensor_horizontal_fov_deg_;
   double visibility_margin_deg_;
-  double stop_distance_;
-  double path_clearance_;
-  int min_blocking_cells_;
   int block_confirm_count_;
   double resume_delay_;
   double sensor_timeout_;
-  double pass_through_lookahead_;
-  double pass_through_timeout_;
-  double deadband_left_ratio_;   // 不感帯の割合 (path_clearance に対する)
-  double deadband_right_ratio_;
-  double pass_through_deadband_left_;   // 不感帯の幅 (進行方向の左) [m]
-  double pass_through_deadband_right_;  // 不感帯の幅 (進行方向の右) [m]
-  int pass_through_min_blocking_cells_;
-  double pass_through_costmap_margin_;  // 不感帯の外側で local_costmap に入れない幅 [m]
-  bool pass_through_{false};
-  bool pass_through_now_{false};  // 直近の点群処理時に通過モードだったか (可視化用)
-  rclcpp::Time pass_through_stamp_{0, 0, RCL_STEADY_TIME};
+
+  // 検出範囲の設定 (属性ごと) と、waypoint_manager からの指令
+  std::map<std::string, ZoneProfile> profiles_;
+  double zone_timeout_;
+  std::string zone_request_;
+  bool has_zone_request_{false};
+  rclcpp::Time zone_stamp_{0, 0, RCL_STEADY_TIME};
+  std::string zone_type_{"normal"};  // いまの区間の属性
+  std::string zone_label_;            // ログ・表示用 (個別設定の件数つき)
+
+  // いまの区間の設定 (applyZone で決まる)
+  double stop_distance_{2.0};
+  double stop_distance_back_{0.0};     // 停止判定の範囲の後方 [m]
+  double path_clearance_left_{0.45};   // 停止判定の範囲の左の幅 [m] (進行方向から見て)
+  double path_clearance_right_{0.45};  // 停止判定の範囲の右の幅 [m]
+  int min_blocking_cells_{2};
+  double deadband_left_{0.0};          // 不感帯の幅 (進行方向の左) [m]
+  double deadband_right_{0.0};         // 不感帯の幅 (進行方向の右) [m]
+  double costmap_margin_{0.0};         // 不感帯の外側で local_costmap に入れない幅 [m]
+  double zone_lookahead_{6.0};         // 不感帯・costmap 除外の前方の長さ [m]
+  double zone_lookbehind_{1.0};        // 不感帯・costmap 除外の後方の長さ [m]
+  bool deadband_active_{false};        // 直近の点群処理時に不感帯があったか (可視化用)
   bool publish_markers_;
 
   std::vector<std::pair<double, double>> path_;

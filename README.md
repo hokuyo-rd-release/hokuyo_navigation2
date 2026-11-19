@@ -351,8 +351,13 @@ ros2 run hokuyo_navigation2 coordinator.sh
 
 1. 点群から、床から `min_obstacle_height`〜`max_obstacle_height` の高さの点を障害物とします（自車体の範囲は除外）。
 2. 障害物点を地図座標の `cell_size` のセルに記録します。
-3. グローバルプランの前方 `stop_distance` 以内・中心線から `path_clearance` 以内にセルが
-   `min_blocking_cells` 個以上あり、それが `block_confirm_count` フレーム続いたら停止します。
+3. 停止判定の範囲（検出帯）にセルが `min_blocking_cells` 個以上あり、それが `block_confirm_count` フレーム続いたら停止します。
+   範囲はグローバルプランに沿って後方 `stop_distance_back`〜前方 `stop_distance`、
+   中心線から左 `path_clearance_left`・右 `path_clearance_right` です（左右はロボットの進行方向から見た向き）。
+   これらは下の「検出範囲（ウェイポイントの属性ごと）」で、属性ごと・ウェイポイントごとに設定します。
+   - 後方はプランをさかのぼり、足りなければ最初の区間の向きのまま後ろへ延ばします。
+   - 後方・左右を広げると、横や斜め後ろから追い抜いてくるものが車体の横に並んだ時点で止まります。
+     ただし YVT は水平 ±105° しか見えないため、車体の真横より後ろにいるものは検出できません。
 4. 該当するセルが無くなってから `resume_delay` 経過したら再開します。
 5. 点群が `sensor_timeout` 以上届かない場合も、プランがある間は停止します。
 
@@ -382,31 +387,41 @@ YVT-35LX の垂直視野は -5°〜+35° のため、背の低い物は近づく
 - 車体が前後に長い（後方 0.535 m）ため、DWB には車体形状を検査する
   `ObstacleFootprint` critic を追加しています。保守的すぎて動けない場合はこの critic を外します。
 
-**通過モード（枝葉が張り出した区間）**
+**検出範囲（ウェイポイントの属性ごと）**
 
-通路に張り出して揺れる葉や枝は障害物として扱いたくありませんが、センサからは人や物と区別できません。
-そこで、該当する区間だけウェイポイントの属性で強制通過させます。
+停止判定の範囲（検出帯）・不感帯（無視する範囲）・costmap 除外は、ウェイポイントの属性
+（`normal` / `slow` / `stop` / `wait` / `pass_through`）ごとに `obstacle_monitor.yaml` の
+`zone.<属性>.<項目>` で設定します。走っている区間（到着したウェイポイントから次のウェイポイントまで）の属性の設定が使われます。
 
-- GUI のウェイポイント編集で、区間の**手前のウェイポイント**に `pass_through` 属性を付け、`value` に徐行速度 [m/s] を入れます。
-  そのウェイポイントに到達してから次のウェイポイントに到達するまでが通過区間です（`value` が 0 以下なら速度制限なし）。
-- 区間中は `waypoint_manager` が `/wizurg/pass_through` に `true` を出し続け、`obstacle_monitor` は
-  - グローバルプランの**不感帯**にある障害物を無視します（local_costmap からも消えるため DWB も避けません）。
-  - 不感帯の外に残った障害物では通常どおり停止判定します（範囲は `stop_distance` × 左右 `path_clearance`）。
-    「塞がれている」とするセル数は `pass_through_min_blocking_cells`（既定 2）です。
-- 不感帯は、ロボットの進行方向から見て経路の中心線から
-  左へ `path_clearance` × `pass_through_deadband_left_ratio`、右へ `path_clearance` × `pass_through_deadband_right_ratio`
-  の範囲です（割合は 0.0〜1.0、前方 `pass_through_lookahead` まで）。
-  - 例: `path_clearance` 0.45 m、左 1.0・右 0.0 → 左側に張り出した枝葉は無視し、右側から来る人では止まります。
+| 項目 | 意味 | 既定（pass_through） | 既定（その他） |
+|---|---|---|---|
+| `stop_distance` / `stop_distance_back` | 検出帯の前方 / 後方の長さ [m]（プランに沿って） | 2.0 / 0.0 | 2.0 / 0.0 |
+| `path_clearance_left` / `_right` | 検出帯の左 / 右の幅 [m] | 0.45 / 0.45 | 0.45 / 0.45 |
+| `min_blocking_cells` | 検出帯のセルがこの数以上で停止 | 2 | 2 |
+| `deadband_left_ratio` / `_right_ratio` | 不感帯の左 / 右の幅（その側の検出帯の幅に対する割合 0〜1） | 1.0 / 0.0 | 0 / 0（なし） |
+| `costmap_margin` | 不感帯の外側で local_costmap に入れない幅 [m] | 0.35 | 0（なし） |
+| `lookahead` / `lookbehind` | 不感帯・costmap 除外の前方 / 後方の長さ [m] | 6.0 / 1.0 | 6.0 / 1.0 |
+
+- **ウェイポイント個別の設定**: ウェイポイントの属性に `zone_<項目>`（例: `"zone_stop_distance": 3.0`）を書くと、
+  そのウェイポイントから次のウェイポイントまでの区間だけ、属性の設定をその値で上書きします。
+  GUI の「障害物検出設定」の「ウェイポイント個別の設定」で、ファイルとウェイポイントを選んで入力できます
+  （Map Viewer のウェイポイント情報には件数だけ出ます）。
+- `waypoint_manager` は、いまの区間の属性と個別の上書きを `/wizurg/obstacle_zone`（std_msgs/String、
+  書式 `<属性>;<項目>=<値>;...`）に出し続けます。`zone_timeout`（既定 1.0 秒）途絶えると、
+  またはウェイポイント走行していないときは、`normal` の設定を使います。
+- **不感帯**: 中心線から左 `path_clearance_left` × `deadband_left_ratio`、右 `path_clearance_right` × `deadband_right_ratio`、
+  プランに沿って後方 `lookbehind`〜前方 `lookahead` の範囲の障害物を無視します（停止判定にも local_costmap にも入らず、DWB も避けません）。
+  通路に張り出して揺れる葉や枝など、センサからは人や物と区別できないものの区間で使います。
+  - 例: `pass_through` の既定（左 1.0・右 0.0）→ 左側に張り出した枝葉は無視し、右側から来る人では止まります。
   - 割合が 1.0 の側は停止判定しません。左右とも 1.0 なら強制通過です。
-  - 不感帯の外側 `pass_through_costmap_margin`（既定 0.15 m）までの障害物も local_costmap には入れません（停止判定には使います）。
-    経路のすぐ脇に残った枝葉で DWB の軌道がすべて弾かれ（`No valid trajectories`）、動けなくなるのを防ぐためです。
-- 指令が `pass_through_timeout`（既定 1.0 秒）途絶えると通過モードは自動で終了します。
-- これらの値は hokuyo_navigation2_gui の「通過モード設定」で、ロボットのモデル上に帯を描きながら変更できます。
-  `stop_distance`・`path_clearance`・`min_blocking_cells`・`pass_through_*`（`pass_through_topic` 以外）は
-  走行中にも `ros2 param set /obstacle_monitor ...` で変更できます。
-- **不感帯の中では経路上の人も無視されます。** 使う区間・不感帯は最小限にしてください。
-- RViz では不感帯が黄色の帯、不感帯を除いた検出帯が緑 / 赤の帯、検出帯で検出したセルが赤、不感帯で無視したセルが薄い黄で表示され、ロボット上の表示が
-  `PASS_THROUGH: CLEAR` / `PASS_THROUGH: WAIT_BLOCKED (N cells)` になります。
+  - **不感帯の中では経路上の人も無視されます。** 不感帯を付ける区間は最小限にしてください。
+- **costmap 除外**: 不感帯の外側 `costmap_margin` までの障害物も local_costmap には入れません（停止判定には使います）。
+  経路のすぐ脇に残った枝葉で DWB の軌道がすべて弾かれ（`No valid trajectories`）、動けなくなるのを防ぐためです。前後の長さは不感帯と同じです。
+- `pass_through` 属性の `value` は徐行速度 [m/s] です（0 以下なら速度制限なし）。
+- これらの値は hokuyo_navigation2_gui の「障害物検出設定」で、ロボットのモデル上に帯を描きながら属性ごとに変更できます。
+  `zone.*` は走行中にも `ros2 param set /obstacle_monitor zone.<属性>.<項目> <値>` で変更できます。
+- RViz では不感帯が黄色の帯、不感帯を除いた検出帯が緑 / 赤の帯、検出帯で検出したセルが赤、不感帯で無視したセルが薄い黄で表示され、
+  ロボット上の表示が `[<属性>] CLEAR` / `[<属性>] WAIT_BLOCKED (N cells)` になります（個別設定があると `[<属性> (+件数)]`）。
 
 **設定ファイル**
 
@@ -418,8 +433,10 @@ YVT-35LX の垂直視野は -5°〜+35° のため、背の低い物は近づく
 **確認方法**
 
 ```bash
-# 判定結果 (CLEAR / WAIT_BLOCKED / PASS_THROUGH / NO_SENSOR)
+# 判定結果 (CLEAR / WAIT_BLOCKED / PASS_THROUGH (pass_through の区間) / NO_SENSOR)
 ros2 topic echo /obstacle_monitor/status
+# いまの区間の属性と個別設定 (waypoint_manager が出す)
+ros2 topic echo /wizurg/obstacle_zone
 # 停止指令
 ros2 topic echo /wizurg/obstacle_stop_cmd_vel
 # 障害物点が出ているか
@@ -432,9 +449,9 @@ RViz（`rviz/nav2_view.rviz` の「Obstacle Monitor」グループ）では `/ob
 | --- | --- |
 | 橙の柱 | 直近に見えている障害物セル |
 | 紫の柱 | 見えなくなったが記憶している障害物セル（死角など） |
-| 赤の柱 | 停止判定の範囲（検出帯）で検出したセル（通過モード中も同じ） |
-| 薄い黄の柱 | 通過モードの不感帯で無視しているセル |
-| 経路沿いの帯 | 停止判定の範囲（検出帯）。緑 = 空き、赤 = 停止中。黄 = 通過モードの不感帯（通過モード中の検出帯は不感帯を除いた左右の部分だけを表示） |
+| 赤の柱 | 停止判定の範囲（検出帯）で検出したセル |
+| 薄い黄の柱 | 不感帯で無視しているセル |
+| 経路沿いの帯 | 停止判定の範囲（検出帯）。緑 = 空き、赤 = 停止中。黄 = 不感帯（不感帯があるときの検出帯は不感帯を除いた左右の部分だけを表示） |
 | ロボット上の文字 | `CLEAR` / `WAIT_BLOCKED (N cells)` |
 
 ### Launch ファイル

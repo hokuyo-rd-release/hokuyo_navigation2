@@ -36,32 +36,84 @@ obstacle_monitor:
     visibility_margin_deg: 1.0
 
     # --- 停止判定 ---
-    stop_distance: 2.0        # プラン前方この経路長以内に障害物があれば停止 [m]
-    path_clearance: 0.45      # プラン中心線からこの距離以内を経路上とみなす [m] (車体半幅 0.29 + 余裕)
-    min_blocking_cells: 2     # 経路上のセルがこの数以上で「塞がれている」とする (ノイズ除け)
     block_confirm_count: 2    # 連続でこのフレーム数塞がれていたら停止する
     resume_delay: 0.1         # 経路が空いてからこの時間待って再開する [s]
     sensor_timeout: 0.5       # 点群がこの時間届かなければ停止する [s] (プランがある間のみ)
 
-    # --- 通過モード (ウェイポイントの pass_through 属性) ---
-    # 通路に張り出した枝葉など、障害物として扱いたくない物がある区間で使う。
-    # waypoint_manager が区間中 pass_through_topic に true を出し続け、その間は
-    # グローバルプランの不感帯にある障害物を無視する (停止判定にも local_costmap にも使わない)。
-    # 不感帯の外に残った障害物では通常どおり停止判定する (範囲は stop_distance × 左右 path_clearance)。
-    # 不感帯の中では経路上の人も見えなくなるため、使う区間・不感帯は最小限にすること。
-    pass_through_topic: /wizurg/pass_through
-    pass_through_lookahead: 6.0  # 前方何 m のプランまで対象にするか [m]
-    pass_through_timeout: 1.0    # 指令がこの時間途絶えたら通過モードを終了する [s]
-    # 不感帯: ロボットの進行方向から見て、経路の中心線から左右それぞれ path_clearance × 割合 (0.0〜1.0)
-    # 例) 左 1.0・右 0.0 なら中心線から左 path_clearance (0.45 m) が不感帯、右側は通常どおり停止判定する。
-    # 割合が 1.0 の側は停止判定しない。左右とも 1.0 なら停止判定の範囲がすべて不感帯になる (強制通過)
-    pass_through_deadband_left_ratio: 1.0
-    pass_through_deadband_right_ratio: 0.5
-    # 不感帯の外側この幅までの障害物も local_costmap に入れない [m] (停止判定には使う)。
-    # 経路のすぐ脇に残った枝葉で DWB の軌道がすべて弾かれ (No valid trajectories) 動けなくなるのを防ぐ。
-    # 割合 1.0 の側は path_clearance 0.45 + 0.15 = 0.6 m まで消える
-    pass_through_costmap_margin: 0.35
-    pass_through_min_blocking_cells: 30  # 通過モード中に「塞がれている」とするセル数 (通常時は min_blocking_cells)
+    # --- 検出範囲 (ウェイポイントの属性ごと) ---
+    # waypoint_manager が、いま走っている区間 (最後に到着したウェイポイントから次まで) の属性と
+    # そのウェイポイント個別の上書き値 (属性の zone_<項目>) を zone_topic に出し続け、
+    # obstacle_monitor は zone.<属性>.<項目> に個別の上書きを重ねた範囲を使う。
+    # 指令が zone_timeout 途絶えたとき (ウェイポイント走行していないときなど) は normal を使う。
+    # 項目:
+    #   stop_distance / stop_distance_back      停止判定の範囲 (検出帯) の前方 / 後方の長さ [m] (プランに沿って)
+    #   path_clearance_left / _right            検出帯の左 / 右の幅 [m] (中心線から。左右は進行方向から見た向き)
+    #   min_blocking_cells                      検出帯のセルがこの数以上で「塞がれている」とする
+    #   deadband_left_ratio / _right_ratio      不感帯 (無視する範囲) の左 / 右の幅。その側の検出帯の幅に対する割合 (0〜1)。
+    #                                           割合 1.0 の側は停止判定しない。不感帯の中では人も見えなくなる
+    #   costmap_margin                          不感帯の外側で local_costmap に入れない幅 [m] (停止判定には使う)
+    #   lookahead / lookbehind                  不感帯・costmap 除外の前方 / 後方の長さ [m] (プランに沿って)
+    # 後方はプランをさかのぼり、足りなければ最初の区間の向きのまま後ろへ延ばす。
+    # 後方・左右を広げると、横や斜め後ろから追い抜いてくるものが車体の横に並んだ時点で止まる
+    # (ただし YVT は水平 ±105° しか見えないため、車体の真横より後ろは見えない)。
+    # GUI の「障害物検出設定」で、ロボットのモデル上に帯を描きながら変更できる。
+    zone_topic: /wizurg/obstacle_zone
+    zone_timeout: 1.0          # 指令がこの時間途絶えたら normal の設定に戻す [s]
+    # normal: 不感帯・costmap 除外なし
+    zone.normal.stop_distance: 2.0
+    zone.normal.stop_distance_back: 0.0
+    zone.normal.path_clearance_left: 0.45
+    zone.normal.path_clearance_right: 0.45
+    zone.normal.min_blocking_cells: 2
+    zone.normal.deadband_left_ratio: 0.0
+    zone.normal.deadband_right_ratio: 0.0
+    zone.normal.costmap_margin: 0.0
+    zone.normal.lookahead: 6.0
+    zone.normal.lookbehind: 1.0
+    # slow: 不感帯・costmap 除外なし
+    zone.slow.stop_distance: 2.0
+    zone.slow.stop_distance_back: 0.0
+    zone.slow.path_clearance_left: 0.45
+    zone.slow.path_clearance_right: 0.45
+    zone.slow.min_blocking_cells: 2
+    zone.slow.deadband_left_ratio: 0.0
+    zone.slow.deadband_right_ratio: 0.0
+    zone.slow.costmap_margin: 0.0
+    zone.slow.lookahead: 6.0
+    zone.slow.lookbehind: 1.0
+    # stop: 不感帯・costmap 除外なし
+    zone.stop.stop_distance: 2.0
+    zone.stop.stop_distance_back: 0.0
+    zone.stop.path_clearance_left: 0.45
+    zone.stop.path_clearance_right: 0.45
+    zone.stop.min_blocking_cells: 2
+    zone.stop.deadband_left_ratio: 0.0
+    zone.stop.deadband_right_ratio: 0.0
+    zone.stop.costmap_margin: 0.0
+    zone.stop.lookahead: 6.0
+    zone.stop.lookbehind: 1.0
+    # wait: 不感帯・costmap 除外なし
+    zone.wait.stop_distance: 2.0
+    zone.wait.stop_distance_back: 0.0
+    zone.wait.path_clearance_left: 0.45
+    zone.wait.path_clearance_right: 0.45
+    zone.wait.min_blocking_cells: 2
+    zone.wait.deadband_left_ratio: 0.0
+    zone.wait.deadband_right_ratio: 0.0
+    zone.wait.costmap_margin: 0.0
+    zone.wait.lookahead: 6.0
+    zone.wait.lookbehind: 1.0
+    # pass_through: 通路に張り出した枝葉など。左側を不感帯にし、右側から来る人では止まる
+    zone.pass_through.stop_distance: 2.0
+    zone.pass_through.stop_distance_back: 0.0
+    zone.pass_through.path_clearance_left: 0.45
+    zone.pass_through.path_clearance_right: 0.45
+    zone.pass_through.min_blocking_cells: 2
+    zone.pass_through.deadband_left_ratio: 1.0
+    zone.pass_through.deadband_right_ratio: 0.0
+    zone.pass_through.costmap_margin: 0.35
+    zone.pass_through.lookahead: 6.0
+    zone.pass_through.lookbehind: 1.0
 
     # --- costmap 用の出力 ---
     # local_costmap は memory_cloud (記憶している障害物セル) で障害物を書き込み、
